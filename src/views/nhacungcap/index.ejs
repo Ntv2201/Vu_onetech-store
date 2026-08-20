@@ -1,0 +1,76 @@
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">Quản lý Nhà cung cấp</h4>
+    <p class="text-muted small mb-0">Danh sách các đối tác cung cấp thiết bị điện thoại và linh phụ kiện</p>
+  </div>
+  <% if (currentUser && ['Quản lý', 'Thủ kho', 'Kế toán'].includes(currentUser.vaiTro)) { %>
+    <a href="/nha-cung-cap/them-moi" class="btn btn-primary">
+      <i class="bi bi-truck me-1"></i> Thêm Nhà cung cấp
+    </a>
+  <% } %>
+</div>
+
+<!-- Filters Bar -->
+<div class="card-custom p-3 mb-4">
+  <form action="/nha-cung-cap" method="GET" class="row g-2 align-items-center">
+    <div class="col-12 col-md-6">
+      <div class="input-group">
+        <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+        <input type="text" name="search" class="form-control" placeholder="Tìm theo tên NCC hoặc số điện thoại..." value="<%= filters.search || '' %>">
+      </div>
+    </div>
+    <div class="col-12 col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Tìm kiếm</button>
+      <a href="/nha-cung-cap" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- Table of NhaCungCap -->
+<div class="card-custom">
+  <div class="table-responsive">
+    <table class="table table-custom table-hover">
+      <thead>
+        <tr>
+          <th>Tên Nhà cung cấp</th>
+          <th>Số điện thoại</th>
+          <th>Địa chỉ</th>
+          <th>Ngày tạo</th>
+          <th class="text-end">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (nhaCungCaps && nhaCungCaps.length > 0) { %>
+          <% nhaCungCaps.forEach(ncc => { %>
+            <tr>
+              <td class="fw-bold text-dark"><%= ncc.tenNCC %></td>
+              <td><span class="font-monospace text-primary"><%= ncc.sdt || 'Chưa cập nhật' %></span></td>
+              <td><%= ncc.diaChi || 'Chưa cập nhật' %></td>
+              <td><%= new Date(ncc.createdAt).toLocaleDateString('vi-VN') %></td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <% if (currentUser && ['Quản lý', 'Thủ kho', 'Kế toán'].includes(currentUser.vaiTro)) { %>
+                    <a href="/nha-cung-cap/<%= ncc._id %>/chinh-sua" class="btn btn-outline-primary" title="Sửa">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  <% } %>
+                  <% if (currentUser && currentUser.vaiTro === 'Quản lý') { %>
+                    <form action="/nha-cung-cap/<%= ncc._id %>/xoa" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa nhà cung cấp này?')">
+                      <button type="submit" class="btn btn-outline-danger" title="Xóa">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted">Không tìm thấy nhà cung cấp nào</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

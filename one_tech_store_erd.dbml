@@ -1,0 +1,204 @@
+// ONE TECH STORE - ERD (DBML)
+// Cách xem sơ đồ: mở https://dbdiagram.io -> New Diagram -> dán toàn bộ nội dung file này vào
+// Đã bỏ bảng DOITACTAICHINH (bên thứ 3) theo quyết định trả góp nội bộ
+
+Table NHANVIEN {
+  MaNV int [pk, increment]
+  HoTen varchar
+  SDT varchar
+  VaiTro varchar
+  TenDangNhap varchar [unique]
+  MatKhau varchar
+}
+
+Table KHACHHANG {
+  MaKH int [pk, increment]
+  HoTen varchar
+  SDT varchar
+  DiaChi varchar
+}
+
+Table NHACUNGCAP {
+  MaNCC int [pk, increment]
+  TenNCC varchar
+  SDT varchar
+  DiaChi varchar
+}
+
+Table DANHMUC {
+  MaDM int [pk, increment]
+  TenDanhMuc varchar
+}
+
+Table SANPHAM {
+  MaSP int [pk, increment]
+  MaDM int [ref: > DANHMUC.MaDM]
+  TenMay varchar
+  Hang varchar
+  GiaBan decimal
+}
+
+Table MAY_IMEI {
+  IMEI varchar [pk]
+  MaSP int [ref: > SANPHAM.MaSP]
+  GiaNhap decimal
+  TrangThai varchar
+}
+
+Table PHUKIEN {
+  MaPK int [pk, increment]
+  MaDM int [ref: > DANHMUC.MaDM]
+  TenPK varchar
+  GiaBan decimal
+  SoLuongTon int
+}
+
+Table LINHKIEN {
+  MaLK int [pk, increment]
+  TenLK varchar
+  DonGia decimal
+  SoLuongTon int
+}
+
+Table DONDATHANGTRUOC {
+  MaDat int [pk, increment]
+  MaKH int [ref: > KHACHHANG.MaKH]
+  MaSP int [ref: > SANPHAM.MaSP]
+  IMEI varchar [ref: > MAY_IMEI.IMEI]
+  SoTienCoc decimal
+  HanLay date
+  TrangThai varchar
+}
+
+Table HOADON {
+  SoHD int [pk, increment]
+  MaKH int [ref: > KHACHHANG.MaKH]
+  MaNV int [ref: > NHANVIEN.MaNV]
+  MaDat int [ref: > DONDATHANGTRUOC.MaDat]
+  NgayLap datetime
+  TongTien decimal
+  TrangThai varchar
+  HanThanhToan date
+}
+
+Table CT_HOADON_MAY {
+  MaCTM int [pk, increment]
+  SoHD int [ref: > HOADON.SoHD]
+  IMEI varchar [ref: > MAY_IMEI.IMEI, unique]
+  DonGiaBan decimal
+}
+
+Table CT_HOADON_PHUKIEN {
+  MaCT int [pk, increment]
+  SoHD int [ref: > HOADON.SoHD]
+  MaPK int [ref: > PHUKIEN.MaPK]
+  SoLuong int
+}
+
+Table HOPDONGTRAGOP {
+  MaHDTG int [pk, increment]
+  SoHD int [ref: - HOADON.SoHD]
+  SoTienTraGop decimal
+  SoKy int
+  TrangThaiDuyet varchar
+}
+
+Table CONGNO {
+  MaCN int [pk, increment]
+  LoaiDoiTuong varchar
+  MaKH int [ref: > KHACHHANG.MaKH]
+  MaNCC int [ref: > NHACUNGCAP.MaNCC]
+  SoHD int [ref: > HOADON.SoHD]
+  MaPN int [ref: > PHIEUNHAP.MaPN]
+  SoTienNo decimal
+  SoTienDaTra decimal
+  TrangThai varchar
+}
+
+Table PHIEUTHU {
+  MaPT int [pk, increment]
+  SoHD int [ref: > HOADON.SoHD]
+  MaDat int [ref: > DONDATHANGTRUOC.MaDat]
+  MaCN int [ref: > CONGNO.MaCN]
+  SoTien decimal
+  NgayThu datetime
+}
+
+Table PHIEUNHAP {
+  MaPN int [pk, increment]
+  MaNCC int [ref: > NHACUNGCAP.MaNCC]
+  MaNV int [ref: > NHANVIEN.MaNV]
+  NgayNhap datetime
+}
+
+Table CT_PHIEUNHAP {
+  MaCTN int [pk, increment]
+  MaPN int [ref: > PHIEUNHAP.MaPN]
+  IMEI varchar [ref: > MAY_IMEI.IMEI]
+  DonGiaNhap decimal
+}
+
+Table PHIEUCHI {
+  MaPC int [pk, increment]
+  MaPN int [ref: > PHIEUNHAP.MaPN]
+  MaDT int
+  SoTien decimal
+  NgayChi datetime
+  LyDo varchar
+}
+
+Table KHO {
+  MaKho int [pk, increment]
+  TenKho varchar
+}
+
+Table TONKHO {
+  MaTonKho int [pk, increment]
+  MaKho int [ref: > KHO.MaKho]
+  MaSP int [ref: > SANPHAM.MaSP]
+  SoLuong int
+}
+
+Table PHIEUXUATKHO {
+  MaPX int [pk, increment]
+  SoHD int [ref: > HOADON.SoHD]
+  LyDoXuat varchar
+}
+
+Table BIENBANKIEMKE {
+  MaBB int [pk, increment]
+  MaKho int [ref: > KHO.MaKho]
+  Ngay date
+}
+
+Table DIEUCHINHKHO {
+  MaDC int [pk, increment]
+  MaBB int [ref: > BIENBANKIEMKE.MaBB]
+  SoLuongDC int
+}
+
+Table PHIEUBAOHANH {
+  MaPBH int [pk, increment]
+  IMEI varchar [ref: > MAY_IMEI.IMEI]
+  MaKH int [ref: > KHACHHANG.MaKH]
+  MaNV int [ref: > NHANVIEN.MaNV]
+  MoTaLoi varchar
+  NgayTiepNhan datetime
+  TrangThai varchar
+}
+
+Table CT_PBH_LINHKIEN {
+  MaCTB int [pk, increment]
+  MaPBH int [ref: > PHIEUBAOHANH.MaPBH]
+  MaLK int [ref: > LINHKIEN.MaLK]
+  SoLuong int
+}
+
+Table PHIEUDOITRA {
+  MaDT int [pk, increment]
+  SoHD int [ref: > HOADON.SoHD]
+  IMEI varchar [ref: > MAY_IMEI.IMEI]
+  LyDo varchar
+  NgayDoiTra datetime
+  TrangThai varchar
+}

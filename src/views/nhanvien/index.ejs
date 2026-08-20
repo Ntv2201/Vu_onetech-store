@@ -1,0 +1,103 @@
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">Quản lý Nhân viên & Phân quyền</h4>
+    <p class="text-muted small mb-0">Quản trị tài khoản, vai trò (6 vai trò) và trạng thái hoạt động của nhân viên</p>
+  </div>
+  <a href="/nhan-vien/them-moi" class="btn btn-primary">
+    <i class="bi bi-person-plus-fill me-1"></i> Thêm Nhân viên
+  </a>
+</div>
+
+<!-- Filters Bar -->
+<div class="card-custom p-3 mb-4">
+  <form action="/nhan-vien" method="GET" class="row g-2 align-items-center">
+    <div class="col-12 col-md-6">
+      <div class="input-group">
+        <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+        <input type="text" name="search" class="form-control" placeholder="Tìm theo tên, username hoặc SĐT..." value="<%= filters.search || '' %>">
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+      <select name="vaiTro" class="form-select">
+        <option value="">-- Tất cả vai trò --</option>
+        <% roles.forEach(r => { %>
+          <option value="<%= r %>" <%= filters.vaiTro === r ? 'selected' : '' %>><%= r %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-12 col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Lọc</button>
+      <a href="/nhan-vien" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- Table of NhanVien -->
+<div class="card-custom">
+  <div class="table-responsive">
+    <table class="table table-custom table-hover">
+      <thead>
+        <tr>
+          <th>Họ và tên</th>
+          <th>Tên đăng nhập</th>
+          <th>Vai trò (Phân quyền)</th>
+          <th>Số điện thoại</th>
+          <th>Trạng thái</th>
+          <th class="text-end">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (nhanViens && nhanViens.length > 0) { %>
+          <% nhanViens.forEach(nv => { %>
+            <tr>
+              <td>
+                <div class="fw-bold text-dark"><%= nv.hoTen %></div>
+                <div class="small text-muted">ID: <%= nv._id.toString().slice(-6) %></div>
+              </td>
+              <td><span class="font-monospace text-primary fw-semibold">@<%= nv.tenDangNhap %></span></td>
+              <td>
+                <% if (nv.vaiTro === 'Quản lý') { %>
+                  <span class="badge bg-danger px-2 py-1"><i class="bi bi-shield-fill-check me-1"></i> Quản lý</span>
+                <% } else if (nv.vaiTro === 'Thủ kho') { %>
+                  <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-box-seam me-1"></i> Thủ kho</span>
+                <% } else if (nv.vaiTro === 'NV bán hàng') { %>
+                  <span class="badge bg-primary px-2 py-1"><i class="bi bi-cart me-1"></i> NV bán hàng</span>
+                <% } else if (nv.vaiTro === 'Thu ngân') { %>
+                  <span class="badge bg-success px-2 py-1"><i class="bi bi-cash me-1"></i> Thu ngân</span>
+                <% } else if (nv.vaiTro === 'Kế toán') { %>
+                  <span class="badge bg-info text-dark px-2 py-1"><i class="bi bi-calculator me-1"></i> Kế toán</span>
+                <% } else { %>
+                  <span class="badge bg-secondary px-2 py-1"><i class="bi bi-tools me-1"></i> Kỹ thuật</span>
+                <% } %>
+              </td>
+              <td><%= nv.sdt || 'Chưa cập nhật' %></td>
+              <td>
+                <span class="badge <%= nv.trangThai === 'Hoạt động' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle' %>">
+                  <%= nv.trangThai || 'Hoạt động' %>
+                </span>
+              </td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <a href="/nhan-vien/<%= nv._id %>/chinh-sua" class="btn btn-outline-primary" title="Sửa">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <% if (currentUser && currentUser._id.toString() !== nv._id.toString()) { %>
+                    <form action="/nhan-vien/<%= nv._id %>/xoa" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa nhân viên này?')">
+                      <button type="submit" class="btn btn-outline-danger" title="Xóa">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="6" class="text-center py-4 text-muted">Không tìm thấy nhân viên nào</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

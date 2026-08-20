@@ -1,0 +1,36 @@
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-6">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="fw-bold mb-0"><%= isEdit ? 'Chỉnh sửa Khách hàng' : 'Thêm Khách hàng mới' %></h4>
+      <a href="/khach-hang" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại
+      </a>
+    </div>
+
+    <div class="card-custom p-4">
+      <form action="<%= isEdit ? '/khach-hang/' + khachHang._id + '/chinh-sua' : '/khach-hang/them-moi' %>" method="POST">
+        <div class="mb-3">
+          <label class="form-label">Họ và tên khách hàng <span class="text-danger">*</span></label>
+          <input type="text" name="hoTen" class="form-control" placeholder="VD: Nguyễn Văn A" value="<%= khachHang.hoTen || '' %>" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Số điện thoại</label>
+          <input type="text" name="sdt" class="form-control" placeholder="VD: 0987654321" value="<%= khachHang.sdt || '' %>">
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label">Địa chỉ</label>
+          <input type="text" name="diaChi" class="form-control" placeholder="VD: 123 Cầu Giấy, Hà Nội" value="<%= khachHang.diaChi || '' %>">
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+          <a href="/khach-hang" class="btn btn-light">Hủy bỏ</a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check2-circle me-1"></i> <%= isEdit ? 'Cập nhật' : 'Lưu Khách hàng' %>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

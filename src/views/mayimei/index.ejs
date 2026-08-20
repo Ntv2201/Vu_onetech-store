@@ -1,0 +1,121 @@
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">Quản lý Máy theo từng IMEI / Serial</h4>
+    <p class="text-muted small mb-0">Mỗi máy là 1 bản ghi riêng biệt với số IMEI duy nhất, theo dõi trạng thái và lịch sử</p>
+  </div>
+  <% if (currentUser && ['Quản lý', 'Thủ kho'].includes(currentUser.vaiTro)) { %>
+    <a href="/may-imei/them-moi" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Nhập Máy / IMEI Mới
+    </a>
+  <% } %>
+</div>
+
+<!-- Filters Bar -->
+<div class="card-custom p-3 mb-4">
+  <form action="/may-imei" method="GET" class="row g-2 align-items-center">
+    <div class="col-12 col-md-4">
+      <div class="input-group">
+        <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+        <input type="text" name="search" class="form-control font-monospace" placeholder="Tìm kiếm số IMEI..." value="<%= filters.search || '' %>">
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+      <select name="sanPhamId" class="form-select">
+        <option value="">-- Tất cả sản phẩm --</option>
+        <% sanPhams.forEach(sp => { %>
+          <option value="<%= sp._id %>" <%= filters.sanPhamId == sp._id.toString() ? 'selected' : '' %>><%= sp.tenMay %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+      <select name="trangThai" class="form-select">
+        <option value="">-- Tất cả trạng thái --</option>
+        <option value="Con hang" <%= filters.trangThai === 'Con hang' ? 'selected' : '' %>>Còn hàng</option>
+        <option value="Da ban" <%= filters.trangThai === 'Da ban' ? 'selected' : '' %>>Đã bán</option>
+        <option value="Bao hanh" <%= filters.trangThai === 'Bao hanh' ? 'selected' : '' %>>Bảo hành</option>
+        <option value="Loi" <%= filters.trangThai === 'Loi' ? 'selected' : '' %>>Lỗi</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Lọc</button>
+      <a href="/may-imei" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- Table of MayImei -->
+<div class="card-custom">
+  <div class="table-responsive">
+    <table class="table table-custom table-hover">
+      <thead>
+        <tr>
+          <th>Số IMEI / Serial</th>
+          <th>Model Sản phẩm</th>
+          <th>Phân loại</th>
+          <th>Giá nhập</th>
+          <th>Trạng thái</th>
+          <th>Ngày nhập</th>
+          <th class="text-end">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (imeis && imeis.length > 0) { %>
+          <% imeis.forEach(item => { %>
+            <tr>
+              <td>
+                <span class="font-monospace fw-bold fs-6 text-dark"><%= item.imei %></span>
+              </td>
+              <td>
+                <% if (item.sanPham) { %>
+                  <a href="/san-pham/<%= item.sanPham._id %>/chi-tiet" class="fw-semibold text-decoration-none text-dark">
+                    <%= item.sanPham.tenMay %>
+                  </a>
+                  <div class="text-muted small"><%= item.sanPham.hang %> | BH <%= item.sanPham.soThangBH || 12 %> tháng</div>
+                <% } else { %>
+                  <span class="text-muted">Không xác định</span>
+                <% } %>
+              </td>
+              <td>
+                <div><%= item.mauSac || '-' %></div>
+                <div class="small text-muted"><%= item.dungLuong || '' %></div>
+              </td>
+              <td class="fw-semibold"><%= item.giaNhap ? item.giaNhap.toLocaleString('vi-VN') + ' đ' : '0 đ' %></td>
+              <td>
+                <% if (item.trangThai === 'Con hang') { %>
+                  <span class="badge badge-imei-conhang px-2 py-1">Còn hàng</span>
+                <% } else if (item.trangThai === 'Da ban') { %>
+                  <span class="badge badge-imei-daban px-2 py-1">Đã bán</span>
+                <% } else if (item.trangThai === 'Bao hanh') { %>
+                  <span class="badge badge-imei-baohanh px-2 py-1">Bảo hành</span>
+                <% } else { %>
+                  <span class="badge badge-imei-loi px-2 py-1">Lỗi</span>
+                <% } %>
+              </td>
+              <td><%= new Date(item.ngayNhap || item.createdAt).toLocaleDateString('vi-VN') %></td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <% if (currentUser && ['Quản lý', 'Thủ kho', 'Kỹ thuật'].includes(currentUser.vaiTro)) { %>
+                    <a href="/may-imei/<%= item.imei %>/chinh-sua" class="btn btn-outline-primary" title="Chỉnh sửa trạng thái">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  <% } %>
+                  <% if (currentUser && currentUser.vaiTro === 'Quản lý') { %>
+                    <form action="/may-imei/<%= item.imei %>/xoa" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa IMEI này?')">
+                      <button type="submit" class="btn btn-outline-danger" title="Xóa" <%= item.trangThai === 'Da ban' ? 'disabled' : '' %>>
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">Không tìm thấy máy IMEI nào</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

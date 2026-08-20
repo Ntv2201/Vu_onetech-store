@@ -1,0 +1,90 @@
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="fw-bold mb-0"><%= isEdit ? 'Chỉnh sửa máy IMEI' : 'Nhập máy IMEI mới vào kho' %></h4>
+      <a href="/may-imei" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại
+      </a>
+    </div>
+
+    <div class="card-custom p-4">
+      <form action="<%= isEdit ? '/may-imei/' + mayImei.imei + '/chinh-sua' : '/may-imei/them-moi' %>" method="POST">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Model Sản phẩm <span class="text-danger">*</span></label>
+            <select name="sanPham" class="form-select" required>
+              <option value="">-- Chọn model sản phẩm --</option>
+              <% sanPhams.forEach(sp => { %>
+                <option value="<%= sp._id %>" <%= (mayImei.sanPham && (mayImei.sanPham._id || mayImei.sanPham).toString() === sp._id.toString()) ? 'selected' : '' %>>
+                  <%= sp.tenMay %> (<%= sp.hang %>) - Niêm yết: <%= sp.giaBan ? sp.giaBan.toLocaleString('vi-VN') + ' đ' : '' %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <% if (isEdit) { %>
+            <div class="col-12">
+              <label class="form-label">Số IMEI / Serial</label>
+              <input type="text" class="form-control font-monospace fw-bold bg-light" value="<%= mayImei.imei %>" readonly>
+            </div>
+          <% } else { %>
+            <div class="col-12">
+              <ul class="nav nav-tabs mb-3" id="imeiTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="single-tab" data-bs-toggle="tab" data-bs-target="#single-pane" type="button" role="tab">Nhập 1 máy</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="bulk-tab" data-bs-toggle="tab" data-bs-target="#bulk-pane" type="button" role="tab">Nhập hàng loạt (Paste danh sách)</button>
+                </li>
+              </ul>
+
+              <div class="tab-content" id="imeiTabContent">
+                <div class="tab-pane fade show active" id="single-pane" role="tabpanel">
+                  <label class="form-label">Số IMEI / Serial (15 số) <span class="text-danger">*</span></label>
+                  <input type="text" name="singleImei" class="form-control font-monospace" placeholder="VD: 356789012345678">
+                </div>
+                <div class="tab-pane fade" id="bulk-pane" role="tabpanel">
+                  <label class="form-label">Danh sách IMEI (Mỗi dòng 1 số IMEI)</label>
+                  <textarea name="imeiList" class="form-control font-monospace" rows="4" placeholder="356789012345678&#10;356789012345679&#10;356789012345680"></textarea>
+                  <div class="form-text">Có thể phân cách bằng dấu xuống dòng, dấu phẩy hoặc chấm phẩy.</div>
+                </div>
+              </div>
+            </div>
+          <% } %>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Giá nhập gốc (VNĐ) <span class="text-danger">*</span></label>
+            <input type="number" name="giaNhap" class="form-control" placeholder="VD: 25000000" value="<%= mayImei.giaNhap || '' %>" required min="0">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Trạng thái máy <span class="text-danger">*</span></label>
+            <select name="trangThai" class="form-select" required>
+              <option value="Con hang" <%= mayImei.trangThai === 'Con hang' ? 'selected' : '' %>>Còn hàng (Trong kho)</option>
+              <option value="Da ban" <%= mayImei.trangThai === 'Da ban' ? 'selected' : '' %>>Đã bán</option>
+              <option value="Bao hanh" <%= mayImei.trangThai === 'Bao hanh' ? 'selected' : '' %>>Bảo hành</option>
+              <option value="Loi" <%= mayImei.trangThai === 'Loi' ? 'selected' : '' %>>Lỗi / Đổi trả</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Màu sắc</label>
+            <input type="text" name="mauSac" class="form-control" placeholder="Titan Tự Nhiên, Đen, Xanh..." value="<%= mayImei.mauSac || '' %>">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Dung lượng bộ nhớ</label>
+            <input type="text" name="dungLuong" class="form-control" placeholder="128GB, 256GB, 512GB..." value="<%= mayImei.dungLuong || '' %>">
+          </div>
+
+          <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top">
+            <a href="/may-imei" class="btn btn-light">Hủy bỏ</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check2-circle me-1"></i> <%= isEdit ? 'Cập nhật IMEI' : 'Xác nhận Nhập kho' %>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,61 @@
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="fw-bold mb-0"><%= isEdit ? 'Chỉnh sửa Sản phẩm' : 'Thêm Sản phẩm mới' %></h4>
+      <a href="/san-pham" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại
+      </a>
+    </div>
+
+    <div class="card-custom p-4">
+      <form action="<%= isEdit ? '/san-pham/' + sanPham._id + '/chinh-sua' : '/san-pham/them-moi' %>" method="POST">
+        <div class="row g-3">
+          <div class="col-12 col-md-8">
+            <label class="form-label">Tên sản phẩm / Model máy <span class="text-danger">*</span></label>
+            <input type="text" name="tenMay" class="form-control" placeholder="VD: iPhone 15 Pro Max 256GB" value="<%= sanPham.tenMay || '' %>" required>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Danh mục <span class="text-danger">*</span></label>
+            <select name="danhMuc" class="form-select" required>
+              <option value="">-- Chọn danh mục --</option>
+              <% danhMucs.forEach(dm => { %>
+                <option value="<%= dm._id %>" <%= (sanPham.danhMuc && (sanPham.danhMuc._id || sanPham.danhMuc).toString() === dm._id.toString()) ? 'selected' : '' %>>
+                  <%= dm.tenDanhMuc %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Hãng sản xuất</label>
+            <input type="text" name="hang" class="form-control" placeholder="Apple, Samsung, Xiaomi..." value="<%= sanPham.hang || '' %>">
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Giá bán niêm yết (VNĐ) <span class="text-danger">*</span></label>
+            <input type="number" name="giaBan" class="form-control" placeholder="VD: 29990000" value="<%= sanPham.giaBan || '' %>" required min="0">
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Số tháng bảo hành</label>
+            <input type="number" name="soThangBH" class="form-control" placeholder="12" value="<%= sanPham.soThangBH || 12 %>" min="0">
+            <div class="form-text">Dùng để tính hạn bảo hành tự động khi bán.</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Mô tả sản phẩm</label>
+            <textarea name="moTa" class="form-control" rows="3" placeholder="Thông số kỹ thuật, tình trạng máy..."><%= sanPham.moTa || '' %></textarea>
+          </div>
+
+          <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top">
+            <a href="/san-pham" class="btn btn-light">Hủy bỏ</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check2-circle me-1"></i> <%= isEdit ? 'Cập nhật Sản phẩm' : 'Lưu Sản phẩm' %>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
