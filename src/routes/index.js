@@ -11,9 +11,9 @@ const nhanVienRoutes = require('./nhanVienRoutes');
 const danhMucRoutes = require('./danhMucRoutes');
 const phuKienRoutes = require('./phuKienRoutes');
 
-// Mount routes
-router.use('/', authRoutes);
-router.use('/', dashboardRoutes);
+// Mount toàn bộ REST API endpoints
+router.use('/auth', authRoutes);
+router.use('/dashboard', dashboardRoutes);
 router.use('/san-pham', sanPhamRoutes);
 router.use('/may-imei', mayImeiRoutes);
 router.use('/khach-hang', khachHangRoutes);

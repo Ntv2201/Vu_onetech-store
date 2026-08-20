@@ -6,8 +6,9 @@ const { requireAuth, requireRole } = require('../middlewares/auth');
 router.use(requireAuth);
 
 router.get('/', phuKienController.index);
-router.post('/them-moi', requireRole('Quản lý', 'Thủ kho'), phuKienController.postCreate);
-router.post('/:id/chinh-sua', requireRole('Quản lý', 'Thủ kho'), phuKienController.postEdit);
-router.post('/:id/xoa', requireRole('Quản lý'), phuKienController.delete);
+router.get('/:id', phuKienController.getDetail);
+router.post('/', requireRole('Quản lý', 'Thủ kho'), phuKienController.postCreate);
+router.put('/:id', requireRole('Quản lý', 'Thủ kho'), phuKienController.postEdit);
+router.delete('/:id', requireRole('Quản lý'), phuKienController.delete);
 
 module.exports = router;

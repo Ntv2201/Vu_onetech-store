@@ -1,7 +1,7 @@
 const { SanPham, DanhMuc, MayImei } = require('../models');
 
 const sanPhamController = {
-  // GET /san-pham
+  // GET /api/san-pham
   index: async (req, res) => {
     try {
       const { search, danhMucId, hang } = req.query;
@@ -38,47 +38,61 @@ const sanPhamController = {
         })
       );
 
-      res.render('sanpham/index', {
-        title: 'Quản lý Sản phẩm - One Tech Store',
-        sanPhams: sanPhamWithCounts,
+      return res.status(200).json({
+        success: true,
+        data: sanPhamWithCounts,
         danhMucs,
-        allHangs: allHangs.filter(Boolean),
-        filters: { search, danhMucId, hang }
+        allHangs: allHangs.filter(Boolean)
       });
     } catch (error) {
       console.error('Lỗi lấy danh sách sản phẩm:', error);
-      req.flash('error_msg', 'Không thể tải danh sách sản phẩm');
-      res.redirect('/dashboard');
+      return res.status(500).json({
+        success: false,
+        message: 'Không thể tải danh sách sản phẩm: ' + error.message
+      });
     }
   },
 
-  // GET /san-pham/them-moi
-  getCreate: async (req, res) => {
+  // GET /api/san-pham/:id
+  getDetail: async (req, res) => {
     try {
-      const danhMucs = await DanhMuc.find().sort({ tenDanhMuc: 1 });
-      res.render('sanpham/form', {
-        title: 'Thêm Sản phẩm mới',
-        sanPham: {},
-        danhMucs,
-        isEdit: false
+      const sanPham = await SanPham.findById(req.params.id).populate('danhMuc');
+      if (!sanPham) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy sản phẩm'
+        });
+      }
+
+      const imeis = await MayImei.find({ sanPham: sanPham._id }).sort({ createdAt: -1 });
+
+      return res.status(200).json({
+        success: true,
+        sanPham,
+        imeis
       });
     } catch (error) {
-      req.flash('error_msg', 'Không thể tải biểu mẫu');
-      res.redirect('/san-pham');
+      console.error('Lỗi xem chi tiết sản phẩm:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi xem chi tiết sản phẩm: ' + error.message
+      });
     }
   },
 
-  // POST /san-pham/them-moi
+  // POST /api/san-pham
   postCreate: async (req, res) => {
     try {
       const { tenMay, danhMuc, hang, giaBan, soThangBH, moTa, hinhAnh } = req.body;
 
       if (!tenMay || !danhMuc || !giaBan) {
-        req.flash('error_msg', 'Vui lòng điền đầy đủ Tên máy, Danh mục và Giá bán');
-        return res.redirect('/san-pham/them-moi');
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng điền đầy đủ Tên máy, Danh mục và Giá bán'
+        });
       }
 
-      await SanPham.create({
+      const newSP = await SanPham.create({
         tenMay: tenMay.trim(),
         danhMuc,
         hang: hang ? hang.trim() : '',
@@ -88,100 +102,89 @@ const sanPhamController = {
         hinhAnh: hinhAnh ? hinhAnh.trim() : ''
       });
 
-      req.flash('success_msg', `Đã thêm sản phẩm "${tenMay}" thành công`);
-      res.redirect('/san-pham');
-    } catch (error) {
-      console.error('Lỗi tạo sản phẩm:', error);
-      req.flash('error_msg', 'Lỗi khi thêm sản phẩm: ' + error.message);
-      res.redirect('/san-pham/them-moi');
-    }
-  },
-
-  // GET /san-pham/:id/chinh-sua
-  getEdit: async (req, res) => {
-    try {
-      const [sanPham, danhMucs] = await Promise.all([
-        SanPham.findById(req.params.id),
-        DanhMuc.find().sort({ tenDanhMuc: 1 })
-      ]);
-
-      if (!sanPham) {
-        req.flash('error_msg', 'Không tìm thấy sản phẩm');
-        return res.redirect('/san-pham');
-      }
-
-      res.render('sanpham/form', {
-        title: `Chỉnh sửa - ${sanPham.tenMay}`,
-        sanPham,
-        danhMucs,
-        isEdit: true
+      return res.status(201).json({
+        success: true,
+        message: `Đã thêm sản phẩm "${tenMay}" thành công`,
+        data: newSP
       });
     } catch (error) {
-      req.flash('error_msg', 'Lỗi khi tải thông tin sản phẩm');
-      res.redirect('/san-pham');
+      console.error('Lỗi tạo sản phẩm:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi thêm sản phẩm: ' + error.message
+      });
     }
   },
 
-  // POST /san-pham/:id/chinh-sua
+  // PUT /api/san-pham/:id
   postEdit: async (req, res) => {
     try {
       const { tenMay, danhMuc, hang, giaBan, soThangBH, moTa, hinhAnh } = req.body;
 
-      await SanPham.findByIdAndUpdate(req.params.id, {
-        tenMay: tenMay.trim(),
-        danhMuc,
-        hang: hang ? hang.trim() : '',
-        giaBan: Number(giaBan),
-        soThangBH: soThangBH ? Number(soThangBH) : 12,
-        moTa: moTa ? moTa.trim() : '',
-        hinhAnh: hinhAnh ? hinhAnh.trim() : ''
-      });
+      const updated = await SanPham.findByIdAndUpdate(
+        req.params.id,
+        {
+          tenMay: tenMay.trim(),
+          danhMuc,
+          hang: hang ? hang.trim() : '',
+          giaBan: Number(giaBan),
+          soThangBH: soThangBH ? Number(soThangBH) : 12,
+          moTa: moTa ? moTa.trim() : '',
+          hinhAnh: hinhAnh ? hinhAnh.trim() : ''
+        },
+        { new: true }
+      );
 
-      req.flash('success_msg', 'Cập nhật sản phẩm thành công');
-      res.redirect('/san-pham');
+      if (!updated) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy sản phẩm để cập nhật'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Cập nhật sản phẩm thành công',
+        data: updated
+      });
     } catch (error) {
-      req.flash('error_msg', 'Lỗi khi cập nhật sản phẩm');
-      res.redirect(`/san-pham/${req.params.id}/chinh-sua`);
+      console.error('Lỗi cập nhật sản phẩm:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi cập nhật sản phẩm: ' + error.message
+      });
     }
   },
 
-  // POST /san-pham/:id/xoa
+  // DELETE /api/san-pham/:id
   delete: async (req, res) => {
     try {
       const countImei = await MayImei.countDocuments({ sanPham: req.params.id });
       if (countImei > 0) {
-        req.flash('error_msg', `Không thể xóa: Sản phẩm đang có ${countImei} bản ghi IMEI trong hệ thống`);
-        return res.redirect('/san-pham');
+        return res.status(400).json({
+          success: false,
+          message: `Không thể xóa: Sản phẩm đang có ${countImei} bản ghi IMEI trong hệ thống`
+        });
       }
 
-      await SanPham.findByIdAndDelete(req.params.id);
-      req.flash('success_msg', 'Đã xóa sản phẩm thành công');
-      res.redirect('/san-pham');
-    } catch (error) {
-      req.flash('error_msg', 'Lỗi khi xóa sản phẩm');
-      res.redirect('/san-pham');
-    }
-  },
-
-  // GET /san-pham/:id/chi-tiet
-  getDetail: async (req, res) => {
-    try {
-      const sanPham = await SanPham.findById(req.params.id).populate('danhMuc');
-      if (!sanPham) {
-        req.flash('error_msg', 'Không tìm thấy sản phẩm');
-        return res.redirect('/san-pham');
+      const deleted = await SanPham.findByIdAndDelete(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy sản phẩm để xóa'
+        });
       }
 
-      const imeis = await MayImei.find({ sanPham: sanPham._id }).sort({ createdAt: -1 });
-
-      res.render('sanpham/detail', {
-        title: `Chi tiết - ${sanPham.tenMay}`,
-        sanPham,
-        imeis
+      return res.status(200).json({
+        success: true,
+        message: 'Đã xóa sản phẩm thành công'
       });
     } catch (error) {
-      req.flash('error_msg', 'Lỗi khi xem chi tiết sản phẩm');
-      res.redirect('/san-pham');
+      console.error('Lỗi xóa sản phẩm:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi xóa sản phẩm: ' + error.message
+      });
     }
   }
 };

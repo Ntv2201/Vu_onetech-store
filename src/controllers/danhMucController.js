@@ -1,11 +1,11 @@
 const { DanhMuc, SanPham, PhuKien } = require('../models');
 
 const danhMucController = {
-  // GET /danh-muc
+  // GET /api/danh-muc
   index: async (req, res) => {
     try {
       const danhMucs = await DanhMuc.find().sort({ tenDanhMuc: 1 });
-      
+
       const danhMucWithCounts = await Promise.all(
         danhMucs.map(async (dm) => {
           const countSP = await SanPham.countDocuments({ danhMuc: dm._id });
@@ -18,63 +18,113 @@ const danhMucController = {
         })
       );
 
-      res.render('danhmuc/index', {
-        title: 'Quản lý Danh mục - One Tech Store',
-        danhMucs: danhMucWithCounts
+      return res.status(200).json({
+        success: true,
+        data: danhMucWithCounts
       });
     } catch (error) {
       console.error('Lỗi lấy danh mục:', error);
-      req.flash('error_msg', 'Không thể tải danh sách danh mục');
-      res.redirect('/dashboard');
+      return res.status(500).json({
+        success: false,
+        message: 'Không thể tải danh sách danh mục: ' + error.message
+      });
     }
   },
 
-  // POST /danh-muc/them-moi
+  // POST /api/danh-muc
   postCreate: async (req, res) => {
     try {
       const { tenDanhMuc } = req.body;
       if (!tenDanhMuc || !tenDanhMuc.trim()) {
-        req.flash('error_msg', 'Tên danh mục không được để trống');
-        return res.redirect('/danh-muc');
+        return res.status(400).json({
+          success: false,
+          message: 'Tên danh mục không được để trống'
+        });
       }
 
-      await DanhMuc.create({ tenDanhMuc: tenDanhMuc.trim() });
-      req.flash('success_msg', `Đã thêm danh mục "${tenDanhMuc}"`);
-      res.redirect('/danh-muc');
+      const newDM = await DanhMuc.create({ tenDanhMuc: tenDanhMuc.trim() });
+      return res.status(201).json({
+        success: true,
+        message: `Đã thêm danh mục "${tenDanhMuc}" thành công`,
+        data: newDM
+      });
     } catch (error) {
-      req.flash('error_msg', 'Lỗi khi thêm danh mục: ' + error.message);
-      res.redirect('/danh-muc');
+      console.error('Lỗi thêm danh mục:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi thêm danh mục: ' + error.message
+      });
     }
   },
 
-  // POST /danh-muc/:id/chinh-sua
+  // PUT /api/danh-muc/:id
   postEdit: async (req, res) => {
     try {
       const { tenDanhMuc } = req.body;
-      await DanhMuc.findByIdAndUpdate(req.params.id, { tenDanhMuc: tenDanhMuc.trim() });
-      req.flash('success_msg', 'Cập nhật danh mục thành công');
-      res.redirect('/danh-muc');
+      if (!tenDanhMuc || !tenDanhMuc.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Tên danh mục không được để trống'
+        });
+      }
+
+      const updated = await DanhMuc.findByIdAndUpdate(
+        req.params.id,
+        { tenDanhMuc: tenDanhMuc.trim() },
+        { new: true }
+      );
+
+      if (!updated) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy danh mục để cập nhật'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Cập nhật danh mục thành công',
+        data: updated
+      });
     } catch (error) {
-      req.flash('error_msg', 'Lỗi khi cập nhật danh mục');
-      res.redirect('/danh-muc');
+      console.error('Lỗi cập nhật danh mục:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi cập nhật danh mục: ' + error.message
+      });
     }
   },
 
-  // POST /danh-muc/:id/xoa
+  // DELETE /api/danh-muc/:id
   delete: async (req, res) => {
     try {
       const countSP = await SanPham.countDocuments({ danhMuc: req.params.id });
-      if (countSP > 0) {
-        req.flash('error_msg', `Không thể xóa danh mục đang chứa ${countSP} sản phẩm`);
-        return res.redirect('/danh-muc');
+      const countPK = await PhuKien.countDocuments({ danhMuc: req.params.id });
+      if (countSP > 0 || countPK > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Không thể xóa: Danh mục đang chứa ${countSP} sản phẩm và ${countPK} phụ kiện`
+        });
       }
 
-      await DanhMuc.findByIdAndDelete(req.params.id);
-      req.flash('success_msg', 'Đã xóa danh mục thành công');
-      res.redirect('/danh-muc');
+      const deleted = await DanhMuc.findByIdAndDelete(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy danh mục để xóa'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Đã xóa danh mục thành công'
+      });
     } catch (error) {
-      req.flash('error_msg', 'Lỗi khi xóa danh mục');
-      res.redirect('/danh-muc');
+      console.error('Lỗi xóa danh mục:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi xóa danh mục: ' + error.message
+      });
     }
   }
 };

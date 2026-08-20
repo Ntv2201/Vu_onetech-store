@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thông tin Sản phẩm - One Tech Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Sidebar Inject Container -->
+  <div id="appSidebar"></div>
+
+  <!-- Main Content Wrapper -->
+  <div class="app-main">
+    <!-- Navbar Inject Container -->
+    <div id="appNavbar"></div>
+
+    <!-- Page Body -->
+    <main class="page-container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0" id="formTitle">Thêm Sản phẩm mới</h4>
+            <a href="/san-pham/index.html" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-arrow-left me-1"></i> Quay lại
+            </a>
+          </div>
+
+          <div class="card-custom p-4">
+            <form id="sanPhamForm">
+              <div class="row g-3">
+                <div class="col-12 col-md-8">
+                  <label class="form-label">Tên sản phẩm / Model máy <span class="text-danger">*</span></label>
+                  <input type="text" id="inputTenMay" class="form-control" placeholder="VD: iPhone 15 Pro Max 256GB" required>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Danh mục <span class="text-danger">*</span></label>
+                  <select id="selectDanhMuc" class="form-select" required>
+                    <option value="">-- Chọn danh mục --</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Hãng sản xuất</label>
+                  <input type="text" id="inputHang" class="form-control" placeholder="Apple, Samsung, Xiaomi...">
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Giá bán niêm yết (VNĐ) <span class="text-danger">*</span></label>
+                  <input type="number" id="inputGiaBan" class="form-control" placeholder="VD: 29990000" required min="0">
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Số tháng bảo hành</label>
+                  <input type="number" id="inputSoThangBH" class="form-control" placeholder="12" value="12" min="0">
+                  <div class="form-text">Dùng để tính hạn bảo hành tự động khi bán.</div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Mô tả sản phẩm</label>
+                  <textarea id="inputMoTa" class="form-control" rows="3" placeholder="Thông số kỹ thuật, tình trạng máy..."></textarea>
+                </div>
+
+                <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top">
+                  <a href="/san-pham/index.html" class="btn btn-light">Hủy bỏ</a>
+                  <button type="submit" id="btnSubmitForm" class="btn btn-primary">
+                    <i class="bi bi-check2-circle me-1"></i> Lưu Sản phẩm
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script src="/js/sanpham.js"></script>
+</body>
+</html>

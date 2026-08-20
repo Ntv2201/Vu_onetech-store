@@ -1,7 +1,7 @@
 const { MayImei, SanPham } = require('../models');
 
 const mayImeiController = {
-  // GET /may-imei
+  // GET /api/may-imei
   index: async (req, res) => {
     try {
       const { search, sanPhamId, trangThai } = req.query;
@@ -25,44 +25,59 @@ const mayImeiController = {
         SanPham.find().sort({ tenMay: 1 })
       ]);
 
-      res.render('mayimei/index', {
-        title: 'Quản lý IMEI / Serial - One Tech Store',
-        imeis,
-        sanPhams,
-        filters: { search, sanPhamId, trangThai }
+      return res.status(200).json({
+        success: true,
+        data: imeis,
+        sanPhams
       });
     } catch (error) {
       console.error('Lỗi lấy danh sách IMEI:', error);
-      req.flash('error_msg', 'Không thể tải danh sách máy IMEI');
-      res.redirect('/dashboard');
+      return res.status(500).json({
+        success: false,
+        message: 'Không thể tải danh sách máy IMEI: ' + error.message
+      });
     }
   },
 
-  // GET /may-imei/them-moi
-  getCreate: async (req, res) => {
+  // GET /api/may-imei/:imei
+  getDetail: async (req, res) => {
     try {
-      const { sanPhamId } = req.query;
-      const sanPhams = await SanPham.find().sort({ tenMay: 1 });
-      res.render('mayimei/form', {
-        title: 'Nhập máy IMEI mới',
-        mayImei: { sanPham: sanPhamId || '' },
-        sanPhams,
-        isEdit: false
+      const [mayImei, sanPhams] = await Promise.all([
+        MayImei.findOne({ imei: req.params.imei }).populate('sanPham'),
+        SanPham.find().sort({ tenMay: 1 })
+      ]);
+
+      if (!mayImei) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy máy IMEI'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        mayImei,
+        sanPhams
       });
     } catch (error) {
-      req.flash('error_msg', 'Không thể tải biểu mẫu nhập IMEI');
-      res.redirect('/may-imei');
+      console.error('Lỗi lấy chi tiết IMEI:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi tải thông tin IMEI: ' + error.message
+      });
     }
   },
 
-  // POST /may-imei/them-moi (Hỗ trợ nhập 1 máy hoặc nhập hàng loạt danh sách IMEI)
+  // POST /api/may-imei (Hỗ trợ nhập 1 máy hoặc nhập hàng loạt danh sách IMEI)
   postCreate: async (req, res) => {
     try {
       const { sanPham, giaNhap, trangThai, mauSac, dungLuong, imeiList, singleImei } = req.body;
 
-      if (!sanPham || !giaNhap) {
-        req.flash('error_msg', 'Vui lòng chọn Sản phẩm và nhập Giá nhập');
-        return res.redirect('/may-imei/them-moi');
+      if (!sanPham || giaNhap === undefined || giaNhap === '') {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng chọn Sản phẩm và nhập Giá nhập'
+        });
       }
 
       // Xử lý danh sách IMEI (nhập lẻ hoặc paste nhiều dòng)
@@ -77,16 +92,20 @@ const mayImeiController = {
       }
 
       if (rawImeis.length === 0) {
-        req.flash('error_msg', 'Vui lòng nhập ít nhất 1 số IMEI');
-        return res.redirect('/may-imei/them-moi');
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng nhập ít nhất 1 số IMEI'
+        });
       }
 
       // Kiểm tra trùng lặp IMEI
       const existing = await MayImei.find({ imei: { $in: rawImeis } });
       if (existing.length > 0) {
         const dupList = existing.map(e => e.imei).join(', ');
-        req.flash('error_msg', `Các IMEI sau đã tồn tại trong hệ thống: ${dupList}`);
-        return res.redirect('/may-imei/them-moi');
+        return res.status(400).json({
+          success: false,
+          message: `Các IMEI sau đã tồn tại trong hệ thống: ${dupList}`
+        });
       }
 
       const docs = rawImeis.map(imeiVal => ({
@@ -101,46 +120,26 @@ const mayImeiController = {
 
       await MayImei.insertMany(docs);
 
-      req.flash('success_msg', `Đã nhập thành công ${docs.length} máy IMEI vào kho`);
-      res.redirect('/may-imei');
-    } catch (error) {
-      console.error('Lỗi nhập IMEI:', error);
-      req.flash('error_msg', 'Lỗi khi nhập IMEI: ' + error.message);
-      res.redirect('/may-imei/them-moi');
-    }
-  },
-
-  // GET /may-imei/:imei/chinh-sua
-  getEdit: async (req, res) => {
-    try {
-      const [mayImei, sanPhams] = await Promise.all([
-        MayImei.findOne({ imei: req.params.imei }).populate('sanPham'),
-        SanPham.find().sort({ tenMay: 1 })
-      ]);
-
-      if (!mayImei) {
-        req.flash('error_msg', 'Không tìm thấy máy IMEI');
-        return res.redirect('/may-imei');
-      }
-
-      res.render('mayimei/form', {
-        title: `Chỉnh sửa IMEI: ${mayImei.imei}`,
-        mayImei,
-        sanPhams,
-        isEdit: true
+      return res.status(201).json({
+        success: true,
+        message: `Đã nhập thành công ${docs.length} máy IMEI vào kho`,
+        count: docs.length
       });
     } catch (error) {
-      req.flash('error_msg', 'Lỗi khi tải thông tin IMEI');
-      res.redirect('/may-imei');
+      console.error('Lỗi nhập IMEI:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi nhập IMEI: ' + error.message
+      });
     }
   },
 
-  // POST /may-imei/:imei/chinh-sua
+  // PUT /api/may-imei/:imei
   postEdit: async (req, res) => {
     try {
       const { sanPham, giaNhap, trangThai, mauSac, dungLuong } = req.body;
 
-      await MayImei.findOneAndUpdate(
+      const updated = await MayImei.findOneAndUpdate(
         { imei: req.params.imei },
         {
           sanPham,
@@ -148,37 +147,60 @@ const mayImeiController = {
           trangThai,
           mauSac: mauSac ? mauSac.trim() : '',
           dungLuong: dungLuong ? dungLuong.trim() : ''
-        }
+        },
+        { new: true }
       );
 
-      req.flash('success_msg', `Cập nhật thông tin IMEI ${req.params.imei} thành công`);
-      res.redirect('/may-imei');
+      if (!updated) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy IMEI để cập nhật'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Cập nhật thông tin IMEI ${req.params.imei} thành công`,
+        data: updated
+      });
     } catch (error) {
-      req.flash('error_msg', 'Lỗi khi cập nhật IMEI');
-      res.redirect(`/may-imei/${req.params.imei}/chinh-sua`);
+      console.error('Lỗi cập nhật IMEI:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi cập nhật IMEI: ' + error.message
+      });
     }
   },
 
-  // POST /may-imei/:imei/xoa
+  // DELETE /api/may-imei/:imei
   delete: async (req, res) => {
     try {
       const may = await MayImei.findOne({ imei: req.params.imei });
       if (!may) {
-        req.flash('error_msg', 'Không tìm thấy IMEI');
-        return res.redirect('/may-imei');
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy IMEI'
+        });
       }
 
       if (may.trangThai === 'Da ban') {
-        req.flash('error_msg', 'Không thể xóa máy đã bán. Vui lòng kiểm tra lại lịch sử hóa đơn.');
-        return res.redirect('/may-imei');
+        return res.status(400).json({
+          success: false,
+          message: 'Không thể xóa máy đã bán. Vui lòng kiểm tra lại lịch sử hóa đơn.'
+        });
       }
 
       await MayImei.findOneAndDelete({ imei: req.params.imei });
-      req.flash('success_msg', `Đã xóa IMEI ${req.params.imei} thành công`);
-      res.redirect('/may-imei');
+      return res.status(200).json({
+        success: true,
+        message: `Đã xóa IMEI ${req.params.imei} thành công`
+      });
     } catch (error) {
-      req.flash('error_msg', 'Lỗi khi xóa IMEI');
-      res.redirect('/may-imei');
+      console.error('Lỗi xóa IMEI:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi xóa IMEI: ' + error.message
+      });
     }
   }
 };

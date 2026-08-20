@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Phụ kiện - One Tech Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Sidebar Inject Container -->
+  <div id="appSidebar"></div>
+
+  <!-- Main Content Wrapper -->
+  <div class="app-main">
+    <!-- Navbar Inject Container -->
+    <div id="appNavbar"></div>
+
+    <!-- Page Body -->
+    <main class="page-container">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+          <h4 class="fw-bold mb-1">Quản lý Phụ kiện</h4>
+          <p class="text-muted small mb-0">Quản lý các sản phẩm phụ kiện (sạc, cáp, tai nghe, ốp lưng...) theo số lượng tồn</p>
+        </div>
+        <div id="btnCreateContainer">
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPhuKienModal">
+            <i class="bi bi-plus-lg me-1"></i> Thêm Phụ kiện
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters Bar -->
+      <div class="card-custom p-3 mb-4">
+        <form id="filterForm" class="row g-2 align-items-center">
+          <div class="col-12 col-md-5">
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+              <input type="text" id="filterSearch" class="form-control" placeholder="Tìm theo tên phụ kiện...">
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-4">
+            <select id="filterDanhMuc" class="form-select">
+              <option value="">-- Tất cả danh mục --</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Lọc</button>
+            <button type="button" id="btnResetFilter" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Table of PhuKien -->
+      <div class="card-custom">
+        <div class="table-responsive">
+          <table class="table table-custom table-hover">
+            <thead>
+              <tr>
+                <th>Tên phụ kiện</th>
+                <th>Danh mục</th>
+                <th>Giá bán</th>
+                <th>Số lượng tồn kho</th>
+                <th class="text-end">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="tablePhuKienBody">
+              <tr>
+                <td colspan="5" class="text-center py-4">
+                  <div class="spinner-border spinner-border-sm text-primary"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal Thêm Phụ kiện -->
+<div class="modal fade" id="addPhuKienModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formAddPhuKien">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Thêm Phụ kiện Mới</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Tên phụ kiện <span class="text-danger">*</span></label>
+            <input type="text" id="inputAddTenPK" class="form-control" placeholder="VD: Củ sạc Apple 20W Type-C" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Danh mục <span class="text-danger">*</span></label>
+            <select id="selectAddDanhMuc" class="form-select" required>
+              <option value="">-- Chọn danh mục --</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Giá bán (VNĐ) <span class="text-danger">*</span></label>
+            <input type="number" id="inputAddGiaBan" class="form-control" placeholder="VD: 550000" required min="0">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Số lượng tồn ban đầu</label>
+            <input type="number" id="inputAddSoLuongTon" class="form-control" placeholder="10" value="0" min="0">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Thêm phụ kiện</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Sửa Phụ kiện -->
+<div class="modal fade" id="editPhuKienModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content text-start">
+      <form id="formEditPhuKien">
+        <input type="hidden" id="inputEditPKId">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Chỉnh sửa Phụ kiện</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Tên phụ kiện <span class="text-danger">*</span></label>
+            <input type="text" id="inputEditTenPK" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Danh mục <span class="text-danger">*</span></label>
+            <select id="selectEditDanhMuc" class="form-select" required>
+              <option value="">-- Chọn danh mục --</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Giá bán (VNĐ) <span class="text-danger">*</span></label>
+            <input type="number" id="inputEditGiaBan" class="form-control" required min="0">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Số lượng tồn kho</label>
+            <input type="number" id="inputEditSoLuongTon" class="form-control" min="0">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script src="/js/phukien.js"></script>
+</body>
+</html>

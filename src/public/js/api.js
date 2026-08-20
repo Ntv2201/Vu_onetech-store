@@ -1,0 +1,160 @@
+/**
+ * Module hỗ trợ gọi RESTful API và các tiện ích Client-Side
+ */
+
+const API_BASE = '/api';
+
+const api = {
+  async request(endpoint, options = {}) {
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...(options.headers || {})
+    };
+
+    const config = {
+      ...options,
+      headers
+    };
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 401) {
+        // Chưa đăng nhập hoặc hết phiên -> Chuyển về trang đăng nhập
+        if (!window.location.pathname.includes('login.html')) {
+          sessionStorage.setItem('returnTo', window.location.pathname + window.location.search);
+          window.location.href = '/login.html';
+        }
+        return { success: false, message: data.message || 'Vui lòng đăng nhập' };
+      }
+
+      if (!response.ok) {
+        return {
+          success: false,
+          status: response.status,
+          message: data.message || `Lỗi HTTP: ${response.status}`
+        };
+      }
+
+      return data;
+    } catch (error) {
+      console.error('API Request Error:', error);
+      return {
+        success: false,
+        message: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng.'
+      };
+    }
+  },
+
+  get(endpoint, params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const url = query ? `${endpoint}?${query}` : endpoint;
+    return this.request(url, { method: 'GET' });
+  },
+
+  post(endpoint, body = {}) {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+  },
+
+  put(endpoint, body = {}) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(body)
+    });
+  },
+
+  delete(endpoint) {
+    return this.request(endpoint, { method: 'DELETE' });
+  }
+};
+
+/**
+ * Hiển thị Toast thông báo phía trên góc phải màn hình
+ */
+function showToast(message, type = 'success') {
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    document.body.appendChild(container);
+  }
+
+  const toastId = 'toast_' + Date.now();
+  const icon = type === 'success' ? 'bi-check-circle-fill' : (type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill');
+  const bgClass = type === 'success' ? 'bg-success text-white' : (type === 'danger' ? 'bg-danger text-white' : 'bg-primary text-white');
+
+  const toastHtml = `
+    <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 shadow mb-2 show" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body d-flex align-items-center gap-2">
+          <i class="bi ${icon} fs-5"></i>
+          <div>${message}</div>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  `;
+
+  container.insertAdjacentHTML('beforeend', toastHtml);
+
+  setTimeout(() => {
+    const el = document.getElementById(toastId);
+    if (el) {
+      el.remove();
+    }
+  }, 4500);
+}
+
+/**
+ * Định dạng tiền tệ VNĐ
+ */
+function formatCurrency(amount) {
+  if (amount === undefined || amount === null || isNaN(amount)) return '0 đ';
+  return Number(amount).toLocaleString('vi-VN') + ' đ';
+}
+
+/**
+ * Định dạng ngày giờ VN
+ */
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}
+
+/**
+ * Lấy danh sách query parameters từ URL
+ */
+function getQueryParams() {
+  const params = {};
+  const searchParams = new URLSearchParams(window.location.search);
+  for (const [key, value] of searchParams.entries()) {
+    params[key] = value;
+  }
+  return params;
+}
+
+/**
+ * Escape HTML để chống XSS
+ */
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}

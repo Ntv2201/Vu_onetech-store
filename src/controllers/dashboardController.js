@@ -5,23 +5,25 @@ const {
   NhaCungCap,
   NhanVien,
   DanhMuc,
-  HoaDon,
-  PhieuBaoHanh
+  PhuKien
 } = require('../models');
 
 const dashboardController = {
+  // GET /api/dashboard
   index: async (req, res) => {
     try {
-      // Đếm số lượng sản phẩm, IMEI theo trạng thái
       const [
         totalSanPham,
         totalMayImei,
         imeiConHang,
         imeiDaBan,
         imeiBaoHanh,
+        imeiLoi,
         totalKhachHang,
         totalNhaCungCap,
         totalNhanVien,
+        totalDanhMuc,
+        totalPhuKien,
         recentMayImei,
         recentSanPham
       ] = await Promise.all([
@@ -30,44 +32,39 @@ const dashboardController = {
         MayImei.countDocuments({ trangThai: 'Con hang' }),
         MayImei.countDocuments({ trangThai: 'Da ban' }),
         MayImei.countDocuments({ trangThai: 'Bao hanh' }),
+        MayImei.countDocuments({ trangThai: 'Loi' }),
         KhachHang.countDocuments(),
         NhaCungCap.countDocuments(),
         NhanVien.countDocuments(),
+        DanhMuc.countDocuments(),
+        PhuKien.countDocuments(),
         MayImei.find().populate('sanPham').sort({ createdAt: -1 }).limit(6),
         SanPham.find().populate('danhMuc').sort({ createdAt: -1 }).limit(6)
       ]);
 
-      res.render('dashboard/index', {
-        title: 'Tổng quan hệ thống - One Tech Store',
+      return res.status(200).json({
+        success: true,
         stats: {
           totalSanPham,
           totalMayImei,
           imeiConHang,
           imeiDaBan,
           imeiBaoHanh,
+          imeiLoi,
           totalKhachHang,
           totalNhaCungCap,
-          totalNhanVien
+          totalNhanVien,
+          totalDanhMuc,
+          totalPhuKien
         },
         recentMayImei,
         recentSanPham
       });
     } catch (error) {
       console.error('Lỗi dashboard:', error);
-      res.render('dashboard/index', {
-        title: 'Tổng quan hệ thống',
-        stats: {
-          totalSanPham: 0,
-          totalMayImei: 0,
-          imeiConHang: 0,
-          imeiDaBan: 0,
-          imeiBaoHanh: 0,
-          totalKhachHang: 0,
-          totalNhaCungCap: 0,
-          totalNhanVien: 0
-        },
-        recentMayImei: [],
-        recentSanPham: []
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi tải dữ liệu thống kê dashboard: ' + error.message
       });
     }
   }

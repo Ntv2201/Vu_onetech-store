@@ -1,14 +1,14 @@
 # ONE TECH STORE — HỆ THỐNG QUẢN LÝ BÁN HÀNG THEO IMEI
 
-Dự án scaffold hệ thống quản lý bán hàng cho chuỗi cửa hàng điện thoại **One Tech Store**.  
+Dự án hệ thống quản lý bán hàng cho chuỗi cửa hàng điện thoại **One Tech Store**.  
 Đặc thù cốt lõi: **Quản lý hàng hóa theo từng IMEI/Serial vật lý**, không gộp số lượng chung.
 
 ---
 
-## 1. Tech Stack
-- **Backend:** Node.js, Express.js
-- **Database:** MongoDB (sử dụng Mongoose ODM) — mô hình hóa đầy đủ 26 bảng theo thiết kế
-- **Frontend:** HTML5 / EJS Template + Bootstrap 5 + Vanilla JS + Bootstrap Icons
+## 1. Tech Stack & Kiến trúc Hiện đại (Decoupled Architecture)
+- **Backend:** Node.js, Express.js — **RESTful API thuần (trả JSON)**
+- **Database:** MongoDB (sử dụng Mongoose ODM) — mô hình hóa đầy đủ 26 bảng
+- **Frontend:** **100% HTML5 thuần + Vanilla JS (Fetch API) + Bootstrap 5 + Bootstrap Icons** (hoàn toàn tách biệt giao diện, không bị trộn lẫn mã server)
 - **Auth & Phân quyền:** Session + Bcryptjs + Middleware phân quyền theo 6 vai trò (`Quản lý`, `Thủ kho`, `NV bán hàng`, `Thu ngân`, `Kế toán`, `Kỹ thuật`)
 
 ---
@@ -45,7 +45,7 @@ npm run seed
   npm start
   ```
 
-Truy cập hệ thống tại: **`http://localhost:3000`** (hoặc `http://localhost:3000/login`)
+Truy cập hệ thống tại: **`http://localhost:3000`** (hoặc `http://localhost:3000/login.html`)
 
 ---
 
@@ -64,7 +64,7 @@ Truy cập hệ thống tại: **`http://localhost:3000`** (hoặc `http://local
 
 ---
 
-## 4. Cấu trúc Thư mục
+## 4. Cấu trúc Thư mục Chuẩn Hiện đại
 
 ```
 onetech/
@@ -76,7 +76,7 @@ onetech/
 ├── one_tech_store_erd.dbml      # Sơ đồ quan hệ ERD
 ├── README.md                    # Hướng dẫn dự án
 └── src/
-    ├── app.js                   # Cấu hình Express app, middlewares, static & views
+    ├── app.js                   # Cấu hình Express App, REST API & Static Server
     ├── server.js                # Điểm khởi động server & kết nối DB
     ├── config/
     │   └── db.js                # Kết nối MongoDB (Mongoose)
@@ -96,9 +96,9 @@ onetech/
     │   ├── CongNo.js, PhieuThu.js, DonDatHangTruoc.js, HopDongTraGop.js
     │   └── index.js             # Export tập trung 26 models
     ├── middlewares/
-    │   └── auth.js              # requireAuth, requireRole, attachUser
-    ├── controllers/             # Bộ điều khiển CRUD & logic
-    │   ├── authController.js
+    │   └── auth.js              # requireAuth, requireRole (Trả JSON 401/403)
+    ├── controllers/             # Bộ điều khiển RESTful API (Chỉ trả JSON)
+    │   ├── authController.js    # Login, Logout, Me API
     │   ├── dashboardController.js
     │   ├── sanPhamController.js
     │   ├── mayImeiController.js
@@ -107,7 +107,7 @@ onetech/
     │   ├── nhanVienController.js
     │   ├── danhMucController.js
     │   └── phuKienController.js
-    ├── routes/                  # Định tuyến Express
+    ├── routes/                  # Định tuyến REST API (/api/...)
     │   ├── authRoutes.js
     │   ├── dashboardRoutes.js
     │   ├── sanPhamRoutes.js
@@ -118,31 +118,42 @@ onetech/
     │   ├── danhMucRoutes.js
     │   ├── phuKienRoutes.js
     │   └── index.js
-    ├── views/                   # Giao diện EJS + Bootstrap 5
-    │   ├── layouts/main.ejs     # Layout chung với sidebar & navbar
-    │   ├── auth/login.ejs       # Trang đăng nhập
-    │   ├── dashboard/index.ejs  # Bảng điều khiển thống kê
-    │   ├── sanpham/             # CRUD Sản phẩm & xem chi tiết IMEI
-    │   ├── mayimei/             # CRUD IMEI & nhập hàng loạt
-    │   ├── khachhang/           # CRUD Khách hàng
-    │   ├── nhacungcap/          # CRUD Nhà cung cấp
-    │   ├── nhanvien/            # CRUD Nhân viên & phân quyền
-    │   ├── danhmuc/             # Quản lý Danh mục
-    │   ├── phukien/             # Quản lý Phụ kiện
-    │   └── errors/              # Trang lỗi 403, 404, 500
-    ├── public/                  # Tài nguyên tĩnh
-    │   ├── css/style.css        # CSS tùy biến giao diện
-    │   └── js/main.js           # Client JS helpers
-    └── seeds/
-        └── seed.js              # Script khởi tạo dữ liệu mẫu
+    └── public/                  # Giao diện Frontend (100% HTML/CSS/JS thuần)
+        ├── index.html           # Trang Dashboard
+        ├── login.html           # Trang Đăng nhập
+        ├── 404.html             # Trang lỗi 404
+        ├── san-pham/            # Danh sách, form thêm/sửa, chi tiết SP
+        ├── may-imei/            # Danh sách, form nhập lẻ & hàng loạt IMEI
+        ├── khach-hang/          # Danh sách & form khách hàng
+        ├── nha-cung-cap/        # Danh sách & form nhà cung cấp
+        ├── nhan-vien/           # Danh sách & form nhân viên, phân quyền
+        ├── danh-muc/            # Danh sách & modal danh mục
+        ├── phu-kien/            # Danh sách & modal phụ kiện
+        ├── css/
+        │   └── style.css        # CSS tùy biến giao diện
+        └── js/                  # Client JS (Chỉ gọi API & đổ dữ liệu)
+            ├── api.js           # Fetch API helper, toast notifications
+            ├── layout.js        # Dựng sidebar, navbar & phân quyền menu
+            ├── auth.js          # Xử lý đăng nhập
+            ├── dashboard.js     # Thống kê dashboard
+            ├── sanpham.js       # Xử lý sản phẩm
+            ├── mayimei.js       # Xử lý IMEI & nhập hàng loạt
+            ├── khachhang.js     # Xử lý khách hàng
+            ├── nhacungcap.js    # Xử lý nhà cung cấp
+            ├── nhanvien.js      # Xử lý nhân viên
+            ├── danhmuc.js       # Xử lý danh mục
+            └── phukien.js       # Xử lý phụ kiện
 ```
 
 ---
 
-## 5. Hướng dẫn Nhóm phát triển tiếp các Module tiếp theo
+## 5. Hướng dẫn Phát triển Module tiếp theo (POS Bán hàng, Nhập kho, Bảo hành)
 
-Để bổ sung một tính năng mới (ví dụ: *Bán hàng - Hóa đơn*, *Nhập kho*, *Bảo hành*):
+Để bổ sung một tính năng mới:
 1. **Model:** Các model như `HoaDon`, `PhieuNhap`, `PhieuBaoHanh` đã được khai báo sẵn tại `src/models/`.
-2. **Controller:** Tạo mới controller trong `src/controllers/` (tham khảo khuôn mẫu từ `sanPhamController.js` hoặc `mayImeiController.js`).
-3. **Route:** Tạo route trong `src/routes/` và áp dụng `requireRole(...)` tương ứng theo vai trò.
-4. **View:** Tạo thư mục view trong `src/views/` kế thừa layout chung `layouts/main.ejs`.
+2. **Backend Controller & Route:**
+   - Tạo controller trong `src/controllers/` nhận request và trả `res.json({ success: true, data: ... })`.
+   - Tạo route trong `src/routes/` gắn vào `/api/...` kèm `requireRole(...)`.
+3. **Frontend HTML & JS:**
+   - Tạo file `.html` trong `src/public/` với khung layout cơ bản (sử dụng container `#appSidebar` và `#appNavbar`).
+   - Tạo file `.js` trong `src/public/js/` dùng `api.get()` / `api.post()` để lấy và gửi dữ liệu.

@@ -184,12 +184,13 @@ body {
 .stat-icon.warning { background: #fef3c7; color: #f59e0b; }
 .stat-icon.info { background: #cffafe; color: #0891b2; }
 .stat-icon.purple { background: #ede9fe; color: #7c3aed; }
+.stat-icon.danger { background: #fee2e2; color: #ef4444; }
 
 /* Status Badges */
-.badge-imei-conhang { background-color: #d1fae5; color: #065f46; font-weight: 600; }
-.badge-imei-daban { background-color: #fee2e2; color: #991b1b; font-weight: 600; }
-.badge-imei-baohanh { background-color: #fef3c7; color: #92400e; font-weight: 600; }
-.badge-imei-loi { background-color: #f1f5f9; color: #475569; font-weight: 600; }
+.badge-imei-conhang { background-color: #d1fae5; color: #065f46; font-weight: 600; padding: 0.35rem 0.65rem; border-radius: 6px; }
+.badge-imei-daban { background-color: #fee2e2; color: #991b1b; font-weight: 600; padding: 0.35rem 0.65rem; border-radius: 6px; }
+.badge-imei-baohanh { background-color: #fef3c7; color: #92400e; font-weight: 600; padding: 0.35rem 0.65rem; border-radius: 6px; }
+.badge-imei-loi { background-color: #f1f5f9; color: #475569; font-weight: 600; padding: 0.35rem 0.65rem; border-radius: 6px; }
 
 /* Tables */
 .table-custom {
@@ -228,6 +229,23 @@ body {
 .form-control:focus, .form-select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Toast Container */
+#toastContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 99999;
+  min-width: 320px;
+}
+
+/* Loading skeleton */
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
 }
 
 /* Responsive */
