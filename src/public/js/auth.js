@@ -2,9 +2,17 @@
  * Module xử lý đăng nhập phía Client
  */
 
-function fillCreds(u, p) {
-  document.getElementById('inputUsername').value = u;
-  document.getElementById('inputPassword').value = p;
+function fillCreds(u, p, autoSubmit = true) {
+  const inputU = document.getElementById('inputUsername');
+  const inputP = document.getElementById('inputPassword');
+  const loginForm = document.getElementById('loginForm');
+
+  if (inputU) inputU.value = u;
+  if (inputP) inputP.value = p;
+
+  if (autoSubmit && loginForm) {
+    loginForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -31,10 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
       hideError();
 
       const res = await api.post('/auth/login', { tenDangNhap, matKhau });
+      const user = res.user || (res.data && res.data.user) || (res.data && res.data.hoTen ? res.data : null);
 
-      if (res.success) {
-        sessionStorage.setItem('user', JSON.stringify(res.user));
-        const returnTo = sessionStorage.getItem('returnTo') || '/index.html';
+      if (res.success && user) {
+        sessionStorage.setItem('user', JSON.stringify(user));
+        let returnTo = sessionStorage.getItem('returnTo') || '/index.html';
+        if (returnTo.includes('login.html') || returnTo === '/login') {
+          returnTo = '/index.html';
+        }
         sessionStorage.removeItem('returnTo');
         window.location.href = returnTo;
       } else {

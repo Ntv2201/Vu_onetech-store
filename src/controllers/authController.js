@@ -44,7 +44,13 @@ class AuthController extends BaseController {
   // GET /api/auth/me
   getMe(req, res) {
     if (req.session && req.session.user) {
-      return this.sendSuccess(res, { user: req.session.user }, 'Thông tin người dùng hiện tại');
+      return this.sendSuccess(
+        res,
+        { user: req.session.user },
+        'Thông tin người dùng hiện tại',
+        200,
+        { user: req.session.user }
+      );
     }
     return this.sendError(res, 'Chưa đăng nhập', 401);
   }

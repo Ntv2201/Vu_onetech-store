@@ -15,9 +15,10 @@ class BaseController {
     };
 
     if (data !== null && data !== undefined) {
-      // Nếu data đã có cấu trúc riêng (như pagination) hoặc là array/object
-      if (typeof data === 'object' && !Array.isArray(data) && (data.pagination || data.stats || data.sanPhams || data.imeis || data.hoaDons || data.phieuBaoHanhs)) {
+      if (typeof data === 'object' && !Array.isArray(data)) {
+        // Luôn gán trực tiếp các trường cấu trúc lên response root để tương thích cả 2 phong cách truy cập (res.user và res.data.user)
         Object.assign(response, data);
+        response.data = data;
       } else {
         response.data = data;
       }

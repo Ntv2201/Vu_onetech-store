@@ -5,20 +5,23 @@
 let currentUser = null;
 
 async function initLayout() {
-  // Không chạy trên trang đăng nhập
-  if (window.location.pathname.includes('login.html')) {
+  // Không chạy kiểm tra session trên trang đăng nhập
+  const path = window.location.pathname;
+  if (path.includes('login.html') || path === '/login') {
     return;
   }
 
   // 1. Kiểm tra phiên đăng nhập
   const res = await api.get('/auth/me');
-  if (!res.success || !res.user) {
+  const user = res.user || (res.data && res.data.user) || (res.data && res.data.hoTen ? res.data : null);
+
+  if (!res.success || !user) {
     sessionStorage.setItem('returnTo', window.location.pathname + window.location.search);
     window.location.href = '/login.html';
     return;
   }
 
-  currentUser = res.user;
+  currentUser = user;
 
   // 2. Chèn Sidebar & Navbar vào trang
   renderSidebarAndNavbar(currentUser);
@@ -35,7 +38,6 @@ function renderSidebarAndNavbar(user) {
   if (sidebarContainer) {
     const isManager = user.vaiTro === 'Quản lý';
     const isSeller = ['Quản lý', 'NV bán hàng', 'Thu ngân'].includes(user.vaiTro);
-    const isTechOrSeller = ['Quản lý', 'Kỹ thuật', 'NV bán hàng', 'Thủ kho'].includes(user.vaiTro);
 
     sidebarContainer.innerHTML = `
       <aside class="app-sidebar">
