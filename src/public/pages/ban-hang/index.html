@@ -120,6 +120,24 @@
                   </table>
                 </div>
 
+                <!-- Cấn trừ Đơn đặt trước (Pre-order) -->
+                <div class="card p-2 mb-3 border-primary-subtle bg-primary-subtle bg-opacity-25 rounded-3">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-bold text-primary"><i class="bi bi-bookmark-check me-1"></i> Đơn Đặt Trước (Pre-order)</span>
+                    <div class="d-flex gap-1">
+                      <button type="button" id="btnOpenPreOrderModal" class="btn btn-xs btn-primary py-0 px-2" style="font-size: 0.75rem;">
+                        <i class="bi bi-search me-1"></i> Chọn đơn cọc
+                      </button>
+                      <button type="button" id="btnClearPreOrder" class="btn btn-xs btn-outline-danger py-0 px-1 d-none" style="font-size: 0.75rem;" title="Hủy liên kết cọc">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div id="preOrderDisplayArea" class="text-muted" style="font-size: 0.75rem;">
+                    <em>Chưa liên kết đơn cọc</em>
+                  </div>
+                </div>
+
                 <!-- Khách hàng & Hình thức thanh toán -->
                 <div class="mb-3">
                   <label class="form-label small fw-semibold">Khách hàng</label>
@@ -145,19 +163,23 @@
                   </div>
                 </div>
 
-                <!-- Tổng tiền -->
+                <!-- Tổng tiền & Cấn trừ cọc -->
                 <div class="bg-light p-3 rounded mb-3">
                   <div class="d-flex justify-content-between mb-1">
                     <span class="text-muted small">Tổng tiền máy:</span>
                     <span id="totalMachinePrice" class="fw-semibold">0 đ</span>
                   </div>
-                  <div class="d-flex justify-content-between mb-2">
+                  <div class="d-flex justify-content-between mb-1">
                     <span class="text-muted small">Tổng tiền phụ kiện:</span>
                     <span id="totalAccessoryPrice" class="fw-semibold">0 đ</span>
                   </div>
+                  <div id="depositDeductionRow" class="d-flex justify-content-between mb-1 text-success d-none">
+                    <span class="small font-monospace"><i class="bi bi-dash-circle me-1"></i>Đã cấn trừ tiền cọc:</span>
+                    <span id="depositDeductionPrice" class="fw-bold">-0 đ</span>
+                  </div>
                   <hr class="my-1">
                   <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-bold">TỔNG CỘNG:</span>
+                    <span class="fw-bold">THỰC THU:</span>
                     <span id="totalGrandPrice" class="fs-5 fw-bold text-danger">0 đ</span>
                   </div>
                 </div>
@@ -242,6 +264,46 @@
         <button type="button" class="btn btn-primary" onclick="window.print()">
           <i class="bi bi-printer me-1"></i> In Hóa Đơn
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Tìm & Chọn Đơn Đặt Trước (Pre-order) -->
+<div class="modal fade" id="preOrderModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold"><i class="bi bi-bookmark-check text-primary me-2"></i>Chọn Đơn Đặt Hàng Trước (Pre-order)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group mb-3">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" id="inputSearchPreOrder" class="form-control" placeholder="Tìm theo tên khách hàng, SĐT, tên sản phẩm hoặc mã đơn...">
+        </div>
+        <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+          <table class="table table-hover align-middle mb-0 table-sm">
+            <thead class="table-light">
+              <tr>
+                <th>Khách hàng</th>
+                <th>Sản phẩm cọc</th>
+                <th>Ngày hẹn lấy</th>
+                <th class="text-end">Tiền cọc</th>
+                <th>Trạng thái</th>
+                <th class="text-end">Chọn</th>
+              </tr>
+            </thead>
+            <tbody id="preOrderTableBody">
+              <tr>
+                <td colspan="6" class="text-center py-4 text-muted">Đang tải danh sách đơn đặt trước...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
       </div>
     </div>
   </div>

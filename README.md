@@ -118,31 +118,36 @@ onetech/
     │   ├── danhMucRoutes.js
     │   ├── phuKienRoutes.js
     │   └── index.js
-    └── public/                  # Giao diện Frontend (100% HTML/CSS/JS thuần)
-        ├── index.html           # Trang Dashboard
-        ├── login.html           # Trang Đăng nhập
-        ├── 404.html             # Trang lỗi 404
-        ├── san-pham/            # Danh sách, form thêm/sửa, chi tiết SP
-        ├── may-imei/            # Danh sách, form nhập lẻ & hàng loạt IMEI
-        ├── khach-hang/          # Danh sách & form khách hàng
-        ├── nha-cung-cap/        # Danh sách & form nhà cung cấp
-        ├── nhan-vien/           # Danh sách & form nhân viên, phân quyền
-        ├── danh-muc/            # Danh sách & modal danh mục
-        ├── phu-kien/            # Danh sách & modal phụ kiện
-        ├── css/
+    └── public/                  # Giao diện Frontend (Tách bạch CSS, JS, HTML Pages)
+        ├── css/                 # 🎨 Toàn bộ stylesheet
         │   └── style.css        # CSS tùy biến giao diện
-        └── js/                  # Client JS (Chỉ gọi API & đổ dữ liệu)
-            ├── api.js           # Fetch API helper, toast notifications
-            ├── layout.js        # Dựng sidebar, navbar & phân quyền menu
-            ├── auth.js          # Xử lý đăng nhập
-            ├── dashboard.js     # Thống kê dashboard
-            ├── sanpham.js       # Xử lý sản phẩm
-            ├── mayimei.js       # Xử lý IMEI & nhập hàng loạt
-            ├── khachhang.js     # Xử lý khách hàng
-            ├── nhacungcap.js    # Xử lý nhà cung cấp
-            ├── nhanvien.js      # Xử lý nhân viên
-            ├── danhmuc.js       # Xử lý danh mục
-            └── phukien.js       # Xử lý phụ kiện
+        ├── js/                  # ⚡ Toàn bộ script client (Gọi API & đổ dữ liệu)
+        │   ├── api.js           # Fetch API helper, toast notifications
+        │   ├── layout.js        # Dựng sidebar, navbar & phân quyền menu
+        │   ├── auth.js          # Xử lý đăng nhập
+        │   ├── dashboard.js     # Thống kê dashboard
+        │   ├── banhang.js       # Xử lý POS bán hàng & hóa đơn
+        │   ├── baohanh.js       # Xử lý tra cứu & bảo hành máy
+        │   ├── sanpham.js       # Xử lý sản phẩm
+        │   ├── mayimei.js       # Xử lý IMEI & nhập hàng loạt
+        │   ├── khachhang.js     # Xử lý khách hàng
+        │   ├── nhacungcap.js    # Xử lý nhà cung cấp
+        │   ├── nhanvien.js      # Xử lý nhân viên
+        │   ├── danhmuc.js       # Xử lý danh mục
+        │   └── phukien.js       # Xử lý phụ kiện
+        └── pages/               # 📄 Toàn bộ các trang HTML giao diện
+            ├── index.html       # Trang Dashboard
+            ├── login.html       # Trang Đăng nhập
+            ├── 404.html         # Trang lỗi 404
+            ├── ban-hang/        # Màn hình Bán hàng POS & Hóa đơn
+            ├── bao-hanh/        # Màn hình Tra cứu & Bảo hành
+            ├── san-pham/        # Danh sách, form thêm/sửa, chi tiết SP
+            ├── may-imei/        # Danh sách, form nhập lẻ & hàng loạt IMEI
+            ├── khach-hang/      # Danh sách & form khách hàng
+            ├── nha-cung-cap/    # Danh sách & form nhà cung cấp
+            ├── nhan-vien/       # Danh sách & form nhân viên, phân quyền
+            ├── danh-muc/        # Danh sách & modal danh mục
+            └── phu-kien/        # Danh sách & modal phụ kiện
 ```
 
 ---

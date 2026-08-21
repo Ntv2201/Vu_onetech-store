@@ -9,6 +9,9 @@ router.use(requireAuth);
 // GET /api/hoa-don - Danh sách hóa đơn
 router.get('/', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán'), hoaDonController.index);
 
+// GET /api/hoa-don/dat-truoc/tim-kiem - Tìm kiếm đơn đặt trước phục vụ POS bán hàng
+router.get('/dat-truoc/tim-kiem', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân'), hoaDonController.searchDonDatHang);
+
 // GET /api/hoa-don/:id - Chi tiết hóa đơn
 router.get('/:id', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán'), hoaDonController.getDetail);
 

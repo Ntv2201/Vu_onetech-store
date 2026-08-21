@@ -28,10 +28,18 @@ app.use(session({
 // Mount toàn bộ RESTful API Routes dưới tiền tố /api
 app.use('/api', apiRoutes);
 
-// Phục vụ toàn bộ giao diện tĩnh (HTML, CSS, JS) từ thư mục public
-app.use(express.static(path.join(__dirname, 'public'), {
+// Phục vụ tài sản tĩnh (CSS, JS, Assets) từ thư mục public
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Phục vụ các trang HTML từ thư mục public/pages
+app.use(express.static(path.join(__dirname, 'public', 'pages'), {
   extensions: ['html']
 }));
+
+// Route trang chủ mặc định
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'pages', 'index.html'));
+});
 
 // Xử lý 404 cho các API endpoint không tồn tại
 app.use('/api/*', (req, res) => {
@@ -43,7 +51,7 @@ app.use('/api/*', (req, res) => {
 
 // Xử lý 404 cho các trang giao diện
 app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+  res.status(404).sendFile(path.join(__dirname, 'public', 'pages', '404.html'));
 });
 
 // Xử lý lỗi hệ thống 500

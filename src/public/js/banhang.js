@@ -1,5 +1,6 @@
 /**
  * Module Xử lý Bán hàng POS và Quản lý Hóa đơn phía Client (Nguyễn Quang Tuấn)
+ * Cập nhật Tuần 3: Hỗ trợ cấn trừ tiền cọc từ đơn Đặt hàng trước (Pre-order) & Xử lý xung đột
  */
 
 let cart = {
@@ -7,10 +8,14 @@ let cart = {
   phuKiens: [] // [{ _id, tenPK, giaBan, soLuong, soLuongTon }]
 };
 
+let selectedPreOrder = null; // Đơn đặt hàng trước được chọn để cấn trừ cọc
+
 let allAvailableImeis = [];
 let allPhuKiens = [];
 let allSanPhams = [];
 let allKhachHangs = [];
+
+let preOrderModalInstance = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await initPosPage();
@@ -19,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function initPosPage() {
   await loadPosData();
+  initPreOrderModal();
   renderCart();
 
   // Search & Filter IMEI
@@ -36,6 +42,7 @@ async function initPosPage() {
   if (btnClear) {
     btnClear.addEventListener('click', () => {
       cart = { imeis: [], phuKiens: [] };
+      clearPreOrder();
       renderCart();
       filterImeiDisplay();
     });
@@ -57,17 +64,17 @@ async function loadPosData() {
   ]);
 
   if (resImei.success) {
-    allAvailableImeis = resImei.data || [];
+    allAvailableImeis = (resImei.data && Array.isArray(resImei.data.data)) ? resImei.data.data : (Array.isArray(resImei.data) ? resImei.data : []);
   }
   if (resPk.success) {
-    allPhuKiens = resPk.data || [];
+    allPhuKiens = (resPk.data && Array.isArray(resPk.data.data)) ? resPk.data.data : (Array.isArray(resPk.data) ? resPk.data : []);
   }
   if (resKh.success) {
-    allKhachHangs = resKh.data || [];
+    allKhachHangs = (resKh.data && Array.isArray(resKh.data.data)) ? resKh.data.data : (Array.isArray(resKh.data) ? resKh.data : []);
     renderKhachHangOptions();
   }
   if (resSp.success) {
-    allSanPhams = resSp.data || [];
+    allSanPhams = (resSp.data && Array.isArray(resSp.data.data)) ? resSp.data.data : (Array.isArray(resSp.data) ? resSp.data : []);
     renderSanPhamOptions();
   }
 
@@ -235,6 +242,10 @@ function renderCart() {
     document.getElementById('totalMachinePrice').innerText = '0 đ';
     document.getElementById('totalAccessoryPrice').innerText = '0 đ';
     document.getElementById('totalGrandPrice').innerText = '0 đ';
+    
+    // Ẩn dòng trừ cọc nếu giỏ trống
+    const depRow = document.getElementById('depositDeductionRow');
+    if (depRow) depRow.classList.add('d-none');
     return;
   }
 
@@ -292,7 +303,154 @@ function renderCart() {
   tbody.innerHTML = html;
   document.getElementById('totalMachinePrice').innerText = formatCurrency(totalMay);
   document.getElementById('totalAccessoryPrice').innerText = formatCurrency(totalPk);
-  document.getElementById('totalGrandPrice').innerText = formatCurrency(totalMay + totalPk);
+
+  const rawGrandTotal = totalMay + totalPk;
+  let finalPayment = rawGrandTotal;
+
+  // Tính cấn trừ tiền cọc (nếu có đơn đặt trước được liên kết)
+  const depositRow = document.getElementById('depositDeductionRow');
+  const depositPriceEl = document.getElementById('depositDeductionPrice');
+  if (selectedPreOrder && selectedPreOrder.soTienCoc > 0) {
+    const tienCocDaTru = Math.min(selectedPreOrder.soTienCoc, rawGrandTotal);
+    finalPayment = Math.max(0, rawGrandTotal - tienCocDaTru);
+    if (depositRow) depositRow.classList.remove('d-none');
+    if (depositPriceEl) depositPriceEl.innerText = `-${formatCurrency(tienCocDaTru)}`;
+  } else {
+    if (depositRow) depositRow.classList.add('d-none');
+  }
+
+  document.getElementById('totalGrandPrice').innerText = formatCurrency(finalPayment);
+}
+
+/* =========================================================================
+   PHÂN HỆ ĐƠN ĐẶT TRƯỚC (PRE-ORDER) & CẤN TRỪ TIỀN CỌC (TUẦN 3)
+========================================================================= */
+
+function initPreOrderModal() {
+  const modalEl = document.getElementById('preOrderModal');
+  if (modalEl) {
+    preOrderModalInstance = new bootstrap.Modal(modalEl);
+  }
+
+  const btnOpen = document.getElementById('btnOpenPreOrderModal');
+  if (btnOpen) {
+    btnOpen.addEventListener('click', () => {
+      loadPreOrders();
+      if (preOrderModalInstance) preOrderModalInstance.show();
+    });
+  }
+
+  const searchInput = document.getElementById('inputSearchPreOrder');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      loadPreOrders(searchInput.value);
+    });
+  }
+
+  const btnClear = document.getElementById('btnClearPreOrder');
+  if (btnClear) {
+    btnClear.addEventListener('click', clearPreOrder);
+  }
+}
+
+let availablePreOrders = [];
+
+async function loadPreOrders(search = '') {
+  const tbody = document.getElementById('preOrderTableBody');
+  if (!tbody) return;
+
+  const res = await api.get('/hoa-don/dat-truoc/tim-kiem', { search });
+  if (!res.success) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger small">${res.message || 'Lỗi tải đơn đặt'}</td></tr>`;
+    return;
+  }
+
+  availablePreOrders = res.data || [];
+  if (availablePreOrders.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted small">Không tìm thấy đơn đặt hàng trước nào còn hiệu lực</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = availablePreOrders.map(d => {
+    const kh = d.khachHang || {};
+    const sp = d.sanPham || {};
+    return `
+      <tr>
+        <td>
+          <div class="fw-semibold small">${escapeHtml(kh.hoTen || 'Chưa rõ')}</div>
+          <div class="text-muted" style="font-size: 0.7rem;">SĐT: ${escapeHtml(kh.sdt || '')}</div>
+        </td>
+        <td>
+          <div class="fw-semibold small">${escapeHtml(sp.tenMay || 'Điện thoại')}</div>
+          <div class="text-muted" style="font-size: 0.7rem;">Hãng: ${escapeHtml(sp.hang || '')}</div>
+        </td>
+        <td class="small">${formatDate(d.hanLay || d.createdAt)}</td>
+        <td class="text-end fw-bold text-success small">${formatCurrency(d.soTienCoc || 0)}</td>
+        <td><span class="badge bg-info text-dark" style="font-size: 0.7rem;">${escapeHtml(d.trangThai)}</span></td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-primary py-0 px-2" onclick="selectPreOrder('${d._id}')">
+            <i class="bi bi-check2"></i> Chọn
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function selectPreOrder(id) {
+  const preOrder = availablePreOrders.find(p => p._id === id);
+  if (!preOrder) return;
+
+  selectedPreOrder = preOrder;
+
+  // Cập nhật giao diện thông tin đơn cọc
+  const displayArea = document.getElementById('preOrderDisplayArea');
+  const btnClear = document.getElementById('btnClearPreOrder');
+  if (displayArea) {
+    const kh = preOrder.khachHang || {};
+    const sp = preOrder.sanPham || {};
+    displayArea.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong class="text-dark">${escapeHtml(kh.hoTen || 'Khách cọc')}</strong> (${escapeHtml(kh.sdt || '')})<br>
+          <span class="text-muted">Cọc SP: ${escapeHtml(sp.tenMay || '')}</span>
+        </div>
+        <span class="badge bg-success fs-6">${formatCurrency(preOrder.soTienCoc || 0)}</span>
+      </div>
+    `;
+  }
+  if (btnClear) btnClear.classList.remove('d-none');
+
+  // Tự động chọn Khách hàng trên form nếu có
+  if (preOrder.khachHang && preOrder.khachHang._id) {
+    const selectKh = document.getElementById('selectKhachHang');
+    if (selectKh) selectKh.value = preOrder.khachHang._id;
+  }
+
+  // Tự động lọc các máy IMEI thuộc đúng sản phẩm khách đã cọc
+  if (preOrder.sanPham && preOrder.sanPham._id) {
+    const filterSp = document.getElementById('filterPosSanPham');
+    if (filterSp) {
+      filterSp.value = preOrder.sanPham._id;
+      filterImeiDisplay();
+    }
+  }
+
+  if (preOrderModalInstance) preOrderModalInstance.hide();
+  renderCart();
+  showToast(`Đã áp dụng cấn trừ tiền cọc: ${formatCurrency(preOrder.soTienCoc)}`, 'success');
+}
+
+function clearPreOrder() {
+  selectedPreOrder = null;
+  const displayArea = document.getElementById('preOrderDisplayArea');
+  const btnClear = document.getElementById('btnClearPreOrder');
+  if (displayArea) {
+    displayArea.innerHTML = `<em>Chưa liên kết đơn cọc</em>`;
+  }
+  if (btnClear) btnClear.classList.add('d-none');
+
+  renderCart();
 }
 
 async function handleCreateOrder() {
@@ -314,7 +472,8 @@ async function handleCreateOrder() {
       donGiaBan: pk.giaBan
     })),
     hinhThucThanhToan,
-    ghiChu
+    ghiChu,
+    donDatHangId: selectedPreOrder ? selectedPreOrder._id : null
   };
 
   const btn = document.getElementById('btnSubmitOrder');
@@ -333,8 +492,9 @@ async function handleCreateOrder() {
 
   showToast(res.message || 'Bán hàng thành công!', 'success');
 
-  // Reset giỏ
+  // Reset giỏ và đơn cọc
   cart = { imeis: [], phuKiens: [] };
+  clearPreOrder();
   renderCart();
 
   // Reload data
@@ -398,13 +558,17 @@ async function loadInvoiceList() {
   tbody.innerHTML = hoaDons.map(hd => {
     const khName = hd.khachHang ? hd.khachHang.hoTen : 'Khách vãng lai';
     const nvName = hd.nhanVien ? hd.nhanVien.hoTen : 'Hệ thống';
+    const tienThucThu = hd.soTienThanhToan !== undefined ? hd.soTienThanhToan : (hd.tongTien - (hd.tienCocDaTru || 0));
     return `
       <tr>
         <td class="fw-bold font-monospace text-primary">${hd.soHD}</td>
         <td>${escapeHtml(khName)}</td>
         <td>${escapeHtml(nvName)}</td>
         <td>${formatDate(hd.ngayLap)}</td>
-        <td class="text-end fw-bold text-success">${formatCurrency(hd.tongTien)}</td>
+        <td class="text-end fw-bold text-success">
+          ${formatCurrency(tienThucThu)}
+          ${hd.tienCocDaTru > 0 ? `<div class="text-muted" style="font-size: 0.7rem;">(Gốc: ${formatCurrency(hd.tongTien)} - Cọc: ${formatCurrency(hd.tienCocDaTru)})</div>` : ''}
+        </td>
         <td><span class="badge bg-success">${escapeHtml(hd.trangThai)}</span></td>
         <td class="text-end">
           <button class="btn btn-sm btn-outline-primary" onclick="viewInvoiceDetail('${hd._id}')">
@@ -429,6 +593,8 @@ async function viewInvoiceDetail(id) {
 
   const kh = hoaDon.khachHang || {};
   const nv = hoaDon.nhanVien || {};
+  const tienCocDaTru = hoaDon.tienCocDaTru || 0;
+  const soTienThanhToan = hoaDon.soTienThanhToan !== undefined ? hoaDon.soTienThanhToan : (hoaDon.tongTien - tienCocDaTru);
 
   content.innerHTML = `
     <div class="p-3 border rounded mb-3 bg-light">
@@ -454,6 +620,7 @@ async function viewInvoiceDetail(id) {
         <div class="col-sm-6 text-sm-end">
           <strong>Hình thức:</strong> <span class="badge bg-success">${escapeHtml(hoaDon.trangThai)}</span><br>
           ${phieuXuatKho ? `<strong>Phiếu xuất kho:</strong> <span class="badge bg-secondary">Đã xuất tự động</span><br>` : ''}
+          ${hoaDon.donDatHang ? `<strong>Đơn đặt trước:</strong> <span class="badge bg-info text-dark">Đã cấn trừ cọc</span><br>` : ''}
           ${hoaDon.ghiChu ? `<strong>Ghi chú:</strong> ${escapeHtml(hoaDon.ghiChu)}` : ''}
         </div>
       </div>
@@ -512,7 +679,18 @@ async function viewInvoiceDetail(id) {
     </div>
 
     <div class="bg-light p-3 rounded text-end">
-      <div class="fs-5 fw-bold text-danger">TỔNG TIỀN THANH TOÁN: ${formatCurrency(hoaDon.tongTien)}</div>
+      <div class="d-flex justify-content-between mb-1">
+        <span class="text-muted">Tổng giá trị đơn hàng:</span>
+        <span class="fw-semibold">${formatCurrency(hoaDon.tongTien)}</span>
+      </div>
+      ${tienCocDaTru > 0 ? `
+        <div class="d-flex justify-content-between mb-1 text-success">
+          <span>Tiền cọc đã trừ (Đơn đặt trước):</span>
+          <span class="fw-bold">-${formatCurrency(tienCocDaTru)}</span>
+        </div>
+      ` : ''}
+      <hr class="my-2">
+      <div class="fs-5 fw-bold text-danger">TỔNG TIỀN THỰC THU: ${formatCurrency(soTienThanhToan)}</div>
     </div>
   `;
 
@@ -525,3 +703,4 @@ window.removeImeiFromCart = removeImeiFromCart;
 window.addPhuKienToCart = addPhuKienToCart;
 window.changePhuKienQty = changePhuKienQty;
 window.viewInvoiceDetail = viewInvoiceDetail;
+window.selectPreOrder = selectPreOrder;

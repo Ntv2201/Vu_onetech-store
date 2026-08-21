@@ -8,6 +8,19 @@ class HoaDonController extends BaseController {
     this.index = this.index.bind(this);
     this.getDetail = this.getDetail.bind(this);
     this.create = this.create.bind(this);
+    this.searchDonDatHang = this.searchDonDatHang.bind(this);
+  }
+
+  /**
+   * GET /api/hoa-don/dat-truoc/tim-kiem - Tìm kiếm đơn đặt hàng trước còn hiệu lực
+   */
+  async searchDonDatHang(req, res) {
+    try {
+      const result = await HoaDonService.timKiemDonDatHang(req.query.search);
+      return this.sendSuccess(res, result, 'Lấy danh sách đơn đặt trước thành công');
+    } catch (error) {
+      return this.handleError(res, error, 'Không thể tìm kiếm đơn đặt trước');
+    }
   }
 
   /**

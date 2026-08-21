@@ -196,6 +196,75 @@ async function runTests() {
     const restoredMay = await MayImei.findOne({ imei: imeiToSell });
     assert(restoredMay.trangThai === 'Da ban', `IMEI ${imeiToSell} đã được khôi phục về trạng thái "Da ban" (đã trả khách)`);
 
+    // -------------------------------------------------------------
+    // TEST 10 (Tuần 3): Bán hàng cấn trừ tiền cọc từ Đơn đặt trước
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 10 (Tuần 3): Bán hàng cấn trừ tiền cọc Đơn đặt trước ---');
+    const { DonDatHangTruoc } = require('../src/models');
+    
+    // Tìm 1 máy còn hàng để bán kèm cọc
+    const mayChoCoc = await MayImei.findOne({ trangThai: 'Con hang' }).populate('sanPham');
+    const giaMay = (mayChoCoc.sanPham && mayChoCoc.sanPham.giaBan) ? mayChoCoc.sanPham.giaBan : 20000000;
+    const soTienCoc = 2000000;
+
+    // Tạo đơn đặt trước mẫu
+    const donDatMoi = await DonDatHangTruoc.create({
+      khachHang: kh._id,
+      sanPham: mayChoCoc.sanPham._id,
+      soTienCoc: soTienCoc,
+      hanLay: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      trangThai: 'Cho xu ly',
+      ghiChu: 'Khách cọc trước 2 triệu'
+    });
+
+    const orderWithPreOrder = await HoaDonService.taoHoaDonBanHang({
+      khachHang: kh._id,
+      nhanVien: nv._id,
+      danhSachIMEI: [mayChoCoc.imei],
+      danhSachPhuKien: [],
+      donDatHangId: donDatMoi._id,
+      hinhThucThanhToan: 'Da thanh toan',
+      ghiChu: 'Xuất máy cho khách đã cọc'
+    }, nv);
+
+    assert(orderWithPreOrder.hoaDon.donDatHang !== null, 'Hóa đơn đã liên kết với đơn đặt trước');
+    assert(orderWithPreOrder.hoaDon.tienCocDaTru === soTienCoc, `Đã cấn trừ đúng tiền cọc: ${orderWithPreOrder.hoaDon.tienCocDaTru} đ`);
+    assert(orderWithPreOrder.hoaDon.soTienThanhToan === orderWithPreOrder.hoaDon.tongTien - soTienCoc, `Số tiền thực thu chính xác: ${orderWithPreOrder.hoaDon.soTienThanhToan} đ`);
+
+    const updatedDonDat = await DonDatHangTruoc.findById(donDatMoi._id);
+    assert(updatedDonDat.trangThai === 'Da nhan hang', 'Đơn đặt trước đã chuyển sang trạng thái "Da nhan hang"');
+
+    // -------------------------------------------------------------
+    // TEST 11 (Tuần 3): Concurrency Lock - Chặn bán đúp đồng thời cùng 1 IMEI
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 11 (Tuần 3): Concurrency Lock - Chặn bán đúp đồng thời ---');
+    const mayConcurrent = await MayImei.findOne({ trangThai: 'Con hang' });
+    if (mayConcurrent) {
+      const imeiConcurrent = mayConcurrent.imei;
+      
+      // Gửi 2 request bán hàng song song cùng 1 lúc
+      const [req1, req2] = await Promise.allSettled([
+        HoaDonService.taoHoaDonBanHang({
+          khachHang: kh._id,
+          nhanVien: nv._id,
+          danhSachIMEI: [imeiConcurrent],
+          danhSachPhuKien: []
+        }, nv),
+        HoaDonService.taoHoaDonBanHang({
+          khachHang: kh._id,
+          nhanVien: nv._id,
+          danhSachIMEI: [imeiConcurrent],
+          danhSachPhuKien: []
+        }, nv)
+      ]);
+
+      const successCount = [req1, req2].filter(r => r.status === 'fulfilled').length;
+      const conflictCount = [req1, req2].filter(r => r.status === 'rejected' && r.reason.statusCode === 409).length;
+
+      assert(successCount === 1, `Chỉ có duy nhất 1 giao dịch bán thành công (Kết quả: ${successCount})`);
+      assert(conflictCount === 1, `Giao dịch thứ 2 bị chặn với mã lỗi 409 Conflict (Kết quả: ${conflictCount})`);
+    }
+
     console.log('\n===============================================================');
     console.log(`🎉 KẾT QUẢ KIỂM THỬ: ${passed} PASS, ${failed} FAIL`);
     console.log('===============================================================');

@@ -126,26 +126,28 @@ onetech/
     │   └── auth.js                      # requireAuth, requireRole (Trả JSON 401/403)
     ├── seeds/
     │   └── seed.js                      # Nạp dữ liệu mẫu 6 vai trò, SP, IMEI, HĐ, BH
-    └── public/                          # Frontend tĩnh (100% HTML/CSS/JS thuần)
-        ├── login.html                   # Đăng nhập (kèm nút chọn nhanh 6 vai trò)
-        ├── index.html                   # Dashboard tổng quan
-        ├── 404.html                     # Trang 404 Not Found
-        ├── ban-hang/index.html          # Màn hình Bán hàng POS theo IMEI & Quản lý HĐ
-        ├── bao-hanh/index.html          # Màn hình Tra cứu dòng đời IMEI & Quản lý BH
-        ├── san-pham/                    # index.html, form.html, detail.html
-        ├── may-imei/                    # index.html, form.html
-        ├── khach-hang/                  # index.html, form.html
-        ├── nha-cung-cap/                # index.html, form.html
-        ├── nhan-vien/                   # index.html, form.html
-        ├── danh-muc/                    # index.html
-        ├── phu-kien/                    # index.html
-        ├── css/style.css                # CSS giao diện
-        └── js/                          # Client JS logic
-            ├── api.js                   # Wrapper gọi API, toast notification, helper
-            ├── layout.js                # Dựng Sidebar/Navbar & phân quyền Menu
-            ├── banhang.js               # Logic POS bán hàng, giỏ hàng, in hóa đơn
-            ├── baohanh.js               # Logic tra cứu IMEI, lập phiếu BH, xuất linh kiện
-            ├── auth.js, dashboard.js, sanpham.js, mayimei.js...
+    └── public/                          # Frontend tĩnh (Tách bạch CSS, JS, HTML Pages)
+        ├── css/                         # 🎨 TOÀN BỘ FILE STYLESHEET
+        │   └── style.css                # CSS thiết kế giao diện
+        ├── js/                          # ⚡ TOÀN BỘ FILE JAVASCRIPT CLIENT
+        │   ├── api.js                   # Wrapper gọi API, toast notification, helper
+        │   ├── layout.js                # Dựng Sidebar/Navbar & phân quyền Menu
+        │   ├── banhang.js               # Logic POS bán hàng, giỏ hàng, in hóa đơn
+        │   ├── baohanh.js               # Logic tra cứu IMEI, lập phiếu BH, xuất linh kiện
+        │   └── auth.js, dashboard.js, sanpham.js, mayimei.js...
+        └── pages/                       # 📄 TOÀN BỘ CÁC TRANG HTML GIAO DIỆN
+            ├── index.html               # Dashboard tổng quan
+            ├── login.html               # Đăng nhập (kèm nút chọn nhanh 6 vai trò)
+            ├── 404.html                 # Trang 404 Not Found
+            ├── ban-hang/index.html      # Màn hình Bán hàng POS theo IMEI & Quản lý HĐ
+            ├── bao-hanh/index.html      # Màn hình Tra cứu dòng đời IMEI & Quản lý BH
+            ├── san-pham/                # index.html, form.html, detail.html
+            ├── may-imei/                # index.html, form.html
+            ├── khach-hang/              # index.html, form.html
+            ├── nha-cung-cap/            # index.html, form.html
+            ├── nhan-vien/               # index.html, form.html
+            ├── danh-muc/                # index.html
+            └── phu-kien/                # index.html
 ```
 
 ---
