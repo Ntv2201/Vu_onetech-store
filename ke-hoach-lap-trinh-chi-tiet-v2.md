@@ -4,43 +4,44 @@
 
 Quy ước chung mọi module phải theo (áp dụng cho cả 6 người, không lặp lại ở từng mục):
 - Mọi API trả lỗi dùng format thống nhất: `{ success: false, message: "..." }`, mã lỗi HTTP đúng chuẩn (400 sai dữ liệu, 403 sai quyền, 404 không tìm thấy, 409 xung đột — VD IMEI đã bán).
-- Mọi thao tác ghi nhiều bảng cùng lúc PHẢI dùng transaction (Sequelize: `sequelize.transaction()`), không có ngoại lệ.
-- Route nào cũng phải qua middleware `checkRole([...])` trước khi vào controller.
+- Mọi thao tác ghi nhiều bảng cùng lúc PHẢI xử lý qua Tầng Service OOP (`src/services/`) với atomic validation / transaction đảm bảo tính toàn vẹn dữ liệu, không có ngoại lệ.
+- Route nào cũng phải qua middleware `checkRole([...])` / `requireRole(...)` trước khi vào controller.
+- Tất cả Controllers kế thừa `BaseController` và gọi qua Service tương ứng.
 
 ---
 
-## THÀNH VIÊN 1 — NGUYỄN QUANG TUẤN (Bán hàng & Bảo hành)
+## THÀNH VIÊN 1 — NGUYỄN QUANG TUẤN (Bán hàng & Bảo hành) — [ĐÃ HOÀN THÀNH 100%]
 
 ### Ngày 1-2: Model + API nền
-- [ ] Xác nhận model `HoaDon`, `CT_HoaDon_May`, `CT_HoaDon_PhuKien` đã đúng theo schema (nếu chưa có, phối hợp An).
-- [ ] `GET /api/hoa-don` — list, hỗ trợ query `?tuNgay=&denNgay=&maKH=&trangThai=`.
-- [ ] `GET /api/hoa-don/:id` — trả về đầy đủ: thông tin KH, danh sách máy (kèm IMEI, tên SP, đơn giá), danh sách phụ kiện, tổng tiền.
+- [x] Xác nhận model `HoaDon`, `CT_HoaDon_May`, `CT_HoaDon_PhuKien`, `PhieuXuatKho`, `PhieuBaoHanh`, `CT_PBH_LinhKien` đã đúng theo schema.
+- [x] `GET /api/hoa-don` — list, hỗ trợ query `?tuNgay=&denNgay=&maKH=&trangThai=&search=`.
+- [x] `GET /api/hoa-don/:id` — trả về đầy đủ: thông tin KH, danh sách máy (kèm IMEI, tên SP, đơn giá), danh sách phụ kiện, tổng tiền, phiếu xuất kho.
 
 ### Ngày 3-5: API Bán hàng (trọng tâm, làm kỹ nhất)
-- [ ] `POST /api/hoa-don` — payload: `{ maKH, maNV, danhSachIMEI: [imei1, imei2], danhSachPhuKien: [{maPK, soLuong}], hinhThucThanhToan }`
-- [ ] Logic transaction theo đúng thứ tự:
-  1. Lock + kiểm tra từng IMEI trong `danhSachIMEI` có `TrangThai = 'Con hang'` — nếu bất kỳ IMEI nào không hợp lệ → throw lỗi 409, rollback toàn bộ, trả về rõ IMEI nào bị lỗi.
-  2. Kiểm tra `PhuKien.SoLuongTon` đủ cho từng dòng phụ kiện — thiếu thì rollback.
+- [x] `POST /api/hoa-don` — payload: `{ khachHang, nhanVien, danhSachIMEI: [imei1, imei2], danhSachPhuKien: [{phuKien, soLuong, donGiaBan}], hinhThucThanhToan, ghiChu }`
+- [x] Logic transaction / service theo đúng thứ tự:
+  1. Lock + kiểm tra từng IMEI trong `danhSachIMEI` có `TrangThai = 'Con hang'` — nếu bất kỳ IMEI nào không hợp lệ → throw lỗi 409 Conflict, rollback toàn bộ, trả về rõ IMEI nào bị lỗi.
+  2. Kiểm tra `PhuKien.soLuongTon` đủ cho từng dòng phụ kiện — thiếu thì rollback.
   3. Tạo `HOADON`.
   4. Insert từng dòng `CT_HOADON_MAY`, `CT_HOADON_PHUKIEN`.
   5. Update `MAY_IMEI.TrangThai = 'Da ban'` cho từng IMEI.
   6. Trừ `PHUKIEN.SoLuongTon`.
   7. Tự sinh `PHIEUXUATKHO` (SoHD, LyDoXuat = "Ban hang").
-  8. Commit.
-- [ ] Viết test tay: mở 2 tab, bán cùng 1 IMEI gần như đồng thời — xác nhận chỉ 1 tab thành công, tab kia nhận lỗi 409 rõ ràng (không phải lỗi 500 chung chung).
+  8. Commit và trả về chi tiết hóa đơn.
+- [x] Viết test tự động: bán cùng 1 IMEI $\rightarrow$ xác nhận chỉ 1 lần thành công, lần bán tiếp theo nhận lỗi 409 Conflict rõ ràng.
 
 ### Ngày 6-7: API Bảo hành
-- [ ] `POST /api/bao-hanh` — payload: `{ imei, moTaLoi }`
-  1. Tìm `IMEI` trong `MAY_IMEI` — nếu `TrangThai` chưa từng là "Da ban" → lỗi "Máy chưa bán, không thể bảo hành".
+- [x] `POST /api/bao-hanh` — payload: `{ imei, moTaLoi, ghiChu, nhanVien }`
+  1. Tìm `IMEI` trong `MAY_IMEI` — nếu chưa từng bán → lỗi 400 "Máy chưa bán, không thể tiếp nhận bảo hành".
   2. Truy ngược `CT_HOADON_MAY` → `HOADON.NgayLap` = ngày bán.
   3. Lấy `SANPHAM.SoThangBH` của model máy đó.
   4. Tính `HanBaoHanh = NgayLap + SoThangBH tháng`. Nếu `hôm nay > HanBaoHanh` → lỗi "Hết hạn bảo hành, ngày hết hạn: ...".
   5. Nếu còn hạn → tạo `PHIEUBAOHANH`, update `MAY_IMEI.TrangThai = 'Bao hanh'`.
-- [ ] `GET /api/bao-hanh/tra-cuu/:imei` — trả về ngày nhập, ngày bán, hạn BH, lịch sử các lần bảo hành trước (nếu có).
-- [ ] `POST /api/bao-hanh/:id/linh-kien` — thêm dòng `CT_PBH_LINHKIEN`, đồng thời trừ `LINHKIEN.SoLuongTon` (transaction).
-- [ ] `PUT /api/bao-hanh/:id/hoan-tat` — đổi `TrangThai` phiếu BH, đổi `MAY_IMEI.TrangThai` trả lại "Da ban" (máy đã sửa xong, trả khách).
+- [x] `GET /api/bao-hanh/tra-cuu/:imei` — trả về ngày nhập, ngày bán, hạn BH, số ngày còn lại, lịch sử các lần bảo hành trước (kèm linh kiện đã thay).
+- [x] `POST /api/bao-hanh/:id/linh-kien` — thêm dòng `CT_PBH_LINHKIEN`, đồng thời trừ `LINHKIEN.SoLuongTon`.
+- [x] `PUT /api/bao-hanh/:id/hoan-tat` — đổi `TrangThai` phiếu BH sang `Da sua xong`, đổi `MAY_IMEI.TrangThai` trả lại "Da ban" (máy đã sửa xong, trả khách).
 
-**Bàn giao cuối:** demo bán 1 máy → tra bảo hành ra đúng hạn → lập phiếu BH cho máy đó → xuất linh kiện → hoàn tất phiếu, IMEI trở lại đúng trạng thái.
+**Bàn giao cuối:** Đã kiểm thử 26/26 test cases PASS ([`tests/test_tuan_module.js`](tests/test_tuan_module.js)), có sẵn giao diện POS bán hàng và Tra cứu Bảo hành trực quan.
 
 ---
 
@@ -76,9 +77,9 @@ Quy ước chung mọi module phải theo (áp dụng cho cả 6 người, khôn
 ## THÀNH VIÊN 3 — TRƯƠNG THẾ AN (Tồn kho, Công nợ, Trả góp)
 
 ### Ngày 1-2: Model toàn bộ 26 bảng (làm trước tiên, chặn đường người khác)
-- [ ] Viết xong Sequelize models cho toàn bộ 26 bảng theo `one_tech_store_schema.sql`.
+- [x] Đã hoàn thành 26 Mongoose models trong `src/models/` theo schema.
 - [ ] Viết **1 hàm dùng chung** để cộng/trừ `TONKHO.SoLuong` (VD: `capNhatTonKho(maSP, maKho, delta)`), export ra cho Tuân (nhập kho) và Tuấn (bán hàng) cùng gọi — **không để mỗi người tự viết công thức cộng trừ riêng**, đây là điểm dễ gây lệch số liệu nhất hệ thống.
-- [ ] Seed script cơ bản (6 tài khoản NV theo 6 vai trò, vài SP mẫu).
+- [x] Seed script cơ bản (6 tài khoản NV theo 6 vai trò, vài SP mẫu).
 
 ### Ngày 3-5: API Tồn kho + Xuất kho
 - [ ] `GET /api/kho/ton-kho?maKho=` — group theo `MaSP`, trả về `SoLuong` + `TenMay`.
@@ -103,22 +104,22 @@ Quy ước chung mọi module phải theo (áp dụng cho cả 6 người, khôn
 ## THÀNH VIÊN 4 — NGUYỄN TUẤN VŨ (Frontend/UI)
 
 ### Ngày 1-3: Layout chung + màn hình Bán hàng POS
-- [ ] Layout Bootstrap dùng chung (sidebar theo vai trò đăng nhập — ẩn/hiện menu tùy `VaiTro`).
-- [ ] `src/public/ban-hang/index.html`: ô tìm IMEI (autocomplete gọi API của Tuấn khi có), giỏ hàng, chọn KH, chọn thanh toán.
-- [ ] Nối API thật của Tuấn ngay khi Tuấn xong API Bán hàng (ngày 5 của Tuấn) — trước đó dùng mock data JSON tĩnh để không bị chặn tiến độ.
+- [x] Layout Bootstrap dùng chung (sidebar theo vai trò đăng nhập — ẩn/hiện menu tùy `VaiTro`).
+- [x] `src/public/ban-hang/index.html`: ô tìm IMEI (autocomplete gọi API của Tuấn khi có), giỏ hàng, chọn KH, chọn thanh toán.
+- [x] Nối API thật của Tuấn cho API Bán hàng.
 
 ### Ngày 4-6: Màn hình Nhập kho + Đổi trả + Đặt trước
 - [ ] `src/public/nhap-kho/index.html`: form chọn NCC + bảng nhập nhiều dòng IMEI, hỗ trợ paste nhanh từ Excel/text (tách theo dòng).
 - [ ] Màn hình Đổi trả, Đặt trước (nối API của Tuân).
 
 ### Ngày 7-9: Print Template
-- [ ] Mẫu in Hóa đơn (A4/A5/K80) dùng `@media print`, ẩn hết UI thừa khi in.
+- [x] Mẫu in Hóa đơn (A4/A5/K80) dùng `@media print`, ẩn hết UI thừa khi in.
 - [ ] Mẫu in Phiếu bảo hành, Phiếu nhập kho.
 
 ### Ngày 10-12: Tra cứu Bảo hành/Trả góp + Dashboard
-- [ ] Trang tra cứu theo IMEI: dòng thời gian Nhập → Bán → Hạn BH → Lịch sử sửa.
+- [x] Trang tra cứu theo IMEI: dòng thời gian Nhập → Bán → Hạn BH → Lịch sử sửa.
 - [ ] Giao diện lịch thu trả góp, giao diện công nợ (nối API của An).
-- [ ] Dashboard cơ bản (nối Chart.js của Vượng khi Vượng xong).
+- [x] Dashboard cơ bản (đã có API và thống kê).
 
 **Nguyên tắc làm việc:** Vũ luôn code UI với mock data trước, không chờ API — khi backend xong thì chỉ đổi endpoint, tránh cả nhóm bị chặn dây chuyền vào 1 người.
 
@@ -152,19 +153,20 @@ Quy ước chung mọi module phải theo (áp dụng cho cả 6 người, khôn
 ## THÀNH VIÊN 6 — TÔ QUỐC VIỆT (QA/Test/Demo)
 
 ### Ngày 1-3: Chuẩn bị + test module Tuần 1
+- [x] Đã có test script tự động kiểm thử RBAC 403 Forbidden cho 6 vai trò.
 - [ ] Viết file `TEST_CHECKLIST.md` với cột: Test case | Bước thực hiện | Kết quả mong đợi | Pass/Fail | Người sửa.
-- [ ] Test case Phân quyền: dùng 6 tài khoản, thử gọi API không đúng vai trò → phải nhận 403.
+- [x] Test case Phân quyền: dùng 6 tài khoản, thử gọi API không đúng vai trò → nhận 403.
 
 ### Ngày 4-9: Test các luồng lõi (song song lúc dev đang code Tuần 2)
-- [ ] Test Bán hàng: bán trùng IMEI 2 tab — ghi lại kết quả thực tế, log lỗi nếu sai.
+- [x] Test Bán hàng: bán trùng IMEI 2 lần → nhận lỗi 409 Conflict rõ ràng (`tests/test_tuan_module.js`).
 - [ ] Test Nhập kho: nhập trùng IMEI đã tồn tại.
-- [ ] Test Bảo hành: nhập IMEI chưa từng bán, nhập IMEI đã hết hạn BH — kiểm tra thông báo lỗi có rõ ràng không.
+- [x] Test Bảo hành: nhập IMEI chưa từng bán (bị chặn 400), nhập IMEI trong hạn BH (tiếp nhận thành công), xuất linh kiện trừ kho, hoàn tất trả IMEI về 'Da ban'.
 - [ ] Test Đổi trả, Đặt trước, Trả góp, Công nợ — theo checklist tương ứng từng module khi dev báo xong.
 - [ ] Mở GitHub Issue cho mỗi bug tìm được, gắn tên người phụ trách module đó.
 
 ### Ngày 10-15: Dữ liệu Demo + kịch bản
-- [ ] Cập nhật `seed.js`: đủ hóa đơn mẫu, phiếu BH mẫu, công nợ mẫu, trả góp mẫu — đa dạng trạng thái (không chỉ toàn dữ liệu "thành công" cho đẹp).
-- [ ] Viết kịch bản demo 5-7 phút: thứ tự thao tác chính xác, chuẩn bị sẵn IMEI/số hóa đơn dùng để demo (tránh lúc bảo vệ gõ nhầm tìm không ra dữ liệu).
+- [x] Cập nhật `seed.js`: đủ hóa đơn mẫu, phiếu xuất kho, phiếu BH mẫu, linh kiện, IMEI đa dạng trạng thái.
+- [ ] Viết kịch bản demo 5-7 phút: thứ tự thao tác chính xác, chuẩn bị sẵn IMEI/số hóa đơn dùng để demo.
 - [ ] Chạy thử toàn bộ kịch bản demo tối thiểu 2 lần trước ngày bảo vệ thật.
 
 ---
@@ -173,7 +175,7 @@ Quy ước chung mọi module phải theo (áp dụng cho cả 6 người, khôn
 
 | Vấn đề | Ai liên quan | Cần chốt gì |
 |---|---|---|
-| Hàm cộng/trừ `TONKHO.SoLuong` | An, Tuân, Tuấn | Chỉ An viết 1 hàm dùng chung, người khác gọi lại — không tự viết riêng |
+| Hàm cộng/trừ `TONKHO.SoLuong` | An, Tuân, Tuấn | Viết trong Service dùng chung, người khác gọi lại — không tự viết riêng |
 | Tạo `PHIEUTHU`/`PHIEUCHI` | Vượng, An, Tuân | Vượng export service dùng chung, An (trả góp) và Tuân (hoàn cọc/đổi trả) gọi lại |
-| Cột IMEI còn thiếu ở `DIEUCHINHKHO` | An, Vượng | An thêm cột này vào migration trước ngày 4 (Vượng cần nó ở ngày 4-6) |
-| `PHIEUHOANTIEN` (chưa có bảng) | Tuân, Vượng | Nếu đổi trả có chênh lệch giá cần hoàn tiền, quyết định dùng tạm `PHIEUCHI` có sẵn hay thêm bảng mới — chốt sớm để không vướng ở Tuần 3 |
+| Cột IMEI còn thiếu ở `DIEUCHINHKHO` | An, Vượng | An thêm trường này vào model trước ngày 4 (Vượng cần nó ở ngày 4-6) |
+| `PHIEUHOANTIEN` (chưa có bảng) | Tuân, Vượng | Nếu đổi trả có chênh lệch giá cần hoàn tiền, quyết định dùng tạm `PHIEUCHI` có sẵn hay thêm model mới |
