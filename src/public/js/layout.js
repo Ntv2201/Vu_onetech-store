@@ -34,6 +34,8 @@ function renderSidebarAndNavbar(user) {
   const sidebarContainer = document.getElementById('appSidebar');
   if (sidebarContainer) {
     const isManager = user.vaiTro === 'Quản lý';
+    const isSeller = ['Quản lý', 'NV bán hàng', 'Thu ngân'].includes(user.vaiTro);
+    const isTechOrSeller = ['Quản lý', 'Kỹ thuật', 'NV bán hàng', 'Thủ kho'].includes(user.vaiTro);
 
     sidebarContainer.innerHTML = `
       <aside class="app-sidebar">
@@ -47,6 +49,20 @@ function renderSidebarAndNavbar(user) {
           <a href="/index.html" class="sidebar-link" data-path="/index.html">
             <i class="bi bi-grid-1x2"></i>
             <span>Dashboard</span>
+          </a>
+
+          ${isSeller ? `
+            <div class="nav-category">Bán hàng & Hóa đơn</div>
+            <a href="/ban-hang/index.html" class="sidebar-link" data-path="/ban-hang/">
+              <i class="bi bi-cart-check"></i>
+              <span>Bán hàng POS & Hóa đơn</span>
+            </a>
+          ` : ''}
+
+          <div class="nav-category">Dịch vụ & Bảo hành</div>
+          <a href="/bao-hanh/index.html" class="sidebar-link" data-path="/bao-hanh/">
+            <i class="bi bi-shield-check"></i>
+            <span>Tra cứu & Bảo hành</span>
           </a>
 
           <div class="nav-category">Quản lý Hàng hóa</div>

@@ -1,192 +1,65 @@
-const { SanPham, DanhMuc, MayImei } = require('../models');
+const BaseController = require('./BaseController');
+const { SanPhamService } = require('../services');
 
-const sanPhamController = {
+class SanPhamController extends BaseController {
+  constructor() {
+    super();
+    this.index = this.index.bind(this);
+    this.getDetail = this.getDetail.bind(this);
+    this.postCreate = this.postCreate.bind(this);
+    this.postEdit = this.postEdit.bind(this);
+    this.delete = this.delete.bind(this);
+  }
+
   // GET /api/san-pham
-  index: async (req, res) => {
+  async index(req, res) {
     try {
-      const { search, danhMucId, hang } = req.query;
-      const query = {};
-
-      if (search) {
-        query.tenMay = { $regex: search.trim(), $options: 'i' };
-      }
-      if (danhMucId) {
-        query.danhMuc = danhMucId;
-      }
-      if (hang) {
-        query.hang = { $regex: hang.trim(), $options: 'i' };
-      }
-
-      const [sanPhams, danhMucs, allHangs] = await Promise.all([
-        SanPham.find(query).populate('danhMuc').sort({ createdAt: -1 }),
-        DanhMuc.find().sort({ tenDanhMuc: 1 }),
-        SanPham.distinct('hang')
-      ]);
-
-      // Đếm số lượng máy IMEI còn hàng cho từng sản phẩm
-      const sanPhamWithCounts = await Promise.all(
-        sanPhams.map(async (sp) => {
-          const conHang = await MayImei.countDocuments({ sanPham: sp._id, trangThai: 'Con hang' });
-          const daBan = await MayImei.countDocuments({ sanPham: sp._id, trangThai: 'Da ban' });
-          const tongImei = await MayImei.countDocuments({ sanPham: sp._id });
-          return {
-            ...sp.toObject(),
-            soLuongCon: conHang,
-            soLuongDaBan: daBan,
-            tongImei
-          };
-        })
-      );
-
-      return res.status(200).json({
-        success: true,
-        data: sanPhamWithCounts,
-        danhMucs,
-        allHangs: allHangs.filter(Boolean)
-      });
+      const result = await SanPhamService.getAllSanPhams(req.query);
+      return this.sendSuccess(res, { data: result.sanPhams, danhMucs: result.danhMucs }, 'Lấy danh sách sản phẩm thành công');
     } catch (error) {
-      console.error('Lỗi lấy danh sách sản phẩm:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Không thể tải danh sách sản phẩm: ' + error.message
-      });
-    }
-  },
-
-  // GET /api/san-pham/:id
-  getDetail: async (req, res) => {
-    try {
-      const sanPham = await SanPham.findById(req.params.id).populate('danhMuc');
-      if (!sanPham) {
-        return res.status(404).json({
-          success: false,
-          message: 'Không tìm thấy sản phẩm'
-        });
-      }
-
-      const imeis = await MayImei.find({ sanPham: sanPham._id }).sort({ createdAt: -1 });
-
-      return res.status(200).json({
-        success: true,
-        sanPham,
-        imeis
-      });
-    } catch (error) {
-      console.error('Lỗi xem chi tiết sản phẩm:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Lỗi khi xem chi tiết sản phẩm: ' + error.message
-      });
-    }
-  },
-
-  // POST /api/san-pham
-  postCreate: async (req, res) => {
-    try {
-      const { tenMay, danhMuc, hang, giaBan, soThangBH, moTa, hinhAnh } = req.body;
-
-      if (!tenMay || !danhMuc || !giaBan) {
-        return res.status(400).json({
-          success: false,
-          message: 'Vui lòng điền đầy đủ Tên máy, Danh mục và Giá bán'
-        });
-      }
-
-      const newSP = await SanPham.create({
-        tenMay: tenMay.trim(),
-        danhMuc,
-        hang: hang ? hang.trim() : '',
-        giaBan: Number(giaBan),
-        soThangBH: soThangBH ? Number(soThangBH) : 12,
-        moTa: moTa ? moTa.trim() : '',
-        hinhAnh: hinhAnh ? hinhAnh.trim() : ''
-      });
-
-      return res.status(201).json({
-        success: true,
-        message: `Đã thêm sản phẩm "${tenMay}" thành công`,
-        data: newSP
-      });
-    } catch (error) {
-      console.error('Lỗi tạo sản phẩm:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Lỗi khi thêm sản phẩm: ' + error.message
-      });
-    }
-  },
-
-  // PUT /api/san-pham/:id
-  postEdit: async (req, res) => {
-    try {
-      const { tenMay, danhMuc, hang, giaBan, soThangBH, moTa, hinhAnh } = req.body;
-
-      const updated = await SanPham.findByIdAndUpdate(
-        req.params.id,
-        {
-          tenMay: tenMay.trim(),
-          danhMuc,
-          hang: hang ? hang.trim() : '',
-          giaBan: Number(giaBan),
-          soThangBH: soThangBH ? Number(soThangBH) : 12,
-          moTa: moTa ? moTa.trim() : '',
-          hinhAnh: hinhAnh ? hinhAnh.trim() : ''
-        },
-        { new: true }
-      );
-
-      if (!updated) {
-        return res.status(404).json({
-          success: false,
-          message: 'Không tìm thấy sản phẩm để cập nhật'
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'Cập nhật sản phẩm thành công',
-        data: updated
-      });
-    } catch (error) {
-      console.error('Lỗi cập nhật sản phẩm:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Lỗi khi cập nhật sản phẩm: ' + error.message
-      });
-    }
-  },
-
-  // DELETE /api/san-pham/:id
-  delete: async (req, res) => {
-    try {
-      const countImei = await MayImei.countDocuments({ sanPham: req.params.id });
-      if (countImei > 0) {
-        return res.status(400).json({
-          success: false,
-          message: `Không thể xóa: Sản phẩm đang có ${countImei} bản ghi IMEI trong hệ thống`
-        });
-      }
-
-      const deleted = await SanPham.findByIdAndDelete(req.params.id);
-      if (!deleted) {
-        return res.status(404).json({
-          success: false,
-          message: 'Không tìm thấy sản phẩm để xóa'
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'Đã xóa sản phẩm thành công'
-      });
-    } catch (error) {
-      console.error('Lỗi xóa sản phẩm:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Lỗi khi xóa sản phẩm: ' + error.message
-      });
+      return this.handleError(res, error, 'Không thể tải danh sách sản phẩm');
     }
   }
-};
 
-module.exports = sanPhamController;
+  // GET /api/san-pham/:id
+  async getDetail(req, res) {
+    try {
+      const result = await SanPhamService.getSanPhamDetail(req.params.id);
+      return this.sendSuccess(res, result, 'Lấy chi tiết sản phẩm thành công');
+    } catch (error) {
+      return this.handleError(res, error, 'Không thể tải chi tiết sản phẩm');
+    }
+  }
+
+  // POST /api/san-pham
+  async postCreate(req, res) {
+    try {
+      const sp = await SanPhamService.createSanPham(req.body);
+      return this.sendSuccess(res, sp, `Thêm sản phẩm "${sp.tenMay}" thành công`, 201);
+    } catch (error) {
+      return this.handleError(res, error, 'Lỗi khi thêm sản phẩm');
+    }
+  }
+
+  // PUT /api/san-pham/:id
+  async postEdit(req, res) {
+    try {
+      const sp = await SanPhamService.updateSanPham(req.params.id, req.body);
+      return this.sendSuccess(res, sp, `Cập nhật sản phẩm "${sp.tenMay}" thành công`);
+    } catch (error) {
+      return this.handleError(res, error, 'Lỗi khi cập nhật sản phẩm');
+    }
+  }
+
+  // DELETE /api/san-pham/:id
+  async delete(req, res) {
+    try {
+      const result = await SanPhamService.deleteSanPham(req.params.id);
+      return this.sendSuccess(res, result, 'Xóa sản phẩm thành công');
+    } catch (error) {
+      return this.handleError(res, error, 'Lỗi khi xóa sản phẩm');
+    }
+  }
+}
+
+module.exports = new SanPhamController();

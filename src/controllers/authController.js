@@ -1,95 +1,53 @@
-const { NhanVien } = require('../models');
+const BaseController = require('./BaseController');
+const { AuthService } = require('../services');
 
-const authController = {
+class AuthController extends BaseController {
+  constructor() {
+    super();
+    this.postLogin = this.postLogin.bind(this);
+    this.logout = this.logout.bind(this);
+    this.getMe = this.getMe.bind(this);
+  }
+
   // POST /api/auth/login
-  postLogin: async (req, res) => {
+  async postLogin(req, res) {
     try {
       const { tenDangNhap, matKhau } = req.body;
+      const user = await AuthService.login(tenDangNhap, matKhau);
 
-      if (!tenDangNhap || !matKhau) {
-        return res.status(400).json({
-          success: false,
-          message: 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu'
-        });
-      }
+      // Lưu session
+      req.session.user = user;
 
-      const nhanVien = await NhanVien.findOne({ tenDangNhap: tenDangNhap.trim().toLowerCase() });
-      if (!nhanVien) {
-        return res.status(401).json({
-          success: false,
-          message: 'Tên đăng nhập hoặc mật khẩu không chính xác'
-        });
-      }
-
-      if (nhanVien.trangThai === 'Khóa') {
-        return res.status(403).json({
-          success: false,
-          message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản lý.'
-        });
-      }
-
-      const isMatch = await nhanVien.comparePassword(matKhau);
-      if (!isMatch) {
-        return res.status(401).json({
-          success: false,
-          message: 'Tên đăng nhập hoặc mật khẩu không chính xác'
-        });
-      }
-
-      // Lưu thông tin phiên đăng nhập
-      req.session.user = {
-        _id: nhanVien._id,
-        hoTen: nhanVien.hoTen,
-        tenDangNhap: nhanVien.tenDangNhap,
-        vaiTro: nhanVien.vaiTro,
-        sdt: nhanVien.sdt
-      };
-
-      return res.status(200).json({
-        success: true,
-        message: `Chào mừng ${nhanVien.hoTen} (${nhanVien.vaiTro}) quay trở lại!`,
-        user: req.session.user
-      });
+      return this.sendSuccess(
+        res,
+        { user },
+        `Chào mừng ${user.hoTen} (${user.vaiTro}) quay trở lại!`,
+        200,
+        { user }
+      );
     } catch (error) {
-      console.error('Lỗi đăng nhập:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Đã xảy ra lỗi máy chủ trong quá trình xử lý'
-      });
+      return this.handleError(res, error, 'Lỗi trong quá trình đăng nhập');
     }
-  },
+  }
 
   // POST /api/auth/logout
-  logout: (req, res) => {
+  logout(req, res) {
     req.session.destroy((err) => {
       if (err) {
-        console.error('Lỗi đăng xuất:', err);
-        return res.status(500).json({
-          success: false,
-          message: 'Lỗi khi đăng xuất'
-        });
+        return this.sendError(res, 'Lỗi khi đăng xuất', 500);
       }
       res.clearCookie('connect.sid');
-      return res.status(200).json({
-        success: true,
-        message: 'Đã đăng xuất thành công'
-      });
-    });
-  },
-
-  // GET /api/auth/me
-  getMe: (req, res) => {
-    if (req.session && req.session.user) {
-      return res.status(200).json({
-        success: true,
-        user: req.session.user
-      });
-    }
-    return res.status(401).json({
-      success: false,
-      message: 'Chưa đăng nhập'
+      return this.sendSuccess(res, null, 'Đã đăng xuất thành công');
     });
   }
-};
 
-module.exports = authController;
+  // GET /api/auth/me
+  getMe(req, res) {
+    if (req.session && req.session.user) {
+      return this.sendSuccess(res, { user: req.session.user }, 'Thông tin người dùng hiện tại');
+    }
+    return this.sendError(res, 'Chưa đăng nhập', 401);
+  }
+}
+
+module.exports = new AuthController();
