@@ -1,15 +1,18 @@
-# ONE TECH STORE — HỆ THỐNG QUẢN LÝ BÁN HÀNG THEO IMEI
+# ONE TECH STORE — HỆ THỐNG QUẢN LÝ BÁN HÀNG THEO TỪNG IMEI
 
 Dự án hệ thống quản lý bán hàng cho chuỗi cửa hàng điện thoại **One Tech Store**.  
-Đặc thù cốt lõi: **Quản lý hàng hóa theo từng IMEI/Serial vật lý**, không gộp số lượng chung.
+Đặc thù cốt lõi: **Quản lý hàng hóa theo từng IMEI/Serial vật lý riêng biệt**, truy vết chính xác từ Nhập kho $\rightarrow$ Bán hàng POS $\rightarrow$ Xuất kho $\rightarrow$ Tiếp nhận & Hoàn tất Bảo hành.
 
 ---
 
-## 1. Tech Stack & Kiến trúc Hiện đại (Decoupled Architecture)
+## 1. Tech Stack & Kiến trúc Hệ thống (Layered MVC + OOP Service)
+
 - **Backend:** Node.js, Express.js — **RESTful API thuần (trả JSON)**
-- **Database:** MongoDB (sử dụng Mongoose ODM) — mô hình hóa đầy đủ 26 bảng
-- **Frontend:** **100% HTML5 thuần + Vanilla JS (Fetch API) + Bootstrap 5 + Bootstrap Icons** (hoàn toàn tách biệt giao diện, không bị trộn lẫn mã server)
-- **Auth & Phân quyền:** Session + Bcryptjs + Middleware phân quyền theo 6 vai trò (`Quản lý`, `Thủ kho`, `NV bán hàng`, `Thu ngân`, `Kế toán`, `Kỹ thuật`)
+- **Kiến trúc:** Layered MVC + OOP Service Layer (`src/services/` kế thừa `BaseService`, `src/controllers/` kế thừa `BaseController`)
+- **Database:** MongoDB (sử dụng Mongoose ODM) — mô hình hóa đầy đủ 26 Models CSDL
+- **Frontend:** **100% HTML5 thuần + Vanilla JS (Fetch API) + Bootstrap 5 + Bootstrap Icons + CSS Animations** (Giao diện hiện đại, card glassmorphism, responsive drawer, lọc phân quyền tự động theo vai trò)
+- **Auth & Phân quyền RBAC:** Session + Bcryptjs + Middleware phân quyền bảo vệ 6 vai trò: `Quản lý`, `Thủ kho`, `NV bán hàng`, `Thu ngân`, `Kế toán`, `Kỹ thuật`
+- **Kiểm thử tự động:** Bộ test suites tự động kiểm thử nghiệp vụ bán hàng, chống xung đột IMEI (409 Conflict), cấn trừ cọc và phân quyền HTTP.
 
 ---
 
@@ -30,12 +33,21 @@ NODE_ENV=development
 ```
 
 ### Bước 3: Nạp dữ liệu mẫu (Seed Data)
-Chạy script seed để tạo danh mục, sản phẩm, IMEI theo trạng thái và tài khoản cho 6 vai trò:
+Chạy script seed để tạo danh mục, sản phẩm, máy IMEI theo trạng thái và tài khoản cho 6 vai trò:
 ```bash
 npm run seed
 ```
 
-### Bước 4: Khởi động Server
+### Bước 4: Chạy kiểm thử tự động
+```bash
+# Kiểm thử toàn diện 32 test cases module Bán hàng & Bảo hành theo IMEI
+node tests/test_tuan_module.js
+
+# Kiểm thử đăng nhập nhanh 6 vai trò
+node tests/verify_all_logins.js
+```
+
+### Bước 5: Khởi động Server
 - Chế độ phát triển (auto-reload):
   ```bash
   npm run dev
@@ -49,116 +61,109 @@ Truy cập hệ thống tại: **`http://localhost:3000`** (hoặc `http://local
 
 ---
 
-## 3. Danh sách Tài khoản Demo
+## 3. Danh sách Tài khoản Demo (6 Vai trò)
 
-| Vai trò | Tên đăng nhập | Mật khẩu | Quyền hạn chính |
+| Vai trò | Tên đăng nhập | Mật khẩu | Quyền hạn & Phân hệ được truy cập |
 |---|---|---|---|
-| **Quản lý** | `admin` | `admin123` | Toàn quyền hệ thống, quản lý tài khoản nhân viên & phân quyền |
-| **NV bán hàng** | `banhang` | `123456` | Xem sản phẩm, kiểm tra IMEI còn hàng, thêm khách hàng |
-| **Thủ kho** | `thukho` | `123456` | Thêm model SP, nhập máy IMEI (đơn/hàng loạt), quản lý phụ kiện |
-| **Thu ngân** | `thungan` | `123456` | Quản lý khách hàng, xem danh sách sản phẩm & giá bán |
-| **Kế toán** | `ketoan` | `123456` | Quản lý nhà cung cấp, đối soát giá nhập |
-| **Kỹ thuật** | `kythuat` | `123456` | Cập nhật trạng thái IMEI (Bảo hành, Lỗi...), tra cứu bảo hành |
+| **Quản lý** | `admin` | `admin123` | **Toàn quyền**: Dashboard, Bán hàng POS, Bảo hành, Sản phẩm, Quản lý IMEI, Danh mục, Phụ kiện, KH, NCC, Nhân viên. |
+| **NV bán hàng** | `banhang` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Tra cứu & Tiếp nhận Bảo hành, Xem Sản phẩm, Khách hàng. |
+| **Thủ kho** | `thukho` | `123456` | Dashboard, Xem Sản phẩm, Quản lý máy IMEI (Nhập lẻ/hàng loạt), Danh mục, Phụ kiện, Nhà cung cấp. |
+| **Thu ngân** | `thungan` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Xem bảng giá Sản phẩm, Quản lý Khách hàng. |
+| **Kế toán** | `ketoan` | `123456` | Dashboard, Tra cứu Hóa đơn, Xem Sản phẩm, Phụ kiện, Khách hàng, Quản lý Nhà cung cấp. |
+| **Kỹ thuật** | `kythuat` | `123456` | Dashboard, Tra cứu & Tiếp nhận/Sửa chữa Bảo hành, Xuất linh kiện, Cập nhật trạng thái máy IMEI. |
 
-*(Trên giao diện đăng nhập có các nút bấm để tự động điền nhanh tài khoản demo)*
+*(Trên trang đăng nhập có các nút badge để tự động điền nhanh tài khoản demo 1-click).*
 
 ---
 
-## 4. Cấu trúc Thư mục Chuẩn Hiện đại
+## 4. Cấu trúc Thư mục Dự án
 
 ```
 onetech/
-├── .env.example                 # Mẫu cấu hình môi trường
-├── package.json                 # Dependencies & scripts
-├── brief-agent-one-tech-store.md# File brief yêu cầu dự án
-├── one_tech_store_schema.sql    # Bản thiết kế SQL gốc
-├── one_tech_store_mo_ta_bang.md # Mô tả 26 bảng
-├── one_tech_store_erd.dbml      # Sơ đồ quan hệ ERD
-├── README.md                    # Hướng dẫn dự án
+├── .env.example                         # Mẫu cấu hình môi trường
+├── package.json                         # Dependencies & scripts
+├── ke-hoach-lap-trinh-chi-tiet-v2.md    # Kế hoạch phân công 6 thành viên theo ngày (Lộ trình 8 tuần)
+├── PROJECT_WALKTHROUGH.md               # Tài liệu bàn giao kỹ thuật & kiến trúc chi tiết
+├── one_tech_store_schema.sql            # Bản thiết kế SQL gốc
+├── one_tech_store_mo_ta_bang.md         # Mô tả 26 bảng CSDL
+├── one_tech_store_erd.dbml              # Sơ đồ quan hệ ERD
+├── README.md                            # Hướng dẫn dự án (File này)
+├── tests/                               # Bộ kiểm thử tự động
+│   ├── test_tuan_module.js              # Kiểm thử 32 test cases POS, IMEI, Bảo hành, Cấn trừ cọc
+│   ├── test_http_endpoints.js           # Kiểm thử HTTP API & Phân quyền RBAC 403
+│   └── verify_all_logins.js             # Kiểm thử đăng nhập 6 vai trò
 └── src/
-    ├── app.js                   # Cấu hình Express App, REST API & Static Server
-    ├── server.js                # Điểm khởi động server & kết nối DB
+    ├── app.js                           # Cấu hình Express App, REST API & Static Server
+    ├── server.js                        # Điểm khởi động server & kết nối DB
     ├── config/
-    │   └── db.js                # Kết nối MongoDB (Mongoose)
-    ├── models/                  # Đầy đủ 26 Mongoose Models
-    │   ├── NhanVien.js          # Model nhân viên & hash mật khẩu
-    │   ├── SanPham.js           # Model sản phẩm (kèm soThangBH)
-    │   ├── MayImei.js           # Model máy vật lý theo từng số IMEI
-    │   ├── KhachHang.js
-    │   ├── NhaCungCap.js
-    │   ├── DanhMuc.js
-    │   ├── PhuKien.js
-    │   ├── LinhKien.js
-    │   ├── HoaDon.js, CT_HoaDon_May.js, CT_HoaDon_PhuKien.js
-    │   ├── PhieuNhap.js, CT_PhieuNhap.js, PhieuChi.js
+    │   └── db.js                        # Kết nối MongoDB (Mongoose)
+    ├── models/                          # Đầy đủ 26 Mongoose Models
+    │   ├── NhanVien.js, KhachHang.js, NhaCungCap.js
+    │   ├── DanhMuc.js, SanPham.js, MayImei.js, PhuKien.js, LinhKien.js
+    │   ├── HoaDon.js, CT_HoaDon_May.js, CT_HoaDon_PhuKien.js, PhieuXuatKho.js
     │   ├── PhieuBaoHanh.js, CT_PBH_LinhKien.js, PhieuDoiTra.js
-    │   ├── Kho.js, TonKho.js, PhieuXuatKho.js, BienBanKiemKe.js, DieuChinhKho.js
+    │   ├── PhieuNhap.js, CT_PhieuNhap.js, PhieuChi.js
+    │   ├── Kho.js, TonKho.js, BienBanKiemKe.js, DieuChinhKho.js
     │   ├── CongNo.js, PhieuThu.js, DonDatHangTruoc.js, HopDongTraGop.js
-    │   └── index.js             # Export tập trung 26 models
-    ├── middlewares/
-    │   └── auth.js              # requireAuth, requireRole (Trả JSON 401/403)
-    ├── controllers/             # Bộ điều khiển RESTful API (Chỉ trả JSON)
-    │   ├── authController.js    # Login, Logout, Me API
-    │   ├── dashboardController.js
-    │   ├── sanPhamController.js
-    │   ├── mayImeiController.js
-    │   ├── khachHangController.js
-    │   ├── nhaCungCapController.js
-    │   ├── nhanVienController.js
-    │   ├── danhMucController.js
-    │   └── phuKienController.js
-    ├── routes/                  # Định tuyến REST API (/api/...)
-    │   ├── authRoutes.js
-    │   ├── dashboardRoutes.js
-    │   ├── sanPhamRoutes.js
-    │   ├── mayImeiRoutes.js
-    │   ├── khachHangRoutes.js
-    │   ├── nhaCungCapRoutes.js
-    │   ├── nhanVienRoutes.js
-    │   ├── danhMucRoutes.js
-    │   ├── phuKienRoutes.js
+    │   └── index.js                     # Export tập trung 26 models
+    ├── services/                        # [TẦNG OOP SERVICE] Đóng gói toàn bộ logic nghiệp vụ
+    │   ├── BaseService.js               # Base Service Class
+    │   ├── HoaDonService.js             # Bán hàng POS, khóa IMEI, trừ kho, cấn trừ cọc
+    │   ├── BaoHanhService.js            # Tra cứu dòng đời IMEI, tiếp nhận BH, xuất LK, hoàn tất
+    │   ├── MayImeiService.js            # Quản lý vòng đời máy IMEI (nhập lẻ / hàng loạt)
+    │   ├── SanPhamService.js            # Quản lý Model sản phẩm & tính tồn kho
+    │   ├── KhachHangService.js, NhanVienService.js, NhaCungCapService.js
+    │   ├── DanhMucService.js, PhuKienService.js
+    │   ├── AuthService.js, DashboardService.js
+    │   └── index.js                     # Export tập hợp Services
+    ├── controllers/                     # [TẦNG OOP CONTROLLER] Kế thừa BaseController
+    │   ├── BaseController.js            # Base Controller Class (sendSuccess, sendError, handleError)
+    │   ├── authController.js, dashboardController.js
+    │   ├── hoaDonController.js, baoHanhController.js
+    │   ├── sanPhamController.js, mayImeiController.js
+    │   ├── khachHangController.js, nhaCungCapController.js
+    │   ├── nhanVienController.js, danhMucController.js, phuKienController.js
     │   └── index.js
-    └── public/                  # Giao diện Frontend (Tách bạch CSS, JS, HTML Pages)
-        ├── css/                 # 🎨 Toàn bộ stylesheet
-        │   └── style.css        # CSS tùy biến giao diện
-        ├── js/                  # ⚡ Toàn bộ script client (Gọi API & đổ dữ liệu)
-        │   ├── api.js           # Fetch API helper, toast notifications
-        │   ├── layout.js        # Dựng sidebar, navbar & phân quyền menu
-        │   ├── auth.js          # Xử lý đăng nhập
-        │   ├── dashboard.js     # Thống kê dashboard
-        │   ├── banhang.js       # Xử lý POS bán hàng & hóa đơn
-        │   ├── baohanh.js       # Xử lý tra cứu & bảo hành máy
-        │   ├── sanpham.js       # Xử lý sản phẩm
-        │   ├── mayimei.js       # Xử lý IMEI & nhập hàng loạt
-        │   ├── khachhang.js     # Xử lý khách hàng
-        │   ├── nhacungcap.js    # Xử lý nhà cung cấp
-        │   ├── nhanvien.js      # Xử lý nhân viên
-        │   ├── danhmuc.js       # Xử lý danh mục
-        │   └── phukien.js       # Xử lý phụ kiện
-        └── pages/               # 📄 Toàn bộ các trang HTML giao diện
-            ├── index.html       # Trang Dashboard
-            ├── login.html       # Trang Đăng nhập
-            ├── 404.html         # Trang lỗi 404
-            ├── ban-hang/        # Màn hình Bán hàng POS & Hóa đơn
-            ├── bao-hanh/        # Màn hình Tra cứu & Bảo hành
-            ├── san-pham/        # Danh sách, form thêm/sửa, chi tiết SP
-            ├── may-imei/        # Danh sách, form nhập lẻ & hàng loạt IMEI
-            ├── khach-hang/      # Danh sách & form khách hàng
-            ├── nha-cung-cap/    # Danh sách & form nhà cung cấp
-            ├── nhan-vien/       # Danh sách & form nhân viên, phân quyền
-            ├── danh-muc/        # Danh sách & modal danh mục
-            └── phu-kien/        # Danh sách & modal phụ kiện
+    ├── middlewares/
+    │   └── auth.js                      # requireAuth, requireRole (Trả JSON 401/403)
+    ├── routes/                          # Định tuyến REST API (/api/...)
+    │   ├── authRoutes.js, dashboardRoutes.js
+    │   ├── hoaDonRoutes.js, baoHanhRoutes.js
+    │   ├── sanPhamRoutes.js, mayImeiRoutes.js
+    │   ├── khachHangRoutes.js, nhaCungCapRoutes.js
+    │   ├── nhanVienRoutes.js, danhMucRoutes.js, phuKienRoutes.js
+    │   └── index.js
+    └── public/                          # Giao diện Frontend (Tách bạch CSS, JS, HTML Pages)
+        ├── css/                         # 🎨 TOÀN BỘ FILE STYLESHEET
+        │   └── style.css                # CSS thiết kế giao diện, animations & theme
+        ├── js/                          # ⚡ TOÀN BỘ FILE JAVASCRIPT CLIENT
+        │   ├── api.js                   # Fetch API helper, toast notifications
+        │   ├── layout.js                # Dựng sidebar/navbar, phân quyền menu & route guard
+        │   ├── dashboard.js             # Hiệu ứng đếm số & thao tác nhanh Dashboard
+        │   ├── banhang.js               # Logic POS bán hàng, giỏ hàng, in hóa đơn
+        │   ├── baohanh.js               # Logic tra cứu IMEI, lập phiếu BH, xuất linh kiện
+        │   ├── auth.js, sanpham.js, mayimei.js, khachhang.js, nhacungcap.js...
+        └── pages/                       # 📄 TOÀN BỘ CÁC TRANG HTML GIAO DIỆN
+            ├── index.html               # Trang Dashboard tổng quan
+            ├── login.html               # Trang Đăng nhập hiện đại
+            ├── 404.html                 # Trang 404 Not Found
+            ├── ban-hang/index.html      # Màn hình Bán hàng POS & Hóa đơn
+            ├── bao-hanh/index.html      # Màn hình Tra cứu & Bảo hành
+            ├── san-pham/                # Danh sách, form thêm/sửa, chi tiết SP
+            ├── may-imei/                # Danh sách, form nhập lẻ & hàng loạt IMEI
+            ├── khach-hang/              # Danh sách & form khách hàng
+            ├── nha-cung-cap/            # Danh sách & form nhà cung cấp
+            ├── nhan-vien/               # Danh sách & form nhân viên, phân quyền
+            ├── danh-muc/                # Danh sách & modal danh mục
+            └── phu-kien/                # Danh sách & modal phụ kiện
 ```
 
 ---
 
-## 5. Hướng dẫn Phát triển Module tiếp theo (POS Bán hàng, Nhập kho, Bảo hành)
+## 5. Hướng dẫn Phát triển Module mới cho các Thành viên
 
-Để bổ sung một tính năng mới:
-1. **Model:** Các model như `HoaDon`, `PhieuNhap`, `PhieuBaoHanh` đã được khai báo sẵn tại `src/models/`.
-2. **Backend Controller & Route:**
-   - Tạo controller trong `src/controllers/` nhận request và trả `res.json({ success: true, data: ... })`.
-   - Tạo route trong `src/routes/` gắn vào `/api/...` kèm `requireRole(...)`.
-3. **Frontend HTML & JS:**
-   - Tạo file `.html` trong `src/public/` với khung layout cơ bản (sử dụng container `#appSidebar` và `#appNavbar`).
-   - Tạo file `.js` trong `src/public/js/` dùng `api.get()` / `api.post()` để lấy và gửi dữ liệu.
+Khi triển khai các module tiếp theo (Nhập kho của Tuân, Đặt trước/Đổi trả của Việt, Công nợ/Trả góp của An, Thu chi/Kiểm kê của Vượng):
+1. **Service Class (`src/services/`):** Kế thừa `BaseService`, đóng gói toàn bộ business rules, kiểm tra trạng thái IMEI và xử lý atomic transactions.
+2. **Controller Class (`src/controllers/`):** Kế thừa `BaseController`, sử dụng `this.sendSuccess(res, data, message)` và `this.handleError(res, error)`.
+3. **REST Routes (`src/routes/`):** Gắn middleware `requireAuth` và `requireRole([...])` bảo vệ quyền truy cập.
+4. **Frontend (`src/public/`):** Sử dụng `api.get()` / `api.post()` để gọi Backend API và tự động kế thừa layout/sidebar từ `js/layout.js`.
