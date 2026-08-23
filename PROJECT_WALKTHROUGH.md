@@ -90,8 +90,10 @@ onetech/
 ├── README.md                            # Hướng dẫn cài đặt & tài khoản demo
 ├── PROJECT_WALKTHROUGH.md               # Bản Walkthrough kỹ thuật (File này)
 ├── tests/                               # Bộ kiểm thử tự động
-│   ├── test_tuan_module.js              # Kiểm thử 26 test cases luồng Bán hàng, IMEI, Bảo hành
-│   └── test_http_endpoints.js           # Kiểm thử tích hợp HTTP API & RBAC 403 Forbidden
+│   ├── test_tuan_module.js              # Kiểm thử 32 test cases luồng Bán hàng, IMEI, Bảo hành
+│   ├── test_viet_module.js              # Kiểm thử 32 test cases Đặt hàng trước, Cọc & Hoàn cọc
+│   ├── test_http_endpoints.js           # Kiểm thử tích hợp HTTP API & RBAC 403 Forbidden
+│   └── verify_all_logins.js             # Kiểm thử đăng nhập 6 vai trò
 └── src/
     ├── server.js                        # Entry point khởi động HTTP Server (Port 3000)
     ├── app.js                           # Cấu hình Express, Middleware, Static & API Routes
@@ -108,8 +110,10 @@ onetech/
     │   └── index.js                     # Export tập trung 26 models
     ├── services/                        # [TẦNG OOP SERVICE] Đóng gói toàn bộ logic nghiệp vụ
     │   ├── BaseService.js               # Base Class (phân trang, tạo lỗi HTTP chuẩn)
-    │   ├── HoaDonService.js             # Bán hàng theo IMEI, chống xung đột 409, xuất kho
+    │   ├── HoaDonService.js             # Bán hàng theo IMEI, chống xung đột 409, cấn trừ cọc
     │   ├── BaoHanhService.js            # Tiếp nhận, tính hạn BH, tra cứu, xuất linh kiện, hoàn tất
+    │   ├── DatTruocService.js           # Đặt hàng trước, thu tiền cọc, hủy đơn hoàn cọc, gán IMEI
+    │   ├── ThanhToanService.js          # Sổ quỹ & Thu - Chi dùng chung (taoPhieuThu, taoPhieuChi)
     │   ├── MayImeiService.js            # Quản lý vòng đời máy IMEI (nhập lẻ / hàng loạt)
     │   ├── SanPhamService.js            # Quản lý Model máy & tính tồn kho tổng hợp
     │   ├── KhachHangService.js          # Quản lý khách hàng & lịch sử hóa đơn
@@ -126,6 +130,7 @@ onetech/
     │   ├── dashboardController.js       # GET /api/dashboard
     │   ├── hoaDonController.js          # GET /api/hoa-don, GET /:id, POST / (Bán hàng)
     │   ├── baoHanhController.js         # Tra cứu, tiếp nhận, xuất linh kiện, hoàn tất
+    │   ├── datTruocController.js        # Đặt hàng trước, hủy hoàn cọc, gán IMEI
     │   ├── mayImeiController.js         # CRUD máy IMEI
     │   ├── sanPhamController.js         # CRUD sản phẩm
     │   ├── khachHangController.js       # CRUD khách hàng
@@ -135,7 +140,7 @@ onetech/
     │   └── phuKienController.js         # CRUD phụ kiện
     ├── routes/                          # Định tuyến REST API & Gắn RBAC Middleware
     │   ├── authRoutes.js, dashboardRoutes.js
-    │   ├── hoaDonRoutes.js, baoHanhRoutes.js
+    │   ├── hoaDonRoutes.js, baoHanhRoutes.js, datTruocRoutes.js
     │   ├── sanPhamRoutes.js, mayImeiRoutes.js
     │   ├── khachHangRoutes.js, nhaCungCapRoutes.js
     │   ├── nhanVienRoutes.js, danhMucRoutes.js, phuKienRoutes.js
@@ -146,12 +151,13 @@ onetech/
     │   └── seed.js                      # Nạp dữ liệu mẫu 6 vai trò, SP, IMEI, HĐ, BH
     └── public/                          # Frontend tĩnh (Tách bạch CSS, JS, HTML Pages)
         ├── css/                         # 🎨 TOÀN BỘ FILE STYLESHEET
-        │   └── style.css                # CSS thiết kế giao diện
+        │   └── style.css                # CSS thiết kế giao diện, animations & theme
         ├── js/                          # ⚡ TOÀN BỘ FILE JAVASCRIPT CLIENT
         │   ├── api.js                   # Wrapper gọi API, toast notification, helper
         │   ├── layout.js                # Dựng Sidebar/Navbar & phân quyền Menu
         │   ├── banhang.js               # Logic POS bán hàng, giỏ hàng, in hóa đơn
         │   ├── baohanh.js               # Logic tra cứu IMEI, lập phiếu BH, xuất linh kiện
+        │   ├── dattruoc.js              # Logic Đặt trước (Pre-order), thu/hoàn cọc
         │   └── auth.js, dashboard.js, sanpham.js, mayimei.js...
         └── pages/                       # 📄 TOÀN BỘ CÁC TRANG HTML GIAO DIỆN
             ├── index.html               # Dashboard tổng quan
@@ -159,6 +165,7 @@ onetech/
             ├── 404.html                 # Trang 404 Not Found
             ├── ban-hang/index.html      # Màn hình Bán hàng POS theo IMEI & Quản lý HĐ
             ├── bao-hanh/index.html      # Màn hình Tra cứu dòng đời IMEI & Quản lý BH
+            ├── dat-truoc/index.html     # Màn hình Quản lý Đơn đặt trước & Thu cọc
             ├── san-pham/                # index.html, form.html, detail.html
             ├── may-imei/                # index.html, form.html
             ├── khach-hang/              # index.html, form.html
@@ -282,6 +289,23 @@ Tất cả API trả về định dạng JSON thống nhất theo quy ước d�
 * `/api/nha-cung-cap`: `GET`, `GET /:id`, `POST`, `PUT`, `DELETE` nhà cung cấp.
 * `/api/nhan-vien`: `GET`, `GET /:id`, `POST`, `PUT`, `DELETE` nhân viên (Chỉ role `Quản lý`).
 
+### 6.7. Đặt hàng trước (Pre-order) & Thu cọc (`/api/dat-truoc`) — *Module Tô Quốc Việt*
+* `GET /api/dat-truoc`: Lấy danh sách đơn đặt trước (lọc `trangThai`, `maKH`, `tuNgay`, `denNgay`, `search`, phân trang).
+* `GET /api/dat-truoc/:id`: Chi tiết 1 đơn đặt trước kèm danh sách phiếu thu tiền cọc, phiếu chi hoàn cọc và hóa đơn bán liên kết.
+* `POST /api/dat-truoc`: **Tiếp nhận đơn đặt trước & Thu tiền cọc**:
+  - Kiểm tra tính hợp lệ của khách hàng và model sản phẩm.
+  - Tạo bản ghi `DonDatHangTruoc` (`trangThai = 'Da dat coc'`).
+  - Nếu có tiền cọc > 0 $\rightarrow$ tự động gọi `ThanhToanService.taoPhieuThu` sinh `PhieuThu` tiền cọc.
+* `PUT /api/dat-truoc/:id/huy`: **Hủy đơn đặt trước & Hoàn tiền cọc**:
+  - Kiểm tra trạng thái đơn hợp lệ (chặn hủy nếu đã xuất hóa đơn nhận máy).
+  - Đổi trạng thái sang `Da huy`.
+  - Tự động gọi `ThanhToanService.taoPhieuChi` hoàn tiền cọc cho khách.
+* `PUT /api/dat-truoc/:id/trang-thai`: Cập nhật trạng thái đơn và gán IMEI máy vật lý khi hàng về kho.
+
+### 6.8. Sổ quỹ & Thu - Chi dùng chung (`ThanhToanService`) — *Module Tô Quốc Việt & Đinh Đức Vượng*
+* `ThanhToanService.taoPhieuThu({ hoaDon, donDatHang, congNo, soTien, hinhThuc, ghiChu })`: Sinh bản ghi `PhieuThu` dùng chung cho Bán hàng (Tuấn), Đặt cọc (Việt), Trả góp & Công nợ (An).
+* `ThanhToanService.taoPhieuChi({ phieuNhap, donDatHang, maDT, soTien, hinhThuc, lyDo })`: Sinh bản ghi `PhieuChi` dùng chung cho Hoàn cọc (Việt), Nhập kho (Tuân), Đổi trả (Việt).
+
 ---
 
 ## 7. HƯỚNG DẪN DÀNH CHO CÁC THÀNH VIÊN KHI CODE MODULE MỚI
@@ -353,6 +377,8 @@ Khi bạn (hoặc thành viên khác) tiếp tục triển khai các module ti�
 3. **Chạy kiểm thử tự động toàn bộ module:**
    ```bash
    node tests/test_tuan_module.js
+   node tests/test_viet_module.js
+   node tests/verify_all_logins.js
    node tests/test_http_endpoints.js
    ```
 4. **Chạy server phát triển:**
@@ -363,3 +389,4 @@ Khi bạn (hoặc thành viên khác) tiếp tục triển khai các module ti�
    - URL: `http://localhost:3000` (hoặc `http://localhost:3000/login.html`)
    - Bán hàng POS: `http://localhost:3000/ban-hang/`
    - Tra cứu & Bảo hành: `http://localhost:3000/bao-hanh/`
+   - Đặt hàng trước (Pre-order): `http://localhost:3000/dat-truoc/`

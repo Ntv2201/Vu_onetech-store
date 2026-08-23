@@ -33,7 +33,7 @@
 
  [Tuần 3] HIỆN TẠI (Đang triển khai)
    ├─ Module Nhập kho máy IMEI & Phụ kiện (Tuân)
-   ├─ Module Đặt hàng trước Pre-order (Việt)
+   ├─ Module Đặt hàng trước Pre-order [ĐÃ MERGE] (Việt)
    ├─ Hàm tồn kho dùng chung + Nền tảng Công nợ (An)
    ├─ Module Sổ quỹ Thu - Chi dùng chung (Vượng)
    ├─ UI Redesign & Animation Pack toàn diện [ĐÃ MERGE] (Vũ)

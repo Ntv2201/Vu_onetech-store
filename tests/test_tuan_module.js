@@ -140,20 +140,27 @@ async function runTests() {
     // TEST 6: Tiếp nhận Bảo hành cho máy chưa bán -> Bị chặn
     // -------------------------------------------------------------
     console.log('\n--- TEST 6: Chặn tiếp nhận bảo hành cho máy chưa bán ---');
-    const mayChuaBan = await MayImei.findOne({ trangThai: 'Con hang' });
+    const testImeiUnsold = 'TUAN_UNSOLD_' + Date.now().toString().slice(-6);
+    const mayChuaBan = await MayImei.create({
+      imei: testImeiUnsold,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Trắng',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+
     let unsoldErr = null;
-    if (mayChuaBan) {
-      try {
-        await BaoHanhService.tiepNhanBaoHanh({
-          imei: mayChuaBan.imei,
-          moTaLoi: 'Máy lỗi chưa bán',
-          nhanVien: nv._id
-        }, nv);
-      } catch (err) {
-        unsoldErr = err;
-      }
-      assert(unsoldErr !== null && unsoldErr.message.includes('chưa bán'), 'Chặn tiếp nhận bảo hành thành công với thông báo rõ ràng');
+    try {
+      await BaoHanhService.tiepNhanBaoHanh({
+        imei: mayChuaBan.imei,
+        moTaLoi: 'Máy lỗi chưa bán',
+        nhanVien: nv._id
+      }, nv);
+    } catch (err) {
+      unsoldErr = err;
     }
+    assert(unsoldErr !== null && unsoldErr.message.includes('chưa bán'), 'Chặn tiếp nhận bảo hành thành công với thông báo rõ ràng');
 
     // -------------------------------------------------------------
     // TEST 7: Tiếp nhận Bảo hành hợp lệ cho máy đã bán (tiepNhanBaoHanh)
