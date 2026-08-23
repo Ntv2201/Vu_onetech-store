@@ -29,14 +29,7 @@
           <h4 class="fw-bold mb-1">Bảng điều khiển Tổng quan</h4>
           <p class="text-muted small mb-0">Quản lý kho hàng, truy vết IMEI và theo dõi kinh doanh</p>
         </div>
-        <div class="d-flex gap-2">
-          <a href="/may-imei/form.html" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle me-1"></i> Nhập máy / IMEI
-          </a>
-          <a href="/san-pham/form.html" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-phone me-1"></i> Thêm Model SP
-          </a>
-        </div>
+        <div class="d-flex gap-2" id="dashboardQuickActions"></div>
       </div>
 
       <!-- Stats Row -->
@@ -107,11 +100,11 @@
                 <div class="fw-bold fs-5" id="statTotalKhachHang">...</div>
               </div>
             </div>
-            <a href="/khach-hang/index.html" class="btn btn-sm btn-light"><i class="bi bi-arrow-right"></i></a>
+            <a href="/khach-hang/index.html" class="btn btn-sm btn-light" id="linkKhachHang"><i class="bi bi-arrow-right"></i></a>
           </div>
         </div>
 
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-4" id="cardNhaCungCap">
           <div class="card-custom p-3 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
               <div class="stat-icon primary" style="width: 44px; height: 44px; font-size: 1.25rem;">
@@ -122,11 +115,11 @@
                 <div class="fw-bold fs-5" id="statTotalNhaCungCap">...</div>
               </div>
             </div>
-            <a href="/nha-cung-cap/index.html" class="btn btn-sm btn-light"><i class="bi bi-arrow-right"></i></a>
+            <a href="/nha-cung-cap/index.html" class="btn btn-sm btn-light" id="linkNhaCungCap"><i class="bi bi-arrow-right"></i></a>
           </div>
         </div>
 
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-4" id="cardNhanVien">
           <div class="card-custom p-3 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
               <div class="stat-icon success" style="width: 44px; height: 44px; font-size: 1.25rem;">

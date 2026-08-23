@@ -4,8 +4,209 @@
 
 let currentUser = null;
 
+/**
+ * Định nghĩa cấu trúc Menu và Ma trận Phân quyền 6 Vai trò
+ * - Quản lý: Toàn quyền
+ * - NV bán hàng: POS & HĐ, Bảo hành (tiếp nhận/tra cứu), Sản phẩm, Khách hàng
+ * - Thủ kho: Sản phẩm, Quản lý IMEI, Danh mục, Phụ kiện, Nhà cung cấp
+ * - Thu ngân: POS & HĐ, Sản phẩm, Khách hàng
+ * - Kế toán: POS & HĐ (xem/tra cứu), Sản phẩm, Phụ kiện, Khách hàng, Nhà cung cấp
+ * - Kỹ thuật: Tra cứu & Bảo hành, Sản phẩm, Quản lý IMEI (tra cứu/sửa trạng thái)
+ */
+const MENU_SCHEMA = [
+  {
+    category: 'Tổng quan',
+    items: [
+      {
+        path: '/index.html',
+        dataPath: '/index.html',
+        label: 'Dashboard',
+        shortLabel: 'Dashboard',
+        icon: 'bi-grid-1x2',
+        roles: ['Quản lý', 'Thủ kho', 'NV bán hàng', 'Thu ngân', 'Kế toán', 'Kỹ thuật']
+      }
+    ]
+  },
+  {
+    category: 'Bán hàng & Hóa đơn',
+    items: [
+      {
+        path: '/ban-hang/index.html',
+        dataPath: '/ban-hang/',
+        label: 'Bán hàng POS & Hóa đơn',
+        shortLabel: 'Bán hàng POS',
+        icon: 'bi-cart-check',
+        roles: ['Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán']
+      }
+    ]
+  },
+  {
+    category: 'Dịch vụ & Bảo hành',
+    items: [
+      {
+        path: '/bao-hanh/index.html',
+        dataPath: '/bao-hanh/',
+        label: 'Tra cứu & Bảo hành',
+        shortLabel: 'Bảo hành',
+        icon: 'bi-shield-check',
+        roles: ['Quản lý', 'NV bán hàng', 'Kỹ thuật']
+      }
+    ]
+  },
+  {
+    category: 'Quản lý Hàng hóa',
+    items: [
+      {
+        path: '/san-pham/index.html',
+        dataPath: '/san-pham/',
+        label: 'Sản phẩm',
+        shortLabel: 'Sản phẩm',
+        icon: 'bi-phone',
+        roles: ['Quản lý', 'Thủ kho', 'NV bán hàng', 'Thu ngân', 'Kế toán', 'Kỹ thuật']
+      },
+      {
+        path: '/may-imei/index.html',
+        dataPath: '/may-imei/',
+        label: 'Quản lý IMEI/Máy',
+        shortLabel: 'Quản lý IMEI',
+        icon: 'bi-upc-scan',
+        roles: ['Quản lý', 'Thủ kho', 'Kỹ thuật']
+      },
+      {
+        path: '/danh-muc/index.html',
+        dataPath: '/danh-muc/',
+        label: 'Danh mục',
+        shortLabel: 'Danh mục',
+        icon: 'bi-tags',
+        roles: ['Quản lý', 'Thủ kho']
+      },
+      {
+        path: '/phu-kien/index.html',
+        dataPath: '/phu-kien/',
+        label: 'Phụ kiện',
+        shortLabel: 'Phụ kiện',
+        icon: 'bi-headphones',
+        roles: ['Quản lý', 'Thủ kho', 'Kế toán']
+      }
+    ]
+  },
+  {
+    category: 'Đối tác & Khách hàng',
+    items: [
+      {
+        path: '/khach-hang/index.html',
+        dataPath: '/khach-hang/',
+        label: 'Khách hàng',
+        shortLabel: 'Khách hàng',
+        icon: 'bi-people',
+        roles: ['Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán']
+      },
+      {
+        path: '/nha-cung-cap/index.html',
+        dataPath: '/nha-cung-cap/',
+        label: 'Nhà cung cấp',
+        shortLabel: 'Nhà cung cấp',
+        icon: 'bi-truck',
+        roles: ['Quản lý', 'Thủ kho', 'Kế toán']
+      }
+    ]
+  },
+  {
+    category: 'Hệ thống',
+    items: [
+      {
+        path: '/nhan-vien/index.html',
+        dataPath: '/nhan-vien/',
+        label: 'Nhân viên & Phân quyền',
+        shortLabel: 'Nhân viên',
+        icon: 'bi-shield-lock',
+        roles: ['Quản lý']
+      }
+    ]
+  }
+];
+
+function getRoleBadgeClass(vaiTro) {
+  switch (vaiTro) {
+    case 'Quản lý': return 'role-quanly';
+    case 'Thủ kho': return 'role-thukho';
+    case 'NV bán hàng': return 'role-banhang';
+    case 'Thu ngân': return 'role-thungan';
+    case 'Kế toán': return 'role-ketoan';
+    case 'Kỹ thuật': return 'role-kythuat';
+    default: return '';
+  }
+}
+
+/**
+ * Kiểm tra quyền truy cập trực tiếp URL của người dùng
+ */
+function checkPageAccess(user) {
+  const currentPath = window.location.pathname;
+  if (currentPath === '/' || currentPath === '/index.html' || currentPath.includes('login.html') || currentPath.includes('404.html')) {
+    return true;
+  }
+
+  let matchedItem = null;
+  for (const cat of MENU_SCHEMA) {
+    for (const item of cat.items) {
+      if (currentPath.includes(item.dataPath)) {
+        matchedItem = item;
+        break;
+      }
+    }
+    if (matchedItem) break;
+  }
+
+  if (matchedItem && !matchedItem.roles.includes(user.vaiTro)) {
+    alert(`Tài khoản vai trò "${user.vaiTro}" không có quyền truy cập trang này! Hệ thống sẽ chuyển hướng về Trang chủ.`);
+    window.location.href = '/index.html';
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Tự động ẩn các nút hành động (Thêm/Sửa/Xóa) trên trang nếu vai trò không có quyền
+ */
+function applyRoleElementPermissions(user) {
+  if (!user) return;
+
+  // 1. Quét các phần tử có data-roles
+  document.querySelectorAll('[data-roles], [data-allow-roles]').forEach(el => {
+    const rolesAttr = el.getAttribute('data-roles') || el.getAttribute('data-allow-roles') || '';
+    const allowedRoles = rolesAttr.split(',').map(r => r.trim());
+    if (!allowedRoles.includes(user.vaiTro)) {
+      el.style.display = 'none';
+      el.classList.add('d-none');
+    }
+  });
+
+  // 2. Ẩn nút tạo mới trên Header trang tĩnh nếu không có quyền tạo
+  const path = window.location.pathname;
+  const btnCreate = document.getElementById('btnCreateContainer') || document.getElementById('btnThemMoi');
+  
+  if (btnCreate) {
+    if (path.includes('/san-pham/') && !['Quản lý', 'Thủ kho'].includes(user.vaiTro)) {
+      btnCreate.style.display = 'none';
+    } else if (path.includes('/danh-muc/') && !['Quản lý', 'Thủ kho'].includes(user.vaiTro)) {
+      btnCreate.style.display = 'none';
+    } else if (path.includes('/phu-kien/') && !['Quản lý', 'Thủ kho'].includes(user.vaiTro)) {
+      btnCreate.style.display = 'none';
+    } else if (path.includes('/may-imei/') && !['Quản lý', 'Thủ kho'].includes(user.vaiTro)) {
+      btnCreate.style.display = 'none';
+    } else if (path.includes('/khach-hang/') && !['Quản lý', 'NV bán hàng', 'Thu ngân'].includes(user.vaiTro)) {
+      btnCreate.style.display = 'none';
+    } else if (path.includes('/nha-cung-cap/') && !['Quản lý', 'Thủ kho', 'Kế toán'].includes(user.vaiTro)) {
+      btnCreate.style.display = 'none';
+    } else if (path.includes('/nhan-vien/') && !['Quản lý'].includes(user.vaiTro)) {
+      btnCreate.style.display = 'none';
+    }
+  }
+}
+
 async function initLayout() {
-  // Không chạy kiểm tra session trên trang đăng nhập
   const path = window.location.pathname;
   if (path.includes('login.html') || path === '/login') {
     return;
@@ -23,22 +224,36 @@ async function initLayout() {
 
   currentUser = user;
 
-  // 2. Chèn Sidebar & Navbar vào trang
+  // 2. Kiểm tra quyền truy cập trang hiện tại
+  if (!checkPageAccess(currentUser)) {
+    return;
+  }
+
+  // 3. Chèn Sidebar & Navbar vào trang theo đúng quyền
   renderSidebarAndNavbar(currentUser);
 
-  // 3. Highlight menu hiện tại
+  // 4. Highlight menu hiện tại
   highlightCurrentMenu();
+
+  // 5. Ẩn các nút hành động vượt quyền trên trang
+  applyRoleElementPermissions(currentUser);
 }
 
 function renderSidebarAndNavbar(user) {
-  const currentPath = window.location.pathname;
+  // Lọc Menu theo vai trò
+  const filteredNav = MENU_SCHEMA.map(cat => {
+    const allowedItems = cat.items.filter(item => item.roles.includes(user.vaiTro));
+    return {
+      category: cat.category,
+      items: allowedItems
+    };
+  }).filter(cat => cat.items.length > 0);
+
+  const roleClass = getRoleBadgeClass(user.vaiTro);
 
   // Render Sidebar
   const sidebarContainer = document.getElementById('appSidebar');
   if (sidebarContainer) {
-    const isManager = user.vaiTro === 'Quản lý';
-    const isSeller = ['Quản lý', 'NV bán hàng', 'Thu ngân'].includes(user.vaiTro);
-
     sidebarContainer.innerHTML = `
       <aside class="app-sidebar">
         <div class="sidebar-header">
@@ -52,61 +267,15 @@ function renderSidebarAndNavbar(user) {
         </div>
 
         <div class="sidebar-nav">
-          <div class="nav-category">Tổng quan</div>
-          <a href="/index.html" class="sidebar-link" data-path="/index.html" data-label="Dashboard">
-            <i class="bi bi-grid-1x2"></i>
-            <span>Dashboard</span>
-          </a>
-
-          ${isSeller ? `
-            <div class="nav-category">Bán hàng &amp; Hóa đơn</div>
-            <a href="/ban-hang/index.html" class="sidebar-link" data-path="/ban-hang/" data-label="Bán hàng POS">
-              <i class="bi bi-cart-check"></i>
-              <span>Bán hàng POS &amp; Hóa đơn</span>
-            </a>
-          ` : ''}
-
-          <div class="nav-category">Dịch vụ &amp; Bảo hành</div>
-          <a href="/bao-hanh/index.html" class="sidebar-link" data-path="/bao-hanh/" data-label="Bảo hành">
-            <i class="bi bi-shield-check"></i>
-            <span>Tra cứu &amp; Bảo hành</span>
-          </a>
-
-          <div class="nav-category">Quản lý Hàng hóa</div>
-          <a href="/san-pham/index.html" class="sidebar-link" data-path="/san-pham/" data-label="Sản phẩm">
-            <i class="bi bi-phone"></i>
-            <span>Sản phẩm</span>
-          </a>
-          <a href="/may-imei/index.html" class="sidebar-link" data-path="/may-imei/" data-label="Quản lý IMEI">
-            <i class="bi bi-upc-scan"></i>
-            <span>Quản lý IMEI/Máy</span>
-          </a>
-          <a href="/danh-muc/index.html" class="sidebar-link" data-path="/danh-muc/" data-label="Danh mục">
-            <i class="bi bi-tags"></i>
-            <span>Danh mục</span>
-          </a>
-          <a href="/phu-kien/index.html" class="sidebar-link" data-path="/phu-kien/" data-label="Phụ kiện">
-            <i class="bi bi-headphones"></i>
-            <span>Phụ kiện</span>
-          </a>
-
-          <div class="nav-category">Đối tác &amp; Khách hàng</div>
-          <a href="/khach-hang/index.html" class="sidebar-link" data-path="/khach-hang/" data-label="Khách hàng">
-            <i class="bi bi-people"></i>
-            <span>Khách hàng</span>
-          </a>
-          <a href="/nha-cung-cap/index.html" class="sidebar-link" data-path="/nha-cung-cap/" data-label="Nhà cung cấp">
-            <i class="bi bi-truck"></i>
-            <span>Nhà cung cấp</span>
-          </a>
-
-          ${isManager ? `
-            <div class="nav-category">Hệ thống</div>
-            <a href="/nhan-vien/index.html" class="sidebar-link" data-path="/nhan-vien/" data-label="Nhân viên">
-              <i class="bi bi-shield-lock"></i>
-              <span>Nhân viên &amp; Phân quyền</span>
-            </a>
-          ` : ''}
+          ${filteredNav.map(cat => `
+            <div class="nav-category">${escapeHtml(cat.category)}</div>
+            ${cat.items.map(item => `
+              <a href="${item.path}" class="sidebar-link" data-path="${item.dataPath}" data-label="${escapeHtml(item.shortLabel || item.label)}">
+                <i class="bi ${item.icon}"></i>
+                <span>${escapeHtml(item.label)}</span>
+              </a>
+            `).join('')}
+          `).join('')}
         </div>
 
         <div class="sidebar-user">
@@ -116,7 +285,7 @@ function renderSidebarAndNavbar(user) {
             </div>
             <div class="overflow-hidden user-info">
               <div class="text-white small fw-bold text-truncate">${escapeHtml(user.hoTen)}</div>
-              <div class="user-role-badge">${escapeHtml(user.vaiTro)}</div>
+              <div class="user-role-badge ${roleClass}">${escapeHtml(user.vaiTro)}</div>
             </div>
           </div>
           <button id="btnLogout" class="btn btn-sm btn-logout w-100 mt-1" data-label="Đăng xuất" title="Đăng xuất">
@@ -128,7 +297,6 @@ function renderSidebarAndNavbar(user) {
       <!-- Overlay cho mobile -->
       <div class="sidebar-overlay" id="sidebarOverlay"></div>
     `;
-
   }
 
   // Render Navbar
@@ -140,13 +308,13 @@ function renderSidebarAndNavbar(user) {
           <button class="btn btn-light d-lg-none" type="button" id="btnToggleSidebar">
             <i class="bi bi-list fs-5"></i>
           </button>
-          <span class="text-muted small fw-medium">Hệ thống Quản lý Bán hàng theo từng IMEI/Serial</span>
+          <span class="text-muted small fw-medium d-none d-md-inline">Hệ thống Quản lý Bán hàng theo từng IMEI/Serial</span>
         </div>
 
         <div class="d-flex align-items-center gap-3">
           <div class="text-end d-none d-sm-block">
             <div class="fw-semibold small">${escapeHtml(user.hoTen)}</div>
-            <div class="text-muted" style="font-size: 0.75rem;">@${escapeHtml(user.tenDangNhap)}</div>
+            <div class="user-role-badge ${roleClass}" style="font-size: 0.68rem; padding: 0.1rem 0.45rem;">${escapeHtml(user.vaiTro)}</div>
           </div>
         </div>
       </header>

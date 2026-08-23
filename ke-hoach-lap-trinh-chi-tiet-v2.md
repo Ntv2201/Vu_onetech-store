@@ -36,6 +36,7 @@
    ├─ Module Đặt hàng trước Pre-order (Việt)
    ├─ Hàm tồn kho dùng chung + Nền tảng Công nợ (An)
    ├─ Module Sổ quỹ Thu - Chi dùng chung (Vượng)
+   ├─ UI Redesign & Animation Pack toàn diện [ĐÃ MERGE] (Vũ)
    └─ Giao diện Nhập kho & Đặt trước (Vũ)
 
  [Tuần 4] Luồng Nghiệp vụ Nâng cao & Liên kết
@@ -174,9 +175,16 @@
 - [x] Màn hình Bán hàng POS `src/public/ban-hang/index.html` (quét IMEI, giỏ hàng, chọn KH, in HĐ).
 - [x] Màn hình Tra cứu Bảo hành `src/public/bao-hanh/index.html` (timeline dòng đời máy).
 
-#### Tuần 3 [HIỆN TẠI]: Màn hình Nhập kho & Đặt hàng trước
-- [ ] `src/public/nhap-kho/index.html`: Giao diện chọn NCC, bảng nhập nhiều dòng IMEI, paste nhanh danh sách IMEI (nối API của Tuân).
-- [ ] `src/public/dat-truoc/index.html`: Form tiếp nhận đơn đặt trước, thu tiền cọc, danh sách theo dõi đơn hàng (nối API của Việt).
+#### Tuần 3 [HIỆN TẠI]: UI Redesign, Hoạt ảnh & Màn hình Nhập kho - Đặt trước
+- [x] **Nâng cấp Toàn diện UI/UX & Bộ Hoạt ảnh (UI Redesign & Animation Pack):**
+  - [x] Thiết kế bộ Keyframe Animation mượt mà (`fadeInUp`, `slideDown`, `cardIn`, `bgFloat`, `logoSpin`...).
+  - [x] Tính năng **Thu gọn / Mở rộng Sidebar (Collapsible Sidebar)** trên Desktop kèm lưu trạng thái vào `localStorage`.
+  - [x] Hoàn thiện **Mobile Responsive Sidebar** với lớp phủ mờ `sidebar-overlay` và tự động đóng menu khi bấm điều hướng trên di động (< 992px).
+  - [x] Thiết kế lại màn hình **Đăng nhập (`src/public/pages/login.html`)** hiện đại với hiệu ứng gradient nổi bật, card animation và badge chọn nhanh tài khoản demo.
+  - [x] Tích hợp hiệu ứng đếm số tăng dần (`animateCount` với easing `easeOutCubic`) cho toàn bộ thẻ thống kê số liệu trên **Dashboard (`src/public/js/dashboard.js`)**.
+  - [x] **Phân quyền Giao diện Đa tầng (Client-side RBAC & Route Guarding):** Lọc menu Sidebar thông minh cho 6 vai trò, ẩn danh mục rỗng, tùy biến nút Dashboard theo quyền và chặn truy cập URL trái phép.
+- [ ] `src/public/pages/nhap-kho/index.html`: Giao diện chọn NCC, bảng nhập nhiều dòng IMEI, paste nhanh danh sách IMEI (nối API của Tuân).
+- [ ] `src/public/pages/dat-truoc/index.html`: Form tiếp nhận đơn đặt trước, thu tiền cọc, danh sách theo dõi đơn hàng (nối API của Việt).
 
 #### Tuần 4: Màn hình Đổi trả máy & Quản lý Công nợ
 - [ ] `src/public/doi-tra/index.html`: Giao diện tra cứu hóa đơn cũ, chọn IMEI mới cần đổi, hiển thị tiền chênh lệch cần thu thêm/hoàn lại (nối API của Việt).
@@ -198,7 +206,7 @@
 
 #### Tuần 7-8: Tối ưu UI Toàn diện & Hỗ trợ Diễn tập Demo
 - [ ] Kiểm tra responsive trên các độ phân giải màn hình.
-- [ ] Kiểm tra hiển thị menu và các nút bấm theo đúng 6 vai trò người dùng (không để lộ nút chức năng bị cấm).
+- [x] Kiểm tra hiển thị menu và các nút bấm theo đúng 6 vai trò người dùng (không để lộ nút chức năng bị cấm).
 - [ ] Đồng hành cùng nhóm trong các buổi diễn tập demo.
 
 ---

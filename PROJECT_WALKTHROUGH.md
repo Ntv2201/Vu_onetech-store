@@ -56,6 +56,24 @@ Hệ thống được tổ chức theo mô hình **Layered MVC kết hợp OOP S
        [ MONGODB DATABASE ] (mongodb://127.0.0.1:27017/onetech_store)
 ```
 
+### 2.1. Thiết kế Giao diện & Trải nghiệm Người dùng (Frontend UI/UX Redesign)
+* **Giao diện Hiện đại & Hoạt ảnh mượt mà (`src/public/css/style.css`):**
+  - Tích hợp bộ Keyframe Animations đồng bộ (`fadeInUp`, `slideDown`, `cardIn`, `logoSpin`, `bgFloat`...).
+  - Thiết kế card phong cách glassmorphism, shadow đổ bóng tự nhiên, viền tinh tế và màu sắc gradient hiện đại.
+* **Hệ thống Điều hướng Thông minh (`src/public/js/layout.js`):**
+  - **Sidebar Thu gọn / Mở rộng (Collapsible Sidebar):** Hỗ trợ chuyển đổi trạng thái trên Desktop, ghi nhớ trạng thái người dùng qua `localStorage` (`sidebarCollapsed`).
+  - **Mobile Responsive Drawer:** Hỗ trợ menu trượt kèm lớp nền mờ `sidebar-overlay`, tự động đóng sidebar khi người dùng chọn chuyển trang trên thiết bị di động (< 992px).
+* **Màn hình Đăng nhập Trực quan (`src/public/pages/login.html`):**
+  - Hiệu ứng floating background orbs, logo chuyển động xoay tròn nhẹ khi tương tác, form focus nổi bật.
+  - Hàng badge tài khoản demo tương tác cao giúp đăng nhập nhanh 1-click cho 6 vai trò.
+* **Hiệu ứng Đếm số Dashboard (`src/public/js/dashboard.js`):**
+  - Hàm `animateCount(elementId, target, duration)` với easing `easeOutCubic` giúp các chỉ số thống kê (Tổng máy IMEI, Còn hàng, Đã bán, Bảo hành, KH, NCC...) nhảy số trực quan khi tải trang.
+* **Phân quyền Giao diện Đa tầng & Bảo vệ Điều hướng (Client-side RBAC & Route Guarding):**
+  - **Lọc Sidebar thông minh theo 6 vai trò:** Tự động ẩn các menu và danh mục nhóm (`nav-category`) không thuộc quyền hạn để loại bỏ tình trạng rối mắt.
+  - **Tùy biến Quick Actions trên Dashboard:** Tự động hiển thị các nút thao tác đầu trang phù hợp với vai trò (Bán hàng, Thủ kho, Thu ngân, Kỹ thuật, Kế toán, Quản lý).
+  - **Route Guarding:** Chặn và cảnh báo tự động điều hướng về `/index.html` khi người dùng nhập trực tiếp URL trang bị cấm.
+  - **Phân biệt màu sắc vai trò:** Badge người dùng được gán màu sắc trực quan (`role-quanly`, `role-thukho`, `role-banhang`, `role-thungan`, `role-ketoan`, `role-kythuat`).
+
 ---
 
 ## 3. CẤU TRÚC THƯ MỤC DỰ ÁN (PROJECT STRUCTURE)
