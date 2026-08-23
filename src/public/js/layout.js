@@ -37,6 +37,14 @@ const MENU_SCHEMA = [
         shortLabel: 'Bán hàng POS',
         icon: 'bi-cart-check',
         roles: ['Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán']
+      },
+      {
+        path: '/dat-truoc/index.html',
+        dataPath: '/dat-truoc/',
+        label: 'Đặt hàng trước & Cọc',
+        shortLabel: 'Đặt trước (Pre-order)',
+        icon: 'bi-bookmark-star',
+        roles: ['Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán']
       }
     ]
   },

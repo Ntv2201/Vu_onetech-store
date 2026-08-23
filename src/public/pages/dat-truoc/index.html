@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đặt Hàng Trước (Pre-order) - One Tech Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Sidebar Inject Container -->
+  <div id="appSidebar"></div>
+
+  <!-- Main Content Wrapper -->
+  <div class="app-main">
+    <!-- Navbar Inject Container -->
+    <div id="appNavbar"></div>
+
+    <!-- Page Body -->
+    <main class="page-container">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 class="fw-bold mb-1">Quản Lý Đơn Đặt Hàng Trước (Pre-order)</h4>
+          <p class="text-muted small mb-0">Tiếp nhận đặt trước sản phẩm, ghi nhận tiền đặt cọc tự động sinh phiếu thu và xử lý hoàn cọc khi hủy đơn</p>
+        </div>
+      </div>
+
+      <!-- Thống kê nhanh -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="card-custom p-3 border-start border-primary border-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="text-muted small mb-1">Tổng đơn đặt</p>
+                <h4 class="fw-bold mb-0" id="statTotalOrders">0</h4>
+              </div>
+              <div class="bg-primary-subtle text-primary p-2 rounded-circle">
+                <i class="bi bi-bookmark-star fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card-custom p-3 border-start border-warning border-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="text-muted small mb-1">Đang chờ / Đã cọc</p>
+                <h4 class="fw-bold mb-0 text-warning" id="statPendingOrders">0</h4>
+              </div>
+              <div class="bg-warning-subtle text-warning p-2 rounded-circle">
+                <i class="bi bi-hourglass-split fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card-custom p-3 border-start border-success border-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="text-muted small mb-1">Đã nhận hàng</p>
+                <h4 class="fw-bold mb-0 text-success" id="statCompletedOrders">0</h4>
+              </div>
+              <div class="bg-success-subtle text-success p-2 rounded-circle">
+                <i class="bi bi-check-circle fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card-custom p-3 border-start border-danger border-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="text-muted small mb-1">Đã hủy đơn</p>
+                <h4 class="fw-bold mb-0 text-danger" id="statCancelledOrders">0</h4>
+              </div>
+              <div class="bg-danger-subtle text-danger p-2 rounded-circle">
+                <i class="bi bi-x-circle fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nav Tabs -->
+      <ul class="nav nav-pills mb-4" id="preorderTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active fw-semibold" id="tab-list-btn" data-bs-toggle="pill" data-bs-target="#tab-list" type="button" role="tab">
+            <i class="bi bi-card-checklist me-1"></i> Danh Sách Đơn Đặt Trước
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold" id="tab-create-btn" data-bs-toggle="pill" data-bs-target="#tab-create" type="button" role="tab">
+            <i class="bi bi-plus-circle me-1"></i> Tiếp Nhận Đặt Trước Mới
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        <!-- TAB 1: DANH SÁCH ĐƠN ĐẶT TRƯỚC -->
+        <div class="tab-pane fade show active" id="tab-list" role="tabpanel">
+          <div class="card-custom p-3 mb-4">
+            <div class="row g-2 align-items-center">
+              <div class="col-md-4">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" id="searchPreorderInput" class="form-control" placeholder="Tìm theo tên KH, SĐT, tên sản phẩm...">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <select id="filterStatusSelect" class="form-select">
+                  <option value="All">Tất cả trạng thái</option>
+                  <option value="Da dat coc">Đã đặt cọc</option>
+                  <option value="Cho xu ly">Chờ xử lý</option>
+                  <option value="Da co hang">Đã có hàng</option>
+                  <option value="Da nhan hang">Đã nhận hàng</option>
+                  <option value="Da huy">Đã hủy</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button type="button" class="btn btn-outline-primary w-100" id="btnRefreshList">
+                  <i class="bi bi-arrow-clockwise me-1"></i> Làm mới danh sách
+                </button>
+              </div>
+              <div class="col-md-2 text-end">
+                <button type="button" class="btn btn-primary w-100" onclick="document.getElementById('tab-create-btn').click();">
+                  <i class="bi bi-plus-lg me-1"></i> Tạo Đơn
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-custom p-0 overflow-hidden">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3">Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Sản phẩm đặt</th>
+                    <th>Tiền cọc</th>
+                    <th>Hẹn lấy</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th class="text-end pe-3">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="preorderTableBody">
+                  <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                      <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                      Đang tải danh sách đơn đặt trước...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- Phân trang -->
+            <div class="d-flex justify-content-between align-items-center p-3 border-top" id="paginationContainer">
+              <span class="text-muted small" id="paginationInfo">Hiển thị 0 đơn</span>
+              <div class="btn-group btn-group-sm" id="paginationButtons"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: TIẾP NHẬN ĐẶT TRƯỚC MỚI -->
+        <div class="tab-pane fade" id="tab-create" role="tabpanel">
+          <div class="card-custom p-4" style="max-width: 750px; margin: 0 auto;">
+            <h5 class="fw-bold mb-3"><i class="bi bi-bookmark-plus text-primary me-2"></i>Tiếp Nhận Đơn Đặt Hàng Trước</h5>
+            <p class="text-muted small mb-4">Hệ thống sẽ tự động ghi nhận tiền đặt cọc và sinh Phiếu Thu liên kết vào sổ quỹ.</p>
+
+            <form id="createPreorderForm">
+              <!-- Khách hàng -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Khách hàng <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <select id="createKhachHangSelect" class="form-select" required>
+                    <option value="">-- Chọn khách hàng --</option>
+                  </select>
+                  <a href="/khach-hang/form.html" target="_blank" class="btn btn-outline-secondary" title="Thêm khách hàng mới">
+                    <i class="bi bi-person-plus"></i>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Sản phẩm -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Sản phẩm đặt trước <span class="text-danger">*</span></label>
+                <select id="createSanPhamSelect" class="form-select" required>
+                  <option value="">-- Chọn Model sản phẩm --</option>
+                </select>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <!-- Tiền cọc -->
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Số tiền cọc (VNĐ) <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <input type="number" id="createSoTienCoc" class="form-control" min="0" step="50000" placeholder="Ví dụ: 1000000" required>
+                    <span class="input-group-text">đ</span>
+                  </div>
+                  <div class="form-text">Nhập 0 nếu không yêu cầu đặt cọc trước.</div>
+                </div>
+
+                <!-- Hình thức thu tiền -->
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Hình thức thu cọc</label>
+                  <select id="createHinhThucSelect" class="form-select">
+                    <option value="Tien mat">Tiền mặt</option>
+                    <option value="Chuyen khoan">Chuyển khoản</option>
+                    <option value="Quet the">Quẹt thẻ</option>
+                    <option value="Vi dien tu">Ví điện tử</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <!-- Hạn lấy máy -->
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Hạn dự kiến lấy hàng</label>
+                  <input type="date" id="createHanLay" class="form-control">
+                </div>
+
+                <!-- IMEI dự kiến (nếu có sẵn) -->
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Gán số IMEI dự kiến (nếu có)</label>
+                  <input type="text" id="createImei" class="form-control font-monospace" placeholder="Để trống nếu máy chưa về kho">
+                </div>
+              </div>
+
+              <!-- Ghi chú -->
+              <div class="mb-4">
+                <label class="form-label fw-semibold">Ghi chú đơn đặt</label>
+                <textarea id="createGhiChu" class="form-control" rows="2" placeholder="Màu sắc ưu tiên, dung lượng, ghi chú giao hàng..."></textarea>
+              </div>
+
+              <div class="d-flex justify-content-end gap-2">
+                <button type="reset" class="btn btn-light px-4">Xóa nhập lại</button>
+                <button type="submit" class="btn btn-primary px-4 fw-semibold" id="btnSubmitCreatePreorder">
+                  <i class="bi bi-check-circle me-1"></i> Xác Nhận Đặt Trước & Thu Cọc
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL: CHI TIẾT ĐƠN ĐẶT TRƯỚC -->
+<div class="modal fade" id="modalPreorderDetail" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold" id="modalDetailTitle">Chi Tiết Đơn Đặt Trước</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modalDetailContent">
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+      </div>
+      <div class="modal-footer" id="modalDetailFooter">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: HỦY ĐƠN & HOÀN TIỀN CỌC -->
+<div class="modal fade" id="modalCancelPreorder" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Hủy Đơn Đặt Trước & Hoàn Tiền Cọc</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="cancelPreorderForm">
+        <div class="modal-body">
+          <input type="hidden" id="cancelOrderId">
+          <p>Bạn có chắc chắn muốn hủy đơn đặt trước của khách hàng <strong id="cancelCustomerName"></strong>?</p>
+          <div class="alert alert-warning py-2 mb-3">
+            <i class="bi bi-info-circle me-1"></i> Số tiền cọc cần hoàn trả: <strong id="cancelDepositAmount" class="text-danger">0 đ</strong>. Hệ thống sẽ tự động tạo một <strong>Phiếu Chi</strong> vào sổ quỹ.
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Hình thức hoàn tiền</label>
+            <select id="cancelHinhThucSelect" class="form-select">
+              <option value="Tien mat">Tiền mặt</option>
+              <option value="Chuyen khoan">Chuyển khoản</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Lý do hủy đơn <span class="text-danger">*</span></label>
+            <textarea id="cancelLyDoInput" class="form-control" rows="2" placeholder="Ví dụ: Khách đổi ý, hàng về trễ, hết nhu cầu..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Quay lại</button>
+          <button type="submit" class="btn btn-danger fw-semibold" id="btnConfirmCancelPreorder">
+            <i class="bi bi-x-circle me-1"></i> Xác Nhận Hủy & Hoàn Cọc
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CẬP NHẬT TRẠNG THÁI / GÁN IMEI -->
+<div class="modal fade" id="modalUpdateStatus" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold">Cập Nhật Trạng Thái / Gán IMEI</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="updateStatusForm">
+        <div class="modal-body">
+          <input type="hidden" id="updateStatusOrderId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Trạng thái mới</label>
+            <select id="updateStatusSelect" class="form-select">
+              <option value="Da dat coc">Đã đặt cọc</option>
+              <option value="Cho xu ly">Chờ xử lý</option>
+              <option value="Da co hang">Đã có hàng</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Gán số IMEI máy về</label>
+            <input type="text" id="updateImeiInput" class="form-control font-monospace" placeholder="Nhập số IMEI đã về kho (nếu có)">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Ghi chú bổ sung</label>
+            <input type="text" id="updateGhiChuInput" class="form-control" placeholder="Ghi chú thêm...">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary fw-semibold">Lưu Cập Nhật</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script src="/js/dattruoc.js"></script>
+</body>
+</html>

@@ -69,12 +69,9 @@ async function testHttp() {
     throw new Error(`Kỳ vọng 403 nhưng nhận ${roleRes.status}`);
   }
 
-  console.log('\n✅ TẤT CẢ CÁC HTTP API ENDPOINTS ĐÃ TEST THÀNH CÔNG 100%!');
-
-  await mongoose.disconnect();
-  server.close(() => {
-    process.exit(0);
-  });
+  await mongoose.connection.close();
+  server.close();
+  setTimeout(() => process.exit(0), 50);
 }
 
 testHttp().catch(err => {

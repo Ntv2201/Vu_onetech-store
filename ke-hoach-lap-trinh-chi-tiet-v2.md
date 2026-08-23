@@ -253,18 +253,19 @@
 - [x] Nắm rõ cấu trúc Service Layer OOP và mô hình quản lý theo từng IMEI.
 - [x] Tham gia xây dựng kiểm thử RBAC 403 Forbidden cho 6 vai trò.
 
-#### Tuần 3 [HIỆN TẠI]: Xây dựng Phân hệ Đặt hàng trước (Pre-order)
-- [ ] Xây dựng `DatTruocService` kế thừa `BaseService`, `DatTruocController`, route `/api/dat-truoc`.
-- [ ] `POST /api/dat-truoc` — payload: `{ maKH, maSP, soTienCoc, hanLay, ghiChu }`:
+#### Tuần 3 [HIỆN TẠI]: Xây dựng Phân hệ Đặt hàng trước (Pre-order) [ĐÃ HOÀN THÀNH 100%]
+- [x] Xây dựng `DatTruocService` kế thừa `BaseService`, `DatTruocController`, route `/api/dat-truoc`.
+- [x] `POST /api/dat-truoc` — payload: `{ maKH, maSP, soTienCoc, hanLay, ghiChu }`:
   1. Kiểm tra khách hàng và sản phẩm tồn tại.
   2. Tạo bản ghi `DONDATHANGTRUOC` với `TrangThai = 'Da dat coc'`.
   3. Tự động gọi `taoPhieuThu` của Vượng để ghi nhận tiền cọc (loại `DatCoc`).
-- [ ] `GET /api/dat-truoc` — Danh sách đơn đặt trước (lọc `trangThai`, `maKH`, `tuNgay`, `denNgay`, phân trang).
-- [ ] `GET /api/dat-truoc/:id` — Chi tiết đơn đặt trước và phiếu thu cọc kèm theo.
-- [ ] `PUT /api/dat-truoc/:id/huy` — Khách hủy đơn đặt:
+- [x] `GET /api/dat-truoc` — Danh sách đơn đặt trước (lọc `trangThai`, `maKH`, `tuNgay`, `denNgay`, phân trang).
+- [x] `GET /api/dat-truoc/:id` — Chi tiết đơn đặt trước và phiếu thu cọc kèm theo.
+- [x] `PUT /api/dat-truoc/:id/huy` — Khách hủy đơn đặt:
   1. Kiểm tra đơn đang ở `Da dat coc`.
   2. Cập nhật `TrangThai = 'Da huy'`.
   3. Tự động gọi `taoPhieuChi` của Vượng hoàn tiền cọc cho khách.
+- [x] Viết bộ kiểm thử tự động 32/32 test cases PASS (`tests/test_viet_module.js`).
 
 #### Tuần 4: Chuyển đổi Hóa đơn & Xây dựng Phân hệ Đổi trả máy (Trọng tâm)
 - [ ] `PUT /api/dat-truoc/:id/chuyen-hoa-don` — Khách đến nhận máy:
