@@ -2,6 +2,28 @@
  * Module xử lý dữ liệu cho Dashboard
  */
 
+/**
+ * Hiệu ứng đếm số từ 0 lên target
+ * @param {string} elementId - ID phần tử cần cập nhật
+ * @param {number} target - Số đích cần đếm tới
+ * @param {number} duration - Thời gian animation (ms)
+ */
+function animateCount(elementId, target, duration = 800) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const start = 0;
+  const startTime = performance.now();
+  const update = (currentTime) => {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Easing: easeOutCubic
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(start + (target - start) * eased);
+    if (progress < 1) requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await loadDashboardData();
 });
@@ -15,15 +37,16 @@ async function loadDashboardData() {
 
   const { stats, recentMayImei, recentSanPham } = res;
 
-  // 1. Cập nhật thẻ thống kê
-  document.getElementById('statTotalMayImei').textContent = stats.totalMayImei || 0;
-  document.getElementById('statTotalSanPham').textContent = stats.totalSanPham || 0;
-  document.getElementById('statImeiConHang').textContent = stats.imeiConHang || 0;
-  document.getElementById('statImeiDaBan').textContent = stats.imeiDaBan || 0;
-  document.getElementById('statImeiBaoHanh').textContent = stats.imeiBaoHanh || 0;
-  document.getElementById('statTotalKhachHang').textContent = stats.totalKhachHang || 0;
-  document.getElementById('statTotalNhaCungCap').textContent = stats.totalNhaCungCap || 0;
-  document.getElementById('statTotalNhanVien').textContent = stats.totalNhanVien || 0;
+  // 1. Cập nhật thẻ thống kê với hiệu ứng đếm số
+  animateCount('statTotalMayImei', stats.totalMayImei || 0);
+  animateCount('statTotalSanPham', stats.totalSanPham || 0, 600);
+  animateCount('statImeiConHang', stats.imeiConHang || 0, 900);
+  animateCount('statImeiDaBan', stats.imeiDaBan || 0, 700);
+  animateCount('statImeiBaoHanh', stats.imeiBaoHanh || 0, 750);
+  animateCount('statTotalKhachHang', stats.totalKhachHang || 0, 650);
+  animateCount('statTotalNhaCungCap', stats.totalNhaCungCap || 0, 600);
+  animateCount('statTotalNhanVien', stats.totalNhanVien || 0, 600);
+
 
   // 2. Render bảng IMEI mới nhất
   const tableRecentImei = document.getElementById('tableRecentImei');
