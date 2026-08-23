@@ -71,8 +71,16 @@ async function runTests() {
     // TEST 3: Bán hàng theo IMEI & Phụ kiện (taoHoaDonBanHang)
     // -------------------------------------------------------------
     console.log('\n--- TEST 3: Bán hàng theo IMEI & Tự sinh Phiếu xuất kho ---');
-    // Tìm 1 máy còn hàng
-    const mayConHang = await MayImei.findOne({ trangThai: 'Con hang' });
+    // Tạo 1 IMEI mới riêng biệt cho luồng test bán hàng & bảo hành
+    const testImei1 = 'TUAN' + Date.now().toString().slice(-11);
+    const mayConHang = await MayImei.create({
+      imei: testImei1,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Tự Nhiên',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
     const imeiToSell = mayConHang.imei;
     const initialPkStock = pkSac.soLuongTon;
 
@@ -202,15 +210,23 @@ async function runTests() {
     console.log('\n--- TEST 10 (Tuần 3): Bán hàng cấn trừ tiền cọc Đơn đặt trước ---');
     const { DonDatHangTruoc } = require('../src/models');
     
-    // Tìm 1 máy còn hàng để bán kèm cọc
-    const mayChoCoc = await MayImei.findOne({ trangThai: 'Con hang' }).populate('sanPham');
-    const giaMay = (mayChoCoc.sanPham && mayChoCoc.sanPham.giaBan) ? mayChoCoc.sanPham.giaBan : 20000000;
+    // Tạo 1 máy còn hàng để bán kèm cọc
+    const testImei2 = 'TUAN_COC_' + Date.now().toString().slice(-6);
+    const mayChoCoc = await MayImei.create({
+      imei: testImei2,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Xanh',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+    const giaMay = spIphone.giaBan || 29990000;
     const soTienCoc = 2000000;
 
     // Tạo đơn đặt trước mẫu
     const donDatMoi = await DonDatHangTruoc.create({
       khachHang: kh._id,
-      sanPham: mayChoCoc.sanPham._id,
+      sanPham: spIphone._id,
       soTienCoc: soTienCoc,
       hanLay: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       trangThai: 'Cho xu ly',
@@ -238,7 +254,16 @@ async function runTests() {
     // TEST 11 (Tuần 3): Concurrency Lock - Chặn bán đúp đồng thời cùng 1 IMEI
     // -------------------------------------------------------------
     console.log('\n--- TEST 11 (Tuần 3): Concurrency Lock - Chặn bán đúp đồng thời ---');
-    const mayConcurrent = await MayImei.findOne({ trangThai: 'Con hang' });
+    const testImei3 = 'TUAN_LOCK_' + Date.now().toString().slice(-5);
+    const mayConcurrent = await MayImei.create({
+      imei: testImei3,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Đen',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+
     if (mayConcurrent) {
       const imeiConcurrent = mayConcurrent.imei;
       

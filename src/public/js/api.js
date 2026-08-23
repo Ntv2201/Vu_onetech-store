@@ -6,7 +6,16 @@ const API_BASE = '/api';
 
 const api = {
   async request(endpoint, options = {}) {
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+    let url = endpoint;
+    if (!url.startsWith('http')) {
+      if (url.startsWith('/api/')) {
+        // Đã có tiền tố /api/
+      } else if (url.startsWith('/')) {
+        url = `${API_BASE}${url}`;
+      } else {
+        url = `${API_BASE}/${url}`;
+      }
+    }
     
     const headers = {
       'Content-Type': 'application/json',
@@ -74,6 +83,10 @@ const api = {
     return this.request(endpoint, { method: 'DELETE' });
   }
 };
+
+const apiFetch = (endpoint, options = {}) => api.request(endpoint, options);
+window.apiFetch = apiFetch;
+window.api = api;
 
 /**
  * Hiển thị Toast thông báo phía trên góc phải màn hình

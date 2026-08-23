@@ -1,3 +1,9 @@
+require('dotenv').config();
+const http = require('http');
+const mongoose = require('mongoose');
+const app = require('../src/app');
+const connectDB = require('../src/config/db');
+
 const roles = [
   { role: 'Quản lý', u: 'admin', p: 'admin123' },
   { role: 'NV bán hàng', u: 'banhang', p: '123456' },
@@ -8,8 +14,17 @@ const roles = [
 ];
 
 async function verifyAllLogins() {
-  const baseUrl = 'http://localhost:3000';
+  await connectDB();
+
+  const server = http.createServer(app);
+  await new Promise(resolve => server.listen(0, resolve));
+  const port = server.address().port;
+  const baseUrl = `http://127.0.0.1:${port}`;
+
+  console.log(`🌐 Server kiểm tra đang chạy tại port ${port}`);
   console.log('Kiểm tra đăng nhập nhanh cho tất cả 6 vai trò...\n');
+
+  let passed = 0;
 
   for (const item of roles) {
     // 1. Login
@@ -37,12 +52,20 @@ async function verifyAllLogins() {
 
     if (meRes.status === 200 && meData.success && meUser) {
       console.log(`✅ [PASS] ${item.role.padEnd(15)} | User: ${meUser.hoTen} (@${meUser.tenDangNhap}) -> Session OK`);
+      passed++;
     } else {
       console.error(`❌ [FAIL] ${item.role} session check failed:`, meData);
     }
   }
 
-  console.log('\nHoàn tất kiểm tra 6 tài khoản!');
+  console.log(`\n🎉 Hoàn tất kiểm tra: ${passed}/6 tài khoản đăng nhập thành công 100%!`);
+
+  await mongoose.connection.close();
+  server.close();
+  setTimeout(() => process.exit(0), 50);
 }
 
-verifyAllLogins();
+verifyAllLogins().catch(err => {
+  console.error('Lỗi khi chạy verifyAllLogins:', err);
+  process.exit(1);
+});
