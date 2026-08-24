@@ -16,7 +16,10 @@ const {
   CT_HoaDon_PhuKien,
   PhieuXuatKho,
   PhieuBaoHanh,
-  CT_PBH_LinhKien
+  CT_PBH_LinhKien,
+  DonDatHangTruoc,
+  PhieuThu,
+  PhieuChi
 } = require('../models');
 
 const seedData = async () => {
@@ -43,7 +46,10 @@ const seedData = async () => {
       CT_HoaDon_PhuKien.deleteMany({}),
       PhieuXuatKho.deleteMany({}),
       PhieuBaoHanh.deleteMany({}),
-      CT_PBH_LinhKien.deleteMany({})
+      CT_PBH_LinhKien.deleteMany({}),
+      DonDatHangTruoc.deleteMany({}),
+      PhieuThu.deleteMany({}),
+      PhieuChi.deleteMany({})
     ]);
 
     // 1. Tạo Tài khoản Nhân viên (Đủ 6 vai trò)
@@ -278,6 +284,61 @@ const seedData = async () => {
       linhKien: lkManHinh._id,
       soLuong: 1,
       donGia: 0 // Bảo hành miễn phí theo chính sách
+    });
+
+    // 10. Tạo Đơn đặt hàng trước mẫu & Phiếu Thu cọc
+    console.log('[Seed] Đang tạo Đơn đặt trước & Phiếu Thu cọc...');
+    const ddh1 = await DonDatHangTruoc.create({
+      maDonDat: 'DAT20260801',
+      khachHang: khAn._id,
+      sanPham: spIphone15._id,
+      soTienCoc: 2000000,
+      ngayDat: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      trangThai: 'Da dat coc',
+      ghiChu: 'Khách đặt màu Titan Tự Nhiên'
+    });
+
+    // 11. Tạo Phiếu Thu từ hóa đơn và đơn đặt hàng
+    console.log('[Seed] Đang tạo Phiếu Thu & Phiếu Chi Sổ quỹ...');
+    await PhieuThu.create({
+      hoaDon: hd1._id,
+      soTien: hd1.tongTien,
+      hinhThuc: 'Tien mat',
+      ngayThu: hd1.ngayLap,
+      ghiChu: `Thu tiền bán hàng hóa đơn ${hd1.soHD}`
+    });
+
+    await PhieuThu.create({
+      hoaDon: hd2._id,
+      soTien: hd2.tongTien,
+      hinhThuc: 'Chuyen khoan',
+      ngayThu: hd2.ngayLap,
+      ghiChu: `Thu tiền bán hàng hóa đơn ${hd2.soHD}`
+    });
+
+    await PhieuThu.create({
+      donDatHang: ddh1._id,
+      soTien: ddh1.soTienCoc,
+      hinhThuc: 'Chuyen khoan',
+      ngayThu: ddh1.ngayDat,
+      ghiChu: `Thu tiền cọc đơn đặt hàng ${ddh1.maDonDat}`
+    });
+
+    // 12. Tạo Phiếu Chi mẫu (VD: Chi phí vận chuyển / tiền văn phòng)
+    await PhieuChi.create({
+      maDT: 'NCC-APPLE',
+      soTien: 15000000,
+      hinhThuc: 'Chuyen khoan',
+      ngayChi: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      lyDo: 'Chi tạm ứng thanh toán lô hàng phụ kiện và linh kiện'
+    });
+
+    await PhieuChi.create({
+      maDT: 'CHI-PHI-QUY',
+      soTien: 500000,
+      hinhThuc: 'Tien mat',
+      ngayChi: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      lyDo: 'Chi mua văn phòng phẩm và giấy in hóa đơn K80'
     });
 
     console.log('====================================================');

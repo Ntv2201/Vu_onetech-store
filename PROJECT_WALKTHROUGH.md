@@ -302,15 +302,32 @@ Tất cả API trả về định dạng JSON thống nhất theo quy ước d�
   - Tự động gọi `ThanhToanService.taoPhieuChi` hoàn tiền cọc cho khách.
 * `PUT /api/dat-truoc/:id/trang-thai`: Cập nhật trạng thái đơn và gán IMEI máy vật lý khi hàng về kho.
 
-### 6.8. Sổ quỹ & Thu - Chi dùng chung (`ThanhToanService`) — *Module Tô Quốc Việt & Đinh Đức Vượng*
-* `ThanhToanService.taoPhieuThu({ hoaDon, donDatHang, congNo, soTien, hinhThuc, ghiChu })`: Sinh bản ghi `PhieuThu` dùng chung cho Bán hàng (Tuấn), Đặt cọc (Việt), Trả góp & Công nợ (An).
-* `ThanhToanService.taoPhieuChi({ phieuNhap, donDatHang, maDT, soTien, hinhThuc, lyDo })`: Sinh bản ghi `PhieuChi` dùng chung cho Hoàn cọc (Việt), Nhập kho (Tuân), Đổi trả (Việt).
+### 6.8. Phân hệ Thu - Chi & Sổ quỹ Dùng chung (`ThanhToanService`, `ThanhToanController`) — *Module Đinh Đức Vượng*
+* `ThanhToanService.taoPhieuThu({ hoaDon, donDatHang, congNo, soTien, hinhThuc, ghiChu, ngayThu, sessionUser })`:
+  - Kiểm tra số tiền hợp lệ (> 0).
+  - Chuẩn hóa hình thức: `Tien mat`, `Chuyen khoan`, `Quet the`, `Vi dien tu`.
+  - Sinh bản ghi `PhieuThu` dùng chung cho Bán hàng (Tuấn), Đặt cọc (Việt), Trả góp & Công nợ (An).
+* `ThanhToanService.taoPhieuChi({ phieuNhap, donDatHang, maDT, soTien, hinhThuc, lyDo, ngayChi, sessionUser })`:
+  - Kiểm tra số tiền hợp lệ (> 0).
+  - Sinh bản ghi `PhieuChi` dùng chung cho Hoàn cọc (Việt), Nhập kho (Tuân), Đổi trả (Việt).
+* `ThanhToanService.getSoQuy(query)`:
+  - Tính tổng thu, tổng chi, tồn quỹ ròng (`tonQuy = tongThu - tongChi`).
+  - Phân tích chi tiết dòng tiền theo từng hình thức (Tiền mặt tại két, Chuyển khoản ngân hàng, Quẹt thẻ POS, Ví điện tử).
+  - Lấy danh sách giao dịch biến động gần đây sắp xếp theo thời gian mới nhất.
+* **RESTful API Endpoints (`/api/thanh-toan`):**
+  - `GET /api/thanh-toan/so-quy`: Báo cáo sổ quỹ tổng hợp (RBAC: `Quản lý`, `Kế toán`, `Thu ngân`).
+  - `GET /api/thanh-toan/thu`, `POST /api/thanh-toan/thu`, `GET /api/thanh-toan/thu/:id`: Danh sách và lập phiếu thu (RBAC: `Quản lý`, `Thu ngân`, `Kế toán`, `NV bán hàng`).
+  - `GET /api/thanh-toan/chi`, `POST /api/thanh-toan/chi`, `GET /api/thanh-toan/chi/:id`: Danh sách và lập phiếu chi (RBAC: `Quản lý`, `Thu ngân`, `Kế toán`, `Thủ kho`).
+* **Giao diện người dùng (`src/public/pages/so-quy/index.html` & `src/public/js/soquy.js`):**
+  - Thẻ thống kê tài chính trực quan, lọc nhanh theo ngày và hình thức thanh toán.
+  - Tab Biến động dòng tiền, Phiếu Thu, Phiếu Chi, Modal lập phiếu và in chứng từ trực tiếp.
+* **Kiểm thử tự động:** Bộ test `tests/test_vuong_module.js` với 37/37 test cases PASS 100%.
 
 ---
 
 ## 7. HƯỚNG DẪN DÀNH CHO CÁC THÀNH VIÊN KHI CODE MODULE MỚI
 
-Khi bạn (hoặc thành viên khác) tiếp tục triển khai các module tiếp theo (nhập kho của Tuân, công nợ/trả góp của An, thu chi/kiểm kê của Vượng), hãy tuân thủ kiến trúc OOP phân tầng như sau:
+Khi bạn (hoặc thành viên khác) tiếp tục triển khai các module tiếp theo (nhập kho của Tuân, công nợ/trả góp của An, kiểm kê/báo cáo của Vượng), hãy tuân thủ kiến trúc OOP phân tầng như sau:
 
 ### Bước 1: Tạo Service Class (`src/services/`)
 * Kế thừa `BaseService`, đóng gói toàn bộ business rules:
@@ -378,6 +395,7 @@ Khi bạn (hoặc thành viên khác) tiếp tục triển khai các module ti�
    ```bash
    node tests/test_tuan_module.js
    node tests/test_viet_module.js
+   node tests/test_vuong_module.js
    node tests/verify_all_logins.js
    node tests/test_http_endpoints.js
    ```
@@ -390,3 +408,4 @@ Khi bạn (hoặc thành viên khác) tiếp tục triển khai các module ti�
    - Bán hàng POS: `http://localhost:3000/ban-hang/`
    - Tra cứu & Bảo hành: `http://localhost:3000/bao-hanh/`
    - Đặt hàng trước (Pre-order): `http://localhost:3000/dat-truoc/`
+   - Thu - Chi & Sổ quỹ: `http://localhost:3000/so-quy/`

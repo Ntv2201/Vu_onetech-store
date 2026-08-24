@@ -35,7 +35,7 @@
    ├─ Module Nhập kho máy IMEI & Phụ kiện (Tuân)
    ├─ Module Đặt hàng trước Pre-order [ĐÃ MERGE] (Việt)
    ├─ Hàm tồn kho dùng chung + Nền tảng Công nợ (An)
-   ├─ Module Sổ quỹ Thu - Chi dùng chung (Vượng)
+   ├─ Module Sổ quỹ Thu - Chi [ĐÃ MERGE] (Vượng)
    ├─ UI Redesign & Animation Pack toàn diện [ĐÃ MERGE] (Vũ)
    └─ Giao diện Nhập kho & Đặt trước (Vũ)
 
@@ -217,14 +217,16 @@
 - [x] Xác nhận các model `PhieuThu`, `PhieuChi`, `BienBanKiemKe`, `DieuChinhKho`.
 - [x] CRUD cơ bản Danh mục (`/api/danh-muc`) & Phụ kiện (`/api/phu-kien`).
 
-#### Tuần 3 [HIỆN TẠI]: Module Lõi Thu - Chi & Sổ quỹ Dùng chung
-- [ ] Xây dựng `ThanhToanService` kế thừa `BaseService`, `ThanhToanController`, route `/api/thanh-toan`.
-- [ ] **Export 2 hàm dùng chung cho cả nhóm:**
-  - `taoPhieuThu({ soHD, maDat, maCN, maDoiTra, soTien, phuongThuc, nguoiNop, sessionUser })`
-  - `taoPhieuChi({ maPN, maDT, maHoanCoc, maDoiTra, soTien, lyDo, nguoiNhan, sessionUser })`
+#### Tuần 3 [HIỆN TẠI]: Module Lõi Thu - Chi & Sổ quỹ Dùng chung [ĐÃ HOÀN THÀNH 100%]
+- [x] Xây dựng `ThanhToanService` kế thừa `BaseService`, `ThanhToanController`, route `/api/thanh-toan`.
+- [x] **Export 2 hàm dùng chung cho cả nhóm:**
+  - `taoPhieuThu({ hoaDon, donDatHang, congNo, soTien, hinhThuc, ghiChu, ngayThu, sessionUser })`
+  - `taoPhieuChi({ phieuNhap, donDatHang, maDT, soTien, hinhThuc, lyDo, ngayChi, sessionUser })`
   - *(Cho phép Tuân nhập kho, Việt đặt cọc/đổi trả, An thu trả góp/công nợ gọi lại mà không bị trùng code)*.
-- [ ] `POST /api/thanh-toan/thu`, `POST /api/thanh-toan/chi`.
-- [ ] `GET /api/thanh-toan/so-quy?tuNgay=&denNgay=` — Tính tổng thu, tổng chi, số dư tồn quỹ theo khoảng thời gian.
+- [x] `POST /api/thanh-toan/thu`, `POST /api/thanh-toan/chi`.
+- [x] `GET /api/thanh-toan/so-quy?tuNgay=&denNgay=` — Tính tổng thu, tổng chi, số dư tồn quỹ theo khoảng thời gian và phân loại theo hình thức thanh toán.
+- [x] Xây dựng giao diện Sổ Quỹ `src/public/pages/so-quy/index.html` và `src/public/js/soquy.js`.
+- [x] Viết bộ kiểm thử tự động 37/37 test cases PASS ([`tests/test_vuong_module.js`](tests/test_vuong_module.js)).
 
 #### Tuần 4: Phân hệ Kiểm kê kho & Xử lý Lệch IMEI
 - [ ] `POST /api/kiem-ke` — payload: `{ maKho, danhSachIMEIThucTe: [...] }`:

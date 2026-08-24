@@ -49,6 +49,19 @@ const MENU_SCHEMA = [
     ]
   },
   {
+    category: 'Tài chính & Sổ quỹ',
+    items: [
+      {
+        path: '/so-quy/index.html',
+        dataPath: '/so-quy/',
+        label: 'Thu - Chi & Sổ quỹ',
+        shortLabel: 'Sổ quỹ',
+        icon: 'bi-wallet2',
+        roles: ['Quản lý', 'Thu ngân', 'Kế toán']
+      }
+    ]
+  },
+  {
     category: 'Dịch vụ & Bảo hành',
     items: [
       {
