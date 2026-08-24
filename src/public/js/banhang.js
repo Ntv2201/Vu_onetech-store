@@ -17,15 +17,67 @@ let allKhachHangs = [];
 
 let preOrderModalInstance = null;
 
+/**
+ * Hiệu ứng âm thanh POS khi quét mã vạch Barcode IMEI
+ */
+function playBeep(type = 'success') {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    if (type === 'success') {
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // Âm cao A5
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+    } else {
+      osc.frequency.setValueAtTime(220, ctx.currentTime); // Âm cảnh báo
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    }
+  } catch (e) {
+    // AudioContext blocked before user interaction
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await initPosPage();
   await initInvoiceListPage();
+  await initReportsTab();
+  initKeyboardShortcuts();
 });
+
+function initKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F2') {
+      e.preventDefault();
+      const selectKh = document.getElementById('selectKhachHang');
+      if (selectKh) selectKh.focus();
+    } else if (e.key === 'F4') {
+      e.preventDefault();
+      const btnSubmit = document.getElementById('btnSubmitOrder');
+      if (btnSubmit && !btnSubmit.disabled) btnSubmit.click();
+    } else if (e.key === 'F9') {
+      e.preventDefault();
+      const btnPrint = document.getElementById('btnPrintInvoice');
+      if (btnPrint) btnPrint.click();
+    }
+  });
+}
 
 async function initPosPage() {
   await loadPosData();
   initPreOrderModal();
   renderCart();
+
+  // Discount input change
+  const inputDiscount = document.getElementById('inputSoTienGiam');
+  if (inputDiscount) {
+    inputDiscount.addEventListener('input', () => renderCart());
+  }
 
   // Search & Filter IMEI
   const searchInput = document.getElementById('searchImeiInput');
@@ -173,6 +225,7 @@ function addImeiToCart(imei) {
     dungLuong: may.dungLuong
   });
 
+  playBeep('success');
   renderCart();
   filterImeiDisplay();
   showToast(`Đã thêm máy IMEI ${imei} vào giỏ`, 'success');
@@ -189,6 +242,7 @@ function addPhuKienToCart(pkId) {
   if (!pk) return;
 
   if (pk.soLuongTon <= 0) {
+    playBeep('error');
     showToast(`Phụ kiện "${pk.tenPK}" đã hết hàng trong kho!`, 'danger');
     return;
   }
@@ -196,6 +250,7 @@ function addPhuKienToCart(pkId) {
   const exist = cart.phuKiens.find(p => p._id === pkId);
   if (exist) {
     if (exist.soLuong >= pk.soLuongTon) {
+      playBeep('error');
       showToast(`Không thể thêm! Tồn kho chỉ còn ${pk.soLuongTon}`, 'warning');
       return;
     }
@@ -210,6 +265,7 @@ function addPhuKienToCart(pkId) {
     });
   }
 
+  playBeep('success');
   renderCart();
   showToast(`Đã thêm phụ kiện "${pk.tenPK}"`, 'success');
 }
@@ -243,9 +299,11 @@ function renderCart() {
     document.getElementById('totalAccessoryPrice').innerText = '0 đ';
     document.getElementById('totalGrandPrice').innerText = '0 đ';
     
-    // Ẩn dòng trừ cọc nếu giỏ trống
+    // Ẩn dòng trừ cọc & giảm giá nếu giỏ trống
     const depRow = document.getElementById('depositDeductionRow');
     if (depRow) depRow.classList.add('d-none');
+    const discRow = document.getElementById('discountDeductionRow');
+    if (discRow) discRow.classList.add('d-none');
     return;
   }
 
@@ -305,20 +363,32 @@ function renderCart() {
   document.getElementById('totalAccessoryPrice').innerText = formatCurrency(totalPk);
 
   const rawGrandTotal = totalMay + totalPk;
-  let finalPayment = rawGrandTotal;
+  const inputDiscount = document.getElementById('inputSoTienGiam');
+  const discount = Math.max(0, parseInt(inputDiscount ? inputDiscount.value : 0) || 0);
+
+  // Hiển thị giảm giá
+  const discountRow = document.getElementById('discountDeductionRow');
+  const discountPriceEl = document.getElementById('discountDeductionPrice');
+  if (discount > 0) {
+    if (discountRow) discountRow.classList.remove('d-none');
+    if (discountPriceEl) discountPriceEl.innerText = `-${formatCurrency(discount)}`;
+  } else {
+    if (discountRow) discountRow.classList.add('d-none');
+  }
 
   // Tính cấn trừ tiền cọc (nếu có đơn đặt trước được liên kết)
   const depositRow = document.getElementById('depositDeductionRow');
   const depositPriceEl = document.getElementById('depositDeductionPrice');
+  let tienCocDaTru = 0;
   if (selectedPreOrder && selectedPreOrder.soTienCoc > 0) {
-    const tienCocDaTru = Math.min(selectedPreOrder.soTienCoc, rawGrandTotal);
-    finalPayment = Math.max(0, rawGrandTotal - tienCocDaTru);
+    tienCocDaTru = Math.min(selectedPreOrder.soTienCoc, rawGrandTotal);
     if (depositRow) depositRow.classList.remove('d-none');
     if (depositPriceEl) depositPriceEl.innerText = `-${formatCurrency(tienCocDaTru)}`;
   } else {
     if (depositRow) depositRow.classList.add('d-none');
   }
 
+  const finalPayment = Math.max(0, rawGrandTotal - tienCocDaTru - discount);
   document.getElementById('totalGrandPrice').innerText = formatCurrency(finalPayment);
 }
 
@@ -462,6 +532,8 @@ async function handleCreateOrder() {
   const khachHang = document.getElementById('selectKhachHang')?.value || null;
   const hinhThucThanhToan = document.getElementById('selectPaymentMethod')?.value || 'Da thanh toan';
   const ghiChu = document.getElementById('inputGhiChu')?.value || '';
+  const inputDiscount = document.getElementById('inputSoTienGiam');
+  const soTienGiam = Math.max(0, parseInt(inputDiscount ? inputDiscount.value : 0) || 0);
 
   const payload = {
     khachHang,
@@ -473,6 +545,7 @@ async function handleCreateOrder() {
     })),
     hinhThucThanhToan,
     ghiChu,
+    soTienGiam,
     donDatHangId: selectedPreOrder ? selectedPreOrder._id : null
   };
 
@@ -483,23 +556,27 @@ async function handleCreateOrder() {
   const res = await api.post('/hoa-don', payload);
 
   btn.disabled = false;
-  btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> HOÀN TẤT BÁN HÀNG & XUẤT KHO`;
+  btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> HOÀN TẤT BÁN HÀNG & XUẤT KHO [F4]`;
 
   if (!res.success) {
+    playBeep('error');
     showToast(res.message || 'Lỗi khi tạo hóa đơn', 'danger');
     return;
   }
 
+  playBeep('success');
   showToast(res.message || 'Bán hàng thành công!', 'success');
 
-  // Reset giỏ và đơn cọc
+  // Reset giỏ, giảm giá và đơn cọc
   cart = { imeis: [], phuKiens: [] };
+  if (inputDiscount) inputDiscount.value = '0';
   clearPreOrder();
   renderCart();
 
   // Reload data
   await loadPosData();
   await loadInvoiceList();
+  await loadReportsData();
 
   // Mở modal xem và in hóa đơn
   if (res.data && res.data.hoaDon) {
@@ -558,7 +635,7 @@ async function loadInvoiceList() {
   tbody.innerHTML = hoaDons.map(hd => {
     const khName = hd.khachHang ? hd.khachHang.hoTen : 'Khách vãng lai';
     const nvName = hd.nhanVien ? hd.nhanVien.hoTen : 'Hệ thống';
-    const tienThucThu = hd.soTienThanhToan !== undefined ? hd.soTienThanhToan : (hd.tongTien - (hd.tienCocDaTru || 0));
+    const tienThucThu = hd.soTienThanhToan !== undefined ? hd.soTienThanhToan : (hd.tongTien - (hd.tienCocDaTru || 0) - (hd.soTienGiam || 0));
     return `
       <tr>
         <td class="fw-bold font-monospace text-primary">${hd.soHD}</td>
@@ -567,7 +644,10 @@ async function loadInvoiceList() {
         <td>${formatDate(hd.ngayLap)}</td>
         <td class="text-end fw-bold text-success">
           ${formatCurrency(tienThucThu)}
-          ${hd.tienCocDaTru > 0 ? `<div class="text-muted" style="font-size: 0.7rem;">(Gốc: ${formatCurrency(hd.tongTien)} - Cọc: ${formatCurrency(hd.tienCocDaTru)})</div>` : ''}
+          ${(hd.tienCocDaTru > 0 || hd.soTienGiam > 0) ? `
+            <div class="text-muted" style="font-size: 0.7rem;">
+              (Gốc: ${formatCurrency(hd.tongTien)}${hd.soTienGiam > 0 ? ` - Giảm: ${formatCurrency(hd.soTienGiam)}` : ''}${hd.tienCocDaTru > 0 ? ` - Cọc: ${formatCurrency(hd.tienCocDaTru)}` : ''})
+            </div>` : ''}
         </td>
         <td><span class="badge bg-success">${escapeHtml(hd.trangThai)}</span></td>
         <td class="text-end">
@@ -594,7 +674,8 @@ async function viewInvoiceDetail(id) {
   const kh = hoaDon.khachHang || {};
   const nv = hoaDon.nhanVien || {};
   const tienCocDaTru = hoaDon.tienCocDaTru || 0;
-  const soTienThanhToan = hoaDon.soTienThanhToan !== undefined ? hoaDon.soTienThanhToan : (hoaDon.tongTien - tienCocDaTru);
+  const soTienGiam = hoaDon.soTienGiam || 0;
+  const soTienThanhToan = hoaDon.soTienThanhToan !== undefined ? hoaDon.soTienThanhToan : (hoaDon.tongTien - tienCocDaTru - soTienGiam);
 
   content.innerHTML = `
     <div class="p-3 border rounded mb-3 bg-light">
@@ -683,6 +764,12 @@ async function viewInvoiceDetail(id) {
         <span class="text-muted">Tổng giá trị đơn hàng:</span>
         <span class="fw-semibold">${formatCurrency(hoaDon.tongTien)}</span>
       </div>
+      ${soTienGiam > 0 ? `
+        <div class="d-flex justify-content-between mb-1 text-warning">
+          <span>Chiết khấu / Giảm giá:</span>
+          <span class="fw-bold">-${formatCurrency(soTienGiam)}</span>
+        </div>
+      ` : ''}
       ${tienCocDaTru > 0 ? `
         <div class="d-flex justify-content-between mb-1 text-success">
           <span>Tiền cọc đã trừ (Đơn đặt trước):</span>
@@ -698,9 +785,93 @@ async function viewInvoiceDetail(id) {
   modal.show();
 }
 
+/* =========================================================================
+   TAB 3: BÁO CÁO DOANH SỐ & KPI NHÂN VIÊN (TUẦN 5-6 - NGUYỄN QUANG TUẤN)
+========================================================================= */
+
+async function initReportsTab() {
+  const btnReload = document.getElementById('btnReloadStaffKpi');
+  if (btnReload) {
+    btnReload.addEventListener('click', loadReportsData);
+  }
+
+  // Load khi mở tab
+  const reportsTabBtn = document.getElementById('tab-reports-tab');
+  if (reportsTabBtn) {
+    reportsTabBtn.addEventListener('shown.bs.tab', loadReportsData);
+  }
+}
+
+async function loadReportsData() {
+  await Promise.all([
+    loadStaffKpi(),
+    loadTopProducts()
+  ]);
+}
+
+async function loadStaffKpi() {
+  const tbody = document.getElementById('staffKpiTableBody');
+  if (!tbody) return;
+
+  const res = await api.get('/hoa-don/bao-cao/doanh-so-nhan-vien');
+  if (!res.success) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger small">${res.message || 'Lỗi tải KPI'}</td></tr>`;
+    return;
+  }
+
+  const list = res.data || [];
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted small">Chưa có dữ liệu bán hàng</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(item => `
+    <tr>
+      <td>
+        <div class="fw-semibold small">${escapeHtml(item.hoTen)}</div>
+        <div class="text-muted" style="font-size: 0.7rem;">@${escapeHtml(item.tenDangNhap)}</div>
+      </td>
+      <td><span class="badge bg-secondary-subtle text-secondary border" style="font-size: 0.7rem;">${escapeHtml(item.vaiTro)}</span></td>
+      <td class="text-center fw-bold">${item.soHoaDon}</td>
+      <td class="text-end fw-bold text-success">${formatCurrency(item.tongDoanhThu)}</td>
+      <td class="text-end small text-muted">${formatCurrency(item.giaTriTrungBinh)}</td>
+    </tr>
+  `).join('');
+}
+
+async function loadTopProducts() {
+  const tbody = document.getElementById('topProductsTableBody');
+  if (!tbody) return;
+
+  const res = await api.get('/hoa-don/bao-cao/top-san-pham');
+  if (!res.success) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger small">${res.message || 'Lỗi tải top SP'}</td></tr>`;
+    return;
+  }
+
+  const list = res.data || [];
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted small">Chưa có dữ liệu</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map((item, idx) => `
+    <tr>
+      <td class="fw-bold text-muted">${idx + 1}</td>
+      <td>
+        <div class="fw-semibold small">${escapeHtml(item.tenMay)}</div>
+        <span class="badge bg-light text-dark border" style="font-size: 0.65rem;">${escapeHtml(item.hang || '')}</span>
+      </td>
+      <td class="text-center fw-bold text-primary">${item.soLuongBan}</td>
+      <td class="text-end fw-semibold small text-success">${formatCurrency(item.doanhThu)}</td>
+    </tr>
+  `).join('');
+}
+
 window.addImeiToCart = addImeiToCart;
 window.removeImeiFromCart = removeImeiFromCart;
 window.addPhuKienToCart = addPhuKienToCart;
 window.changePhuKienQty = changePhuKienQty;
 window.viewInvoiceDetail = viewInvoiceDetail;
 window.selectPreOrder = selectPreOrder;
+window.loadReportsData = loadReportsData;

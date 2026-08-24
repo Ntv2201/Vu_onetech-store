@@ -6,6 +6,7 @@ const hoaDonSchema = new mongoose.Schema({
   nhanVien: { type: mongoose.Schema.Types.ObjectId, ref: 'NhanVien', required: true },
   donDatHang: { type: mongoose.Schema.Types.ObjectId, ref: 'DonDatHangTruoc' },
   tienCocDaTru: { type: Number, default: 0, min: 0 },
+  soTienGiam: { type: Number, default: 0, min: 0 },
   soTienThanhToan: { type: Number, default: 0, min: 0 },
   ngayLap: { type: Date, default: Date.now },
   tongTien: { type: Number, required: true, default: 0, min: 0 },

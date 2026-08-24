@@ -42,6 +42,16 @@
 
     <!-- Page Body -->
     <main class="page-container">
+      <!-- Shortcut Banner -->
+      <div class="d-flex flex-wrap gap-2 mb-3 align-items-center bg-white p-2 rounded-3 border small text-muted shadow-sm">
+        <span class="fw-bold text-dark"><i class="bi bi-keyboard me-1 text-primary"></i>Phím tắt POS:</span>
+        <span class="badge bg-secondary-subtle text-secondary border font-monospace">F2: Chọn Khách hàng</span>
+        <span class="badge bg-secondary-subtle text-secondary border font-monospace">F4: Hoàn tất đơn</span>
+        <span class="badge bg-secondary-subtle text-secondary border font-monospace">F9: In hóa đơn</span>
+        <span class="badge bg-secondary-subtle text-secondary border font-monospace">Esc: Đóng cửa sổ</span>
+        <span class="ms-auto badge bg-success-subtle text-success border"><i class="bi bi-volume-up me-1"></i>Âm thanh POS: BẬT</span>
+      </div>
+
       <!-- Nav Tabs -->
       <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
         <li class="nav-item" role="presentation">
@@ -52,6 +62,11 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link fw-semibold" id="tab-invoices-tab" data-bs-toggle="pill" data-bs-target="#tab-invoices" type="button" role="tab">
             <i class="bi bi-receipt me-1"></i> Danh sách Hóa đơn & Xuất kho
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold" id="tab-reports-tab" data-bs-toggle="pill" data-bs-target="#tab-reports" type="button" role="tab">
+            <i class="bi bi-graph-up-arrow me-1"></i> Doanh số & KPI Nhân viên
           </button>
         </li>
       </ul>
@@ -163,6 +178,18 @@
                   </div>
                 </div>
 
+                <!-- Giảm giá / Chiết khấu -->
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold d-flex justify-content-between">
+                    <span><i class="bi bi-tag-fill text-warning me-1"></i>Chiết khấu / Giảm giá (VNĐ)</span>
+                    <span class="text-muted" style="font-size: 0.75rem;">Nhập 0 nếu không giảm</span>
+                  </label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="inputSoTienGiam" class="form-control" placeholder="0" min="0" value="0">
+                    <span class="input-group-text">đ</span>
+                  </div>
+                </div>
+
                 <!-- Tổng tiền & Cấn trừ cọc -->
                 <div class="bg-light p-3 rounded mb-3">
                   <div class="d-flex justify-content-between mb-1">
@@ -172,6 +199,10 @@
                   <div class="d-flex justify-content-between mb-1">
                     <span class="text-muted small">Tổng tiền phụ kiện:</span>
                     <span id="totalAccessoryPrice" class="fw-semibold">0 đ</span>
+                  </div>
+                  <div id="discountDeductionRow" class="d-flex justify-content-between mb-1 text-warning d-none">
+                    <span class="small font-monospace"><i class="bi bi-tag me-1"></i>Chiết khấu giảm giá:</span>
+                    <span id="discountDeductionPrice" class="fw-bold">-0 đ</span>
                   </div>
                   <div id="depositDeductionRow" class="d-flex justify-content-between mb-1 text-success d-none">
                     <span class="small font-monospace"><i class="bi bi-dash-circle me-1"></i>Đã cấn trừ tiền cọc:</span>
@@ -185,7 +216,7 @@
                 </div>
 
                 <button id="btnSubmitOrder" class="btn btn-primary w-100 py-2 fw-semibold" disabled>
-                  <i class="bi bi-check-circle me-1"></i> HOÀN TẤT BÁN HÀNG & XUẤT KHO
+                  <i class="bi bi-check-circle me-1"></i> HOÀN TẤT BÁN HÀNG & XUẤT KHO [F4]
                 </button>
               </div>
             </div>
@@ -243,6 +274,63 @@
             </div>
           </div>
         </div>
+
+        <!-- TAB 3: BÁO CÁO DOANH SỐ & KPI NHÂN VIÊN -->
+        <div class="tab-pane fade" id="tab-reports" role="tabpanel">
+          <div class="row g-3 mb-4">
+            <div class="col-lg-7">
+              <div class="card-custom p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="fw-bold mb-0"><i class="bi bi-person-badge text-primary me-2"></i>Bảng Doanh Số & KPI Nhân Viên Bán Hàng</h6>
+                  <button id="btnReloadStaffKpi" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Làm mới</button>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Nhân viên</th>
+                        <th>Vai trò</th>
+                        <th class="text-center">Số HĐ</th>
+                        <th class="text-end">Tổng doanh số</th>
+                        <th class="text-end">TB / Đơn</th>
+                      </tr>
+                    </thead>
+                    <tbody id="staffKpiTableBody">
+                      <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">Đang tải dữ liệu KPI...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-5">
+              <div class="card-custom p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="fw-bold mb-0"><i class="bi bi-fire text-danger me-2"></i>Top Model Điện Thoại Bán Chạy</h6>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Model máy</th>
+                        <th class="text-center">Đã bán</th>
+                        <th class="text-end">Doanh số</th>
+                      </tr>
+                    </thead>
+                    <tbody id="topProductsTableBody">
+                      <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">Đang tải dữ liệu...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -260,9 +348,9 @@
         <!-- Dynamic content -->
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-        <button type="button" class="btn btn-primary" onclick="window.print()">
-          <i class="bi bi-printer me-1"></i> In Hóa Đơn
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng [Esc]</button>
+        <button type="button" id="btnPrintInvoice" class="btn btn-primary" onclick="window.print()">
+          <i class="bi bi-printer me-1"></i> In Hóa Đơn [F9]
         </button>
       </div>
     </div>

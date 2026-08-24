@@ -12,6 +12,32 @@ class HoaDonController extends BaseController {
     this.getImeiKhaDung = this.getImeiKhaDung.bind(this);
     this.kiemTraDoiTra = this.kiemTraDoiTra.bind(this);
     this.getThongKeNhanh = this.getThongKeNhanh.bind(this);
+    this.getDoanhSoNhanVien = this.getDoanhSoNhanVien.bind(this);
+    this.getTopSanPham = this.getTopSanPham.bind(this);
+  }
+
+  /**
+   * GET /api/hoa-don/bao-cao/doanh-so-nhan-vien - Thống kê KPI doanh số nhân viên
+   */
+  async getDoanhSoNhanVien(req, res) {
+    try {
+      const result = await HoaDonService.getDoanhSoNhanVien(req.query);
+      return this.sendSuccess(res, result, 'Lấy báo cáo doanh số nhân viên thành công');
+    } catch (error) {
+      return this.handleError(res, error, 'Không thể lấy báo cáo doanh số nhân viên');
+    }
+  }
+
+  /**
+   * GET /api/hoa-don/bao-cao/top-san-pham - Top sản phẩm bán chạy
+   */
+  async getTopSanPham(req, res) {
+    try {
+      const result = await HoaDonService.getTopSanPham(req.query);
+      return this.sendSuccess(res, result, 'Lấy top sản phẩm bán chạy thành công');
+    } catch (error) {
+      return this.handleError(res, error, 'Không thể lấy top sản phẩm bán chạy');
+    }
   }
 
   /**

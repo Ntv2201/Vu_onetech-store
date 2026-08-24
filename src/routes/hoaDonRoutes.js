@@ -18,6 +18,12 @@ router.get('/kiem-tra-doi-tra/:imei', requireRole('Quản lý', 'NV bán hàng',
 // GET /api/hoa-don/dat-truoc/tim-kiem - Tìm kiếm đơn đặt trước phục vụ POS bán hàng
 router.get('/dat-truoc/tim-kiem', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân'), hoaDonController.searchDonDatHang);
 
+// GET /api/hoa-don/bao-cao/doanh-so-nhan-vien - Báo cáo KPI doanh số nhân viên
+router.get('/bao-cao/doanh-so-nhan-vien', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán'), hoaDonController.getDoanhSoNhanVien);
+
+// GET /api/hoa-don/bao-cao/top-san-pham - Top sản phẩm bán chạy
+router.get('/bao-cao/top-san-pham', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán'), hoaDonController.getTopSanPham);
+
 // GET /api/hoa-don - Danh sách hóa đơn
 router.get('/', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán'), hoaDonController.index);
 

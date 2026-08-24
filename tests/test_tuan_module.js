@@ -371,12 +371,59 @@ async function runTests() {
     assert(thongKe.soHoaDonHomNay > 0, `Đã ghi nhận ${thongKe.soHoaDonHomNay} hóa đơn bán hôm nay`);
     assert(thongKe.doanhThuHomNay > 0, `Doanh thu hôm nay: ${thongKe.doanhThuHomNay.toLocaleString('vi-VN')} đ`);
 
+    // -------------------------------------------------------------
+    // TEST 17 (Tuần 5-6): Bán hàng kèm Chiết khấu / Giảm giá (soTienGiam)
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 17 (Tuần 5-6): Bán hàng kèm Giảm giá / Chiết khấu ---');
+    const testImeiGiam = 'TUAN_DISC_' + Date.now().toString().slice(-6);
+    const mayGiam = await MayImei.create({
+      imei: testImeiGiam,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Tự Nhiên',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+
+    const discountAmount = 500000;
+    const orderDiscount = await HoaDonService.taoHoaDonBanHang({
+      khachHang: kh._id,
+      nhanVien: nv._id,
+      danhSachIMEI: [mayGiam.imei],
+      soTienGiam: discountAmount,
+      hinhThucThanhToan: 'Tien mat',
+      ghiChu: 'Áp dụng voucher giảm giá khai trương'
+    }, nv);
+
+    assert(orderDiscount.hoaDon.soTienGiam === discountAmount, `Ghi nhận chính xác số tiền giảm: ${orderDiscount.hoaDon.soTienGiam} đ`);
+    assert(orderDiscount.hoaDon.soTienThanhToan === orderDiscount.hoaDon.tongTien - discountAmount, `Thực thu trừ đúng giảm giá: ${orderDiscount.hoaDon.soTienThanhToan} đ`);
+
+    // -------------------------------------------------------------
+    // TEST 18 (Tuần 5-6): Thống kê KPI Doanh số theo Nhân viên
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 18 (Tuần 5-6): Thống kê KPI Doanh số theo Nhân viên ---');
+    const kpiStats = await HoaDonService.getDoanhSoNhanVien();
+    assert(Array.isArray(kpiStats), 'getDoanhSoNhanVien trả về danh sách dạng mảng');
+    assert(kpiStats.length > 0, `Tìm thấy ${kpiStats.length} nhân viên trong báo cáo KPI`);
+    const myStats = kpiStats.find(s => s.nhanVienId.toString() === nv._id.toString());
+    assert(myStats !== undefined, 'Tìm thấy nhân viên bán hàng trong danh sách KPI');
+    assert(myStats && myStats.tongDoanhThu > 0, `Nhân viên ${nv.hoTen} có tổng doanh số: ${myStats?.tongDoanhThu?.toLocaleString('vi-VN')} đ`);
+
+    // -------------------------------------------------------------
+    // TEST 19 (Tuần 5-6): Thống kê Top Sản phẩm bán chạy nhất
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 19 (Tuần 5-6): Thống kê Top Sản phẩm bán chạy ---');
+    const topProducts = await HoaDonService.getTopSanPham({ limit: 5 });
+    assert(Array.isArray(topProducts), 'getTopSanPham trả về danh sách dạng mảng');
+    assert(topProducts.length > 0, `Xác định được ${topProducts.length} model sản phẩm trong top bán chạy`);
+    assert(topProducts[0].soLuongBan > 0, `Model bán chạy nhất (${topProducts[0].tenMay}): đã bán ${topProducts[0].soLuongBan} máy`);
+
     console.log('\n===============================================================');
     console.log(`🎉 KẾT QUẢ KIỂM THỬ: ${passed} PASS, ${failed} FAIL`);
     console.log('===============================================================');
 
     if (failed === 0) {
-      console.log('✅ TẤT CẢ CÁC TEST CASES TUẦN 4 CỦA NGUYỄN QUANG TUẤN ĐÃ VƯỢT QUA 100%!');
+      console.log('✅ TẤT CẢ CÁC TEST CASES NÂNG CAO CỦA NGUYỄN QUANG TUẤN ĐÃ VƯỢT QUA 100%!');
       process.exit(0);
     } else {
       console.error('❌ CÓ TEST CASE BỊ LỖI!');

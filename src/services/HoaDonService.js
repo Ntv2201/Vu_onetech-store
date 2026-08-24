@@ -301,6 +301,7 @@ class HoaDonService extends BaseService {
       danhSachPhuKien = [],
       hinhThucThanhToan = 'Tien mat',
       ghiChu = '',
+      soTienGiam = 0,
       donDatHangId,
       donDatHang,
       maDat
@@ -434,7 +435,8 @@ class HoaDonService extends BaseService {
 
     // Giới hạn tiền cọc tối đa bằng tổng tiền hóa đơn
     const actualTienCocDaTru = Math.min(tienCocDaTru, tongTien);
-    const soTienThanhToan = Math.max(0, tongTien - actualTienCocDaTru);
+    const discount = Math.max(0, Number(soTienGiam) || 0);
+    const soTienThanhToan = Math.max(0, tongTien - actualTienCocDaTru - discount);
 
     // 5. Cập nhật MayImei -> 'Da ban' (Dùng atomic update với kiểm tra trangThai === 'Con hang' để chống race condition)
     if (imeis.length > 0) {
@@ -482,6 +484,9 @@ class HoaDonService extends BaseService {
     if (actualTienCocDaTru > 0) {
       noteText = (noteText ? noteText + ' | ' : '') + `Đã cấn trừ tiền cọc đơn đặt trước: ${actualTienCocDaTru.toLocaleString('vi-VN')} đ`;
     }
+    if (discount > 0) {
+      noteText = (noteText ? noteText + ' | ' : '') + `Chiết khấu giảm giá: ${discount.toLocaleString('vi-VN')} đ`;
+    }
 
     const isDebt = hinhThucThanhToan === 'Cong no';
     const hoaDonTrangThai = isDebt ? 'Cong no' : 'Da thanh toan';
@@ -492,6 +497,7 @@ class HoaDonService extends BaseService {
       nhanVien: maNV,
       donDatHang: donDatHangDoc ? donDatHangDoc._id : null,
       tienCocDaTru: actualTienCocDaTru,
+      soTienGiam: discount,
       soTienThanhToan,
       ngayLap: new Date(),
       tongTien,
@@ -568,6 +574,95 @@ class HoaDonService extends BaseService {
 
     // Trả về dữ liệu chi tiết hóa đơn vừa tạo
     return await this.getHoaDonDetail(hoaDon._id);
+  }
+
+  /**
+   * Thống kê KPI doanh số bán hàng theo từng Nhân Viên (Tuần 5-6 - Nguyễn Quang Tuấn)
+   */
+  async getDoanhSoNhanVien(query = {}) {
+    const { tuNgay, denNgay } = query;
+    const filter = { trangThai: { $ne: 'Da huy' } };
+
+    if (tuNgay || denNgay) {
+      filter.ngayLap = {};
+      if (tuNgay) filter.ngayLap.$gte = new Date(tuNgay);
+      if (denNgay) filter.ngayLap.$lte = new Date(denNgay);
+    }
+
+    const danhSachNhanVien = await NhanVien.find({
+      trangThai: { $ne: 'Khóa' },
+      vaiTro: { $in: ['NV bán hàng', 'Thu ngân', 'Quản lý'] }
+    }).select('_id hoTen tenDangNhap vaiTro');
+
+    const hoaDons = await HoaDon.find(filter);
+
+    const nhanVienStats = danhSachNhanVien.map(nv => {
+      const hdList = hoaDons.filter(hd => hd.nhanVien && hd.nhanVien.toString() === nv._id.toString());
+      const tongDoanhThu = hdList.reduce((sum, hd) => sum + (hd.tongTien || 0), 0);
+      const tongThucThu = hdList.reduce((sum, hd) => sum + (hd.soTienThanhToan || 0), 0);
+      const soHoaDon = hdList.length;
+      const giaTriTrungBinh = soHoaDon > 0 ? Math.round(tongDoanhThu / soHoaDon) : 0;
+
+      return {
+        nhanVienId: nv._id,
+        hoTen: nv.hoTen,
+        tenDangNhap: nv.tenDangNhap,
+        vaiTro: nv.vaiTro,
+        soHoaDon,
+        tongDoanhThu,
+        tongThucThu,
+        giaTriTrungBinh
+      };
+    });
+
+    // Sắp xếp theo tổng doanh thu giảm dần
+    nhanVienStats.sort((a, b) => b.tongDoanhThu - a.tongDoanhThu);
+
+    return nhanVienStats;
+  }
+
+  /**
+   * Thống kê Top Sản Phẩm bán chạy nhất (Tuần 5-6 - Nguyễn Quang Tuấn)
+   */
+  async getTopSanPham(query = {}) {
+    const limit = parseInt(query.limit) || 10;
+    const ctMayList = await CT_HoaDon_May.find().populate({
+      path: 'hoaDon',
+      match: { trangThai: { $ne: 'Da huy' } }
+    });
+
+    // Lấy thông tin model máy từ MayImei
+    const imeis = ctMayList.filter(item => item.hoaDon).map(item => item.imei);
+    const mayList = await MayImei.find({ imei: { $in: imeis } }).populate('sanPham');
+    const imeiToSPMap = {};
+    mayList.forEach(m => {
+      if (m.sanPham) {
+        imeiToSPMap[m.imei] = m.sanPham;
+      }
+    });
+
+    const productStats = {};
+    ctMayList.forEach(ct => {
+      if (!ct.hoaDon) return;
+      const sp = imeiToSPMap[ct.imei];
+      if (!sp) return;
+      const spId = sp._id.toString();
+      if (!productStats[spId]) {
+        productStats[spId] = {
+          sanPhamId: sp._id,
+          tenMay: sp.tenMay,
+          hang: sp.hang,
+          giaBan: sp.giaBan,
+          soLuongBan: 0,
+          doanhThu: 0
+        };
+      }
+      productStats[spId].soLuongBan += 1;
+      productStats[spId].doanhThu += (ct.donGiaBan || sp.giaBan || 0);
+    });
+
+    const result = Object.values(productStats).sort((a, b) => b.soLuongBan - a.soLuongBan).slice(0, limit);
+    return result;
   }
 }
 
