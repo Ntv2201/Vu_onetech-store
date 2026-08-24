@@ -32,12 +32,12 @@
    └─ Khung UI Bootstrap + POS Bán hàng + Tra cứu BH (Vũ)
 
  [Tuần 3] HIỆN TẠI (Đang triển khai)
-   ├─ Module Nhập kho máy IMEI & Phụ kiện (Tuân)
+   ├─ Module Nhập kho máy IMEI & Phụ kiện [ĐÃ MERGE] (Tuân)
    ├─ Module Đặt hàng trước Pre-order [ĐÃ MERGE] (Việt)
    ├─ Hàm tồn kho dùng chung + Nền tảng Công nợ (An)
-   ├─ Module Sổ quỹ Thu - Chi dùng chung (Vượng)
+   ├─ Module Sổ quỹ Thu - Chi [ĐÃ MERGE] (Vượng)
    ├─ UI Redesign & Animation Pack toàn diện [ĐÃ MERGE] (Vũ)
-   └─ Giao diện Nhập kho & Đặt trước (Vũ)
+   └─ Giao diện Nhập kho, Đặt trước & Sổ quỹ (Vũ + Tuân + Vượng)
 
  [Tuần 4] Luồng Nghiệp vụ Nâng cao & Liên kết
    ├─ Module Đổi trả máy IMEI + Xử lý bù/hoàn tiền chênh lệch (Việt)
@@ -110,15 +110,17 @@
 - [x] Rà soát cấu trúc bảng `PhieuNhap`, `CT_PhieuNhap`, `NhaCungCap`, `PhieuChi`.
 - [x] CRUD cơ bản đối tác Nhà cung cấp (`/api/nha-cung-cap`).
 
-#### Tuần 3 [HIỆN TẠI]: Xây dựng API Nhập kho Cốt lõi
-- [ ] Xây dựng `PhieuNhapService` kế thừa `BaseService`, `PhieuNhapController`, route `/api/phieu-nhap`.
-- [ ] `POST /api/phieu-nhap` — payload: `{ maNCC, maNV, danhSachMay: [{maSP, imei, giaNhap, mauSac, dungLuong}], danhSachPhuKien: [{maPK, soLuong, giaNhap}], hinhThucThanhToan, ghiChu }`:
+#### Tuần 3 [HIỆN TẠI]: Xây dựng API Nhập kho Cốt lõi [ĐÃ HOÀN THÀNH 100%]
+- [x] Xây dựng `PhieuNhapService` kế thừa `BaseService`, `PhieuNhapController`, route `/api/phieu-nhap`.
+- [x] `POST /api/phieu-nhap` — payload: `{ maNCC, maNV, danhSachMay: [{maSP, imei, giaNhap, mauSac, dungLuong}], danhSachPhuKien: [{maPK, soLuong, giaNhap}], hinhThucThanhToan, ghiChu }`:
   1. Kiểm tra từng IMEI trong `danhSachMay` **chưa tồn tại** trong `MAY_IMEI` — nếu trùng ném lỗi `409 Conflict`.
   2. Tạo `PHIEUNHAP`.
   3. Tạo mới từng bản ghi `MAY_IMEI` với `TrangThai = 'Con hang'`, tạo `CT_PHIEUNHAP`.
-  4. Cập nhật `PhuKien.soLuongTon` và gọi `capNhatTonKho` của An để tăng số lượng tồn.
-  5. Xử lý thanh toán: Nếu thanh toán ngay $\rightarrow$ gọi `taoPhieuChi` của Vượng; nếu ghi nợ $\rightarrow$ ghi nhận `CONGNO` NCC.
-- [ ] `GET /api/phieu-nhap`, `GET /api/phieu-nhap/:id`.
+  4. Cập nhật `PhuKien.soLuongTon` và gọi `TonKhoService.capNhatTonKho` để tăng số lượng tồn.
+  5. Xử lý thanh toán: Nếu thanh toán ngay $\rightarrow$ tự động gọi `taoPhieuChi` của Vượng; nếu ghi nợ $\rightarrow$ ghi nhận `CONGNO` NCC.
+- [x] `GET /api/phieu-nhap`, `GET /api/phieu-nhap/:id`.
+- [x] Xây dựng giao diện Nhập kho `src/public/pages/nhap-kho/index.html` và `src/public/js/nhapkho.js`.
+- [x] Viết bộ kiểm thử tự động 25/25 test cases PASS ([`tests/test_tuan_nhap_kho.js`](tests/test_tuan_nhap_kho.js)).
 
 #### Tuần 4: Quản lý Nhà cung cấp nâng cao & Nhập hàng loạt
 - [ ] `GET /api/nha-cung-cap/:id/lich-su-nhap` — Xem lịch sử các đợt nhập hàng theo NCC, tổng tiền, dư nợ.
@@ -217,14 +219,16 @@
 - [x] Xác nhận các model `PhieuThu`, `PhieuChi`, `BienBanKiemKe`, `DieuChinhKho`.
 - [x] CRUD cơ bản Danh mục (`/api/danh-muc`) & Phụ kiện (`/api/phu-kien`).
 
-#### Tuần 3 [HIỆN TẠI]: Module Lõi Thu - Chi & Sổ quỹ Dùng chung
-- [ ] Xây dựng `ThanhToanService` kế thừa `BaseService`, `ThanhToanController`, route `/api/thanh-toan`.
-- [ ] **Export 2 hàm dùng chung cho cả nhóm:**
-  - `taoPhieuThu({ soHD, maDat, maCN, maDoiTra, soTien, phuongThuc, nguoiNop, sessionUser })`
-  - `taoPhieuChi({ maPN, maDT, maHoanCoc, maDoiTra, soTien, lyDo, nguoiNhan, sessionUser })`
+#### Tuần 3 [HIỆN TẠI]: Module Lõi Thu - Chi & Sổ quỹ Dùng chung [ĐÃ HOÀN THÀNH 100%]
+- [x] Xây dựng `ThanhToanService` kế thừa `BaseService`, `ThanhToanController`, route `/api/thanh-toan`.
+- [x] **Export 2 hàm dùng chung cho cả nhóm:**
+  - `taoPhieuThu({ hoaDon, donDatHang, congNo, soTien, hinhThuc, ghiChu, ngayThu, sessionUser })`
+  - `taoPhieuChi({ phieuNhap, donDatHang, maDT, soTien, hinhThuc, lyDo, ngayChi, sessionUser })`
   - *(Cho phép Tuân nhập kho, Việt đặt cọc/đổi trả, An thu trả góp/công nợ gọi lại mà không bị trùng code)*.
-- [ ] `POST /api/thanh-toan/thu`, `POST /api/thanh-toan/chi`.
-- [ ] `GET /api/thanh-toan/so-quy?tuNgay=&denNgay=` — Tính tổng thu, tổng chi, số dư tồn quỹ theo khoảng thời gian.
+- [x] `POST /api/thanh-toan/thu`, `POST /api/thanh-toan/chi`.
+- [x] `GET /api/thanh-toan/so-quy?tuNgay=&denNgay=` — Tính tổng thu, tổng chi, số dư tồn quỹ theo khoảng thời gian và phân loại theo hình thức thanh toán.
+- [x] Xây dựng giao diện Sổ Quỹ `src/public/pages/so-quy/index.html` và `src/public/js/soquy.js`.
+- [x] Viết bộ kiểm thử tự động 37/37 test cases PASS ([`tests/test_vuong_module.js`](tests/test_vuong_module.js)).
 
 #### Tuần 4: Phân hệ Kiểm kê kho & Xử lý Lệch IMEI
 - [ ] `POST /api/kiem-ke` — payload: `{ maKho, danhSachIMEIThucTe: [...] }`:

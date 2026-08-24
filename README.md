@@ -40,11 +40,21 @@ npm run seed
 
 ### Bước 4: Chạy kiểm thử tự động
 ```bash
-# Kiểm thử toàn diện 32 test cases module Bán hàng & Bảo hành theo IMEI
+# 1. Kiểm thử toàn diện module Bán hàng & Bảo hành (Tuấn)
 node tests/test_tuan_module.js
 
-# Kiểm thử đăng nhập nhanh 6 vai trò
+# 2. Kiểm thử module Đặt hàng trước & Cấn trừ cọc (Việt)
+node tests/test_viet_module.js
+
+# 3. Kiểm thử module Thu - Chi & Sổ quỹ dùng chung (Vượng)
+node tests/test_vuong_module.js
+
+# 4. Kiểm thử module Nhập kho máy IMEI & Phụ kiện (Tuân)
+node tests/test_tuan_nhap_kho.js
+
+# 5. Kiểm thử đăng nhập nhanh 6 vai trò & phân quyền RBAC
 node tests/verify_all_logins.js
+node tests/test_http_endpoints.js
 ```
 
 ### Bước 5: Khởi động Server
@@ -65,11 +75,11 @@ Truy cập hệ thống tại: **`http://localhost:3000`** (hoặc `http://local
 
 | Vai trò | Tên đăng nhập | Mật khẩu | Quyền hạn & Phân hệ được truy cập |
 |---|---|---|---|
-| **Quản lý** | `admin` | `admin123` | **Toàn quyền**: Dashboard, Bán hàng POS, Bảo hành, Sản phẩm, Quản lý IMEI, Danh mục, Phụ kiện, KH, NCC, Nhân viên. |
-| **NV bán hàng** | `banhang` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Tra cứu & Tiếp nhận Bảo hành, Xem Sản phẩm, Khách hàng. |
-| **Thủ kho** | `thukho` | `123456` | Dashboard, Xem Sản phẩm, Quản lý máy IMEI (Nhập lẻ/hàng loạt), Danh mục, Phụ kiện, Nhà cung cấp. |
-| **Thu ngân** | `thungan` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Xem bảng giá Sản phẩm, Quản lý Khách hàng. |
-| **Kế toán** | `ketoan` | `123456` | Dashboard, Tra cứu Hóa đơn, Xem Sản phẩm, Phụ kiện, Khách hàng, Quản lý Nhà cung cấp. |
+| **Quản lý** | `admin` | `admin123` | **Toàn quyền**: Dashboard, Bán hàng POS, Đặt trước, Nhập kho, Thu - Chi & Sổ quỹ, Bảo hành, Sản phẩm, Quản lý IMEI, Danh mục, Phụ kiện, KH, NCC, Nhân viên. |
+| **NV bán hàng** | `banhang` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Đặt trước, Phiếu thu, Tra cứu & Tiếp nhận Bảo hành, Xem Sản phẩm, Khách hàng. |
+| **Thủ kho** | `thukho` | `123456` | Dashboard, Nhập kho hàng hóa & IMEI, Xem Sản phẩm, Quản lý máy IMEI, Danh mục, Phụ kiện, Nhà cung cấp. |
+| **Thu ngân** | `thungan` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Đặt trước, Thu - Chi & Sổ quỹ, Xem bảng giá Sản phẩm, Quản lý Khách hàng. |
+| **Kế toán** | `ketoan` | `123456` | Dashboard, Thu - Chi & Sổ quỹ, Đặt trước, Tra cứu Phiếu nhập, Tra cứu Hóa đơn, Xem Sản phẩm, Phụ kiện, Khách hàng, Quản lý Nhà cung cấp. |
 | **Kỹ thuật** | `kythuat` | `123456` | Dashboard, Tra cứu & Tiếp nhận/Sửa chữa Bảo hành, Xuất linh kiện, Cập nhật trạng thái máy IMEI. |
 
 *(Trên trang đăng nhập có các nút badge để tự động điền nhanh tài khoản demo 1-click).*

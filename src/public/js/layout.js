@@ -49,6 +49,19 @@ const MENU_SCHEMA = [
     ]
   },
   {
+    category: 'Tài chính & Sổ quỹ',
+    items: [
+      {
+        path: '/so-quy/index.html',
+        dataPath: '/so-quy/',
+        label: 'Thu - Chi & Sổ quỹ',
+        shortLabel: 'Sổ quỹ',
+        icon: 'bi-wallet2',
+        roles: ['Quản lý', 'Thu ngân', 'Kế toán']
+      }
+    ]
+  },
+  {
     category: 'Dịch vụ & Bảo hành',
     items: [
       {
@@ -64,6 +77,14 @@ const MENU_SCHEMA = [
   {
     category: 'Quản lý Hàng hóa',
     items: [
+      {
+        path: '/nhap-kho/index.html',
+        dataPath: '/nhap-kho/',
+        label: 'Nhập kho (IMEI & Phụ kiện)',
+        shortLabel: 'Nhập kho',
+        icon: 'bi-box-arrow-in-down',
+        roles: ['Quản lý', 'Thủ kho', 'Kế toán']
+      },
       {
         path: '/san-pham/index.html',
         dataPath: '/san-pham/',
