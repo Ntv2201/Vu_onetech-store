@@ -7,5 +7,5 @@ const bienBanKiemKeSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
+// hay
 module.exports = mongoose.model('BienBanKiemKe', bienBanKiemKeSchema, 'BIENBANKIEMKE');
