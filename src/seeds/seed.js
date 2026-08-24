@@ -22,7 +22,8 @@ const {
   PhieuChi,
   PhieuNhap,
   CT_PhieuNhap,
-  CongNo
+  CongNo,
+  PhieuDoiTra
 } = require('../models');
 
 const seedData = async () => {
@@ -55,7 +56,8 @@ const seedData = async () => {
       PhieuChi.deleteMany({}),
       PhieuNhap.deleteMany({}),
       CT_PhieuNhap.deleteMany({}),
-      CongNo.deleteMany({})
+      CongNo.deleteMany({}),
+      PhieuDoiTra.deleteMany({})
     ]);
 
     // -------------------------------------------------------------
@@ -534,7 +536,30 @@ const seedData = async () => {
     });
 
     // -------------------------------------------------------------
-    // 13. CÔNG NỢ ĐA HÌNH (An)
+    // 13. PHIẾU ĐỔI TRẢ MÁY (Việt - Tuần 4)
+    // -------------------------------------------------------------
+    console.log('[Seed] Đang tạo Phiếu Đổi trả mẫu...');
+    // Khách An đổi máy theo HĐ1 (từ iPhone 14 lên iPhone 15 Pro Max, bù thêm tiền)
+    const pdt1 = await PhieuDoiTra.create({
+      maDT: 'DT20260801',
+      hoaDon: hd1._id,
+      khachHang: khAn._id,
+      nhanVien: nvBanHang._id,
+      imeiCu: '356789012345004',
+      imeiMoi: '356789012345006',
+      loaiDoiTra: 'Doi may',
+      giaMayCu: 29990000,
+      giaMayMoi: 29990000,
+      tienChenhLech: 0,
+      hinhThuc: 'Tien mat',
+      lyDo: 'Khách muốn đổi sang màu Titan Tự Nhiên khác',
+      ngayDoiTra: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      trangThai: 'Hoan tat',
+      ghiChu: 'Đổi máy ngang giá theo chính sách 30 ngày'
+    });
+
+    // -------------------------------------------------------------
+    // 14. CÔNG NỢ ĐA HÌNH (An)
     // -------------------------------------------------------------
     console.log('[Seed] Đang tạo Hồ sơ Công nợ Khách Hàng & NCC...');
     // Nợ Khách Hàng (Anh Long nợ HĐ3: Tổng 21.99tr, đã trả 10tr, còn nợ 11.99tr)
