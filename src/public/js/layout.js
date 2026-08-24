@@ -58,6 +58,14 @@ const MENU_SCHEMA = [
         shortLabel: 'Sổ quỹ',
         icon: 'bi-wallet2',
         roles: ['Quản lý', 'Thu ngân', 'Kế toán']
+      },
+      {
+        path: '/cong-no/index.html',
+        dataPath: '/cong-no/',
+        label: 'Quản lý Công nợ (KH & NCC)',
+        shortLabel: 'Công nợ',
+        icon: 'bi-journal-bookmark',
+        roles: ['Quản lý', 'Thu ngân', 'Kế toán']
       }
     ]
   },

@@ -34,10 +34,10 @@
  [Tuần 3] HIỆN TẠI (Đang triển khai)
    ├─ Module Nhập kho máy IMEI & Phụ kiện [ĐÃ MERGE] (Tuân)
    ├─ Module Đặt hàng trước Pre-order [ĐÃ MERGE] (Việt)
-   ├─ Hàm tồn kho dùng chung + Nền tảng Công nợ (An)
+   ├─ Hàm tồn kho dùng chung + Nền tảng Công nợ [ĐÃ MERGE] (An)
    ├─ Module Sổ quỹ Thu - Chi [ĐÃ MERGE] (Vượng)
    ├─ UI Redesign & Animation Pack toàn diện [ĐÃ MERGE] (Vũ)
-   └─ Giao diện Nhập kho, Đặt trước & Sổ quỹ (Vũ + Tuân + Vượng)
+   └─ Giao diện Nhập kho, Đặt trước, Sổ quỹ & Công nợ (Vũ + Tuân + Vượng + An)
 
  [Tuần 4] Luồng Nghiệp vụ Nâng cao & Liên kết
    ├─ Module Đổi trả máy IMEI + Xử lý bù/hoàn tiền chênh lệch (Việt)
@@ -144,17 +144,16 @@
 - [x] Khởi tạo trọn bộ 26 Mongoose Models trong `src/models/`.
 - [x] Tạo seed script cơ bản (`src/seeds/seed.js`) 6 tài khoản mẫu theo 6 vai trò.
 
-#### Tuần 3 [HIỆN TẠI]: Service Tồn kho Dùng chung & Nền tảng Công nợ
-- [ ] Viết **hàm dùng chung** cập nhật tồn kho: `capNhatTonKho(maSP, maKho, delta)` export từ `TonKhoService` để Tuấn, Tuân, Việt cùng gọi.
-- [ ] `GET /api/kho/ton-kho?maKho=` — Thống kê tồn kho theo từng Model sản phẩm và kho hàng.
-- [ ] `GET /api/kho/phieu-xuat` — Danh sách phiếu xuất kho.
-- [ ] `GET /api/cong-no` — Danh sách công nợ (lọc theo `loaiDoiTuong`, `maKH`, `maNCC`, `trangThai`).
-- [ ] Viết hàm validate đa hình cho `CONGNO`: nếu `LoaiDoiTuong = 'KhachHang'` thì bắt buộc có `MaKH` và `MaNCC = null`, ngược lại tương tự.
-
-#### Tuần 4: Đối soát & Thanh toán Công nợ
-- [ ] `GET /api/cong-no/:id` — Chi tiết khoản nợ kèm lịch sử phiếu thu/chi liên quan.
-- [ ] `POST /api/cong-no/:id/thanh-toan` — Thu nợ / Trả nợ (gọi Service của Vượng tạo phiếu thu/chi).
-- [ ] Tự động cập nhật trạng thái nợ: `Chua tra` $\rightarrow$ `Dang tra` $\rightarrow$ `Da hoan tat`.
+#### Tuần 3 [HIỆN TẠI]: Service Tồn kho Dùng chung & Nền tảng Công nợ [ĐÃ HOÀN THÀNH 100%]
+- [x] Viết **hàm dùng chung** cập nhật tồn kho: `capNhatTonKho(maSP, maKho, delta)` export từ `TonKhoService` để Tuấn, Tuân, Việt cùng gọi.
+- [x] `GET /api/kho/ton-kho?maKho=` — Thống kê tồn kho theo từng Model sản phẩm và kho hàng.
+- [x] `GET /api/kho/phieu-xuat` — Danh sách phiếu xuất kho.
+- [x] `GET /api/cong-no` — Danh sách công nợ (lọc theo `loaiDoiTuong`, `maKH`, `maNCC`, `trangThai`).
+- [x] `GET /api/cong-no/:id` — Lấy chi tiết hồ sơ công nợ.
+- [x] `POST /api/cong-no/:id/thanh-toan` — Thu nợ khách hàng / Trả nợ NCC (tự động gọi `ThanhToanService` sinh phiếu thu/chi và đổi trạng thái `Da tra het`).
+- [x] Viết hàm validate đa hình cho `CONGNO`: nếu `LoaiDoiTuong = 'KhachHang'` thì bắt buộc có `khachHang` và `nhaCungCap = null`, ngược lại tương tự.
+- [x] Xây dựng giao diện Quản lý Công nợ `src/public/pages/cong-no/index.html` và `src/public/js/congno.js`.
+- [x] Viết bộ kiểm thử tự động 28/28 test cases PASS ([`tests/test_an_tuan3.js`](tests/test_an_tuan3.js)).
 
 #### Tuần 5: Phân hệ Hợp đồng Trả góp
 - [ ] `POST /api/tra-gop` — payload: `{ soHD, soTienTraTruoc, soKy }` (3/6/9/12 tháng).

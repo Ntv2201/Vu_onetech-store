@@ -342,11 +342,30 @@ Tất cả API trả về định dạng JSON thống nhất theo quy ước d�
   - Form thêm dòng máy IMEI & phụ kiện linh hoạt, tự động tính tổng tiền dự tính và in phiếu nhập kho.
 * **Kiểm thử tự động:** Bộ test `tests/test_tuan_nhap_kho.js` với 25/25 test cases PASS 100%.
 
+### 6.10. Phân hệ Quản lý Công nợ Đa hình & Thống kê Tồn kho / Phiếu xuất (`CongNoService`, `TonKhoService`) — *Module Trương Thế An*
+* `CongNoService.validateDoiTuongCongNo({ loaiDoiTuong, khachHang, nhaCungCap })`:
+  - Ràng buộc đa hình: `KhachHang` bắt buộc có `khachHang` và `nhaCungCap = null/undefined`; `NhaCungCap` bắt buộc có `nhaCungCap` và `khachHang = null/undefined`.
+* `CongNoService.taoCongNo({ loaiDoiTuong, khachHang, nhaCungCap, hoaDon, phieuNhap, soTienNo })`:
+  - Tạo hồ sơ công nợ mới (cho Tuấn bán hàng nợ, Tuân nhập kho ghi nợ NCC).
+* `CongNoService.thanhToanCongNo(id, { soTien, hinhThuc, ghiChu })`:
+  - Thu nợ Khách Hàng $\rightarrow$ tự động gọi `ThanhToanService.taoPhieuThu` sinh Phiếu Thu.
+  - Trả nợ Nhà Cung Cấp $\rightarrow$ tự động gọi `ThanhToanService.taoPhieuChi` sinh Phiếu Chi.
+  - Tự động đối soát và đổi trạng thái `Da tra het` khi thanh toán đủ.
+* `TonKhoService.layThongKeTonKho({ maKho })` & `layDanhSachPhieuXuat(query)`:
+  - Thống kê số lượng tồn kho theo từng kho hoặc gộp tất cả các kho; quản lý danh sách phiếu xuất kho.
+* **RESTful API Endpoints:**
+  - `GET /api/cong-no`, `GET /api/cong-no/:id`, `POST /api/cong-no/:id/thanh-toan` (RBAC: `Quản lý`, `Kế toán`, `Thu ngân`).
+  - `GET /api/kho/ton-kho` (Tất cả vai trò đã đăng nhập), `GET /api/kho/phieu-xuat` (`Quản lý`, `Thủ kho`).
+* **Giao diện người dùng (`src/public/pages/cong-no/index.html` & `src/public/js/congno.js`):**
+  - Thẻ thống kê trực quan nợ phải thu (KH), nợ phải trả (NCC), đã thanh toán lũy kế.
+  - Bộ lọc theo đối tượng và trạng thái, modal thanh toán nợ 1-click tự động cập nhật sổ quỹ.
+* **Kiểm thử tự động:** Bộ test `tests/test_an_tuan3.js` với 28/28 test cases PASS 100%.
+
 ---
 
 ## 7. HƯỚNG DẪN DÀNH CHO CÁC THÀNH VIÊN KHI CODE MODULE MỚI
 
-Khi các thành viên tiếp tục triển khai các module tiếp theo (công nợ/trả góp của An, kiểm kê/báo cáo của Vượng, đổi trả của Việt), hãy tuân thủ kiến trúc OOP phân tầng như sau:
+Khi các thành viên tiếp tục triển khai các module tiếp theo (trả góp của An, kiểm kê/báo cáo của Vượng, đổi trả của Việt), hãy tuân thủ kiến trúc OOP phân tầng như sau:
 
 ### Bước 1: Tạo Service Class (`src/services/`)
 * Kế thừa `BaseService`, đóng gói toàn bộ business rules.
@@ -376,6 +395,7 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (công n
    node tests/test_viet_module.js
    node tests/test_vuong_module.js
    node tests/test_tuan_nhap_kho.js
+   node tests/test_an_tuan3.js
    node tests/verify_all_logins.js
    node tests/test_http_endpoints.js
    ```
@@ -390,3 +410,4 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (công n
    - Đặt hàng trước (Pre-order): `http://localhost:3000/dat-truoc/`
    - Thu - Chi & Sổ quỹ: `http://localhost:3000/so-quy/`
    - Nhập kho hàng hóa: `http://localhost:3000/nhap-kho/`
+   - Quản lý Công nợ: `http://localhost:3000/cong-no/`

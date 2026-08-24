@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý Công Nợ (KH & NCC) - One Tech Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Sidebar Inject Container -->
+  <div id="appSidebar"></div>
+
+  <!-- Main Content Wrapper -->
+  <div class="app-main">
+    <!-- Navbar Inject Container -->
+    <div id="appNavbar"></div>
+
+    <!-- Page Body -->
+    <main class="page-container">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h4 class="fw-bold mb-1">Quản Lý Công Nợ Đa Hình (Khách Hàng & NCC)</h4>
+          <p class="text-muted small mb-0">Theo dõi dư nợ mua trả chậm của khách hàng và nợ gối đầu nhà cung cấp, thanh toán & sinh chứng từ tự động</p>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card-custom p-3 border-start border-danger border-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="text-muted small mb-1 fw-semibold">NỢ KHÁCH HÀNG (CẦN THU)</p>
+                <h4 class="fw-bold text-danger mb-0" id="statNoKhachHang">0 đ</h4>
+                <div class="small text-muted mt-1">Phải thu từ khách</div>
+              </div>
+              <div class="bg-danger-subtle text-danger p-3 rounded-circle fs-3">
+                <i class="bi bi-person-exclamation"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card-custom p-3 border-start border-warning border-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="text-muted small mb-1 fw-semibold">NỢ NHÀ CUNG CẤP (CẦN TRẢ)</p>
+                <h4 class="fw-bold text-warning mb-0" id="statNoNCC">0 đ</h4>
+                <div class="small text-muted mt-1">Phải trả đối tác NCC</div>
+              </div>
+              <div class="bg-warning-subtle text-warning p-3 rounded-circle fs-3">
+                <i class="bi bi-truck-front"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card-custom p-3 border-start border-success border-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="text-muted small mb-1 fw-semibold">ĐÃ THANH TOÁN (LŨY KẾ)</p>
+                <h4 class="fw-bold text-success mb-0" id="statDaThanhToan">0 đ</h4>
+                <div class="small text-muted mt-1">Đã cấn trừ / trả xong</div>
+              </div>
+              <div class="bg-success-subtle text-success p-3 rounded-circle fs-3">
+                <i class="bi bi-check2-circle"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card-custom p-3 border-start border-info border-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="text-muted small mb-1 fw-semibold">TỔNG KHOẢN CÔNG NỢ</p>
+                <h4 class="fw-bold text-info mb-0" id="statTotalRecords">0</h4>
+                <div class="small text-muted mt-1">Hồ sơ công nợ</div>
+              </div>
+              <div class="bg-info-subtle text-info p-3 rounded-circle fs-3">
+                <i class="bi bi-journal-text"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="card-custom p-3 mb-4">
+        <div class="row g-2 align-items-center">
+          <div class="col-12 col-md-4">
+            <select id="filterLoaiDoiTuong" class="form-select form-select-sm" onchange="loadDanhSachCongNo()">
+              <option value="">-- Tất cả Đối tượng (KH & NCC) --</option>
+              <option value="KhachHang">Khách Hàng (Khoản Phải Thu)</option>
+              <option value="NhaCungCap">Nhà Cung Cấp (Khoản Phải Trả)</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <select id="filterTrangThai" class="form-select form-select-sm" onchange="loadDanhSachCongNo()">
+              <option value="">-- Tất cả Trạng thái --</option>
+              <option value="Con no">Còn nợ</option>
+              <option value="Da tra het">Đã trả hết</option>
+              <option value="Qua han">Quá hạn</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-4 text-md-end">
+            <button class="btn btn-sm btn-outline-secondary" onclick="resetFilters()">
+              <i class="bi bi-arrow-clockwise"></i> Đặt lại bộ lọc
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Công Nợ -->
+      <div class="card-custom">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-3" style="width: 140px;">Loại Đối Tượng</th>
+                  <th>Tên Đối Tượng</th>
+                  <th style="width: 150px;">Chứng Từ Gốc</th>
+                  <th style="width: 140px;" class="text-end">Tổng Tiền Nợ</th>
+                  <th style="width: 140px;" class="text-end">Đã Trả</th>
+                  <th style="width: 140px;" class="text-end">Còn Lại</th>
+                  <th style="width: 120px;" class="text-center">Trạng Thái</th>
+                  <th style="width: 110px;" class="text-center">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="tableCongNoBody">
+                <tr>
+                  <td colspan="8" class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm text-primary me-2"></div> Đang tải dữ liệu công nợ...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal Thanh Toán Công Nợ -->
+<div class="modal fade" id="modalThanhToanCongNo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-custom">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold text-primary" id="modalPaymentTitle">Thanh Toán Công Nợ</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="formThanhToanCongNo" onsubmit="handlePaymentSubmit(event)">
+        <input type="hidden" id="paymentCongNoId">
+        <div class="modal-body">
+          <div class="p-3 bg-light-subtle rounded border mb-3">
+            <div class="row g-2 mb-1">
+              <div class="col-5 text-muted">Đối tượng:</div>
+              <div class="col-7 text-end fw-bold" id="lblPaymentDoiTuong">---</div>
+            </div>
+            <div class="row g-2 mb-1">
+              <div class="col-5 text-muted">Tổng nợ:</div>
+              <div class="col-7 text-end fw-bold" id="lblPaymentTongNo">0 đ</div>
+            </div>
+            <div class="row g-2 mb-1">
+              <div class="col-5 text-muted">Đã thanh toán:</div>
+              <div class="col-7 text-end text-success" id="lblPaymentDaTra">0 đ</div>
+            </div>
+            <div class="row g-2">
+              <div class="col-5 text-muted">Số nợ còn lại:</div>
+              <div class="col-7 text-end fw-bold text-danger fs-5" id="lblPaymentConLai">0 đ</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Số tiền thanh toán (VNĐ) <span class="text-danger">*</span></label>
+            <input type="number" id="inputSoTienThanhToan" class="form-control form-control-lg fw-bold text-primary" min="1000" step="1000" required>
+            <div class="d-flex gap-2 mt-2">
+              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillAllRemainingDebt()">Trả hết số còn lại</button>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Hình thức thanh toán <span class="text-danger">*</span></label>
+            <select id="inputHinhThucThanhToan" class="form-select" required>
+              <option value="Chuyen khoan">Chuyển khoản ngân hàng</option>
+              <option value="Tien mat">Tiền mặt tại két</option>
+              <option value="Quet the">Quẹt thẻ POS</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Ghi chú thanh toán</label>
+            <input type="text" id="inputGhiChuThanhToan" class="form-control" placeholder="Ghi chú chứng từ...">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary fw-semibold px-4" id="btnSubmitPayment">
+            <i class="bi bi-check-circle me-1"></i> Xác Nhận Thanh Toán
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script src="/js/congno.js"></script>
+</body>
+</html>

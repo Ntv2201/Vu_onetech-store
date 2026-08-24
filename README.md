@@ -52,7 +52,10 @@ node tests/test_vuong_module.js
 # 4. Kiểm thử module Nhập kho máy IMEI & Phụ kiện (Tuân)
 node tests/test_tuan_nhap_kho.js
 
-# 5. Kiểm thử đăng nhập nhanh 6 vai trò & phân quyền RBAC
+# 5. Kiểm thử module Tồn kho & Công nợ đa hình (An)
+node tests/test_an_tuan3.js
+
+# 6. Kiểm thử đăng nhập nhanh 6 vai trò & phân quyền RBAC
 node tests/verify_all_logins.js
 node tests/test_http_endpoints.js
 ```
@@ -75,11 +78,11 @@ Truy cập hệ thống tại: **`http://localhost:3000`** (hoặc `http://local
 
 | Vai trò | Tên đăng nhập | Mật khẩu | Quyền hạn & Phân hệ được truy cập |
 |---|---|---|---|
-| **Quản lý** | `admin` | `admin123` | **Toàn quyền**: Dashboard, Bán hàng POS, Đặt trước, Nhập kho, Thu - Chi & Sổ quỹ, Bảo hành, Sản phẩm, Quản lý IMEI, Danh mục, Phụ kiện, KH, NCC, Nhân viên. |
+| **Quản lý** | `admin` | `admin123` | **Toàn quyền**: Dashboard, Bán hàng POS, Đặt trước, Nhập kho, Thu - Chi & Sổ quỹ, Quản lý Công nợ, Bảo hành, Sản phẩm, Quản lý IMEI, Danh mục, Phụ kiện, KH, NCC, Nhân viên. |
 | **NV bán hàng** | `banhang` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Đặt trước, Phiếu thu, Tra cứu & Tiếp nhận Bảo hành, Xem Sản phẩm, Khách hàng. |
-| **Thủ kho** | `thukho` | `123456` | Dashboard, Nhập kho hàng hóa & IMEI, Xem Sản phẩm, Quản lý máy IMEI, Danh mục, Phụ kiện, Nhà cung cấp. |
-| **Thu ngân** | `thungan` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Đặt trước, Thu - Chi & Sổ quỹ, Xem bảng giá Sản phẩm, Quản lý Khách hàng. |
-| **Kế toán** | `ketoan` | `123456` | Dashboard, Thu - Chi & Sổ quỹ, Đặt trước, Tra cứu Phiếu nhập, Tra cứu Hóa đơn, Xem Sản phẩm, Phụ kiện, Khách hàng, Quản lý Nhà cung cấp. |
+| **Thủ kho** | `thukho` | `123456` | Dashboard, Nhập kho hàng hóa & IMEI, Xem Tồn kho & Phiếu xuất, Xem Sản phẩm, Quản lý máy IMEI, Danh mục, Phụ kiện, Nhà cung cấp. |
+| **Thu ngân** | `thungan` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Đặt trước, Thu - Chi & Sổ quỹ, Quản lý Công nợ, Xem bảng giá Sản phẩm, Quản lý Khách hàng. |
+| **Kế toán** | `ketoan` | `123456` | Dashboard, Thu - Chi & Sổ quỹ, Quản lý Công nợ, Đặt trước, Tra cứu Phiếu nhập, Tra cứu Hóa đơn, Xem Sản phẩm, Phụ kiện, Khách hàng, Quản lý Nhà cung cấp. |
 | **Kỹ thuật** | `kythuat` | `123456` | Dashboard, Tra cứu & Tiếp nhận/Sửa chữa Bảo hành, Xuất linh kiện, Cập nhật trạng thái máy IMEI. |
 
 *(Trên trang đăng nhập có các nút badge để tự động điền nhanh tài khoản demo 1-click).*
