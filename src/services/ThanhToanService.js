@@ -23,6 +23,7 @@ class ThanhToanService extends BaseService {
       hoaDon,
       donDatHang,
       congNo,
+      phieuDoiTra,
       soTien,
       hinhThuc = 'Tien mat',
       ghiChu = '',
@@ -41,6 +42,7 @@ class ThanhToanService extends BaseService {
       hoaDon: hoaDon || null,
       donDatHang: donDatHang || null,
       congNo: congNo || null,
+      phieuDoiTra: phieuDoiTra || null,
       soTien: amount,
       hinhThuc: selectedHinhThuc,
       ngayThu: ngayThu ? new Date(ngayThu) : new Date(),
@@ -52,12 +54,13 @@ class ThanhToanService extends BaseService {
 
   /**
    * Tạo Phiếu Chi dùng chung cho toàn hệ thống
-   * @param {Object} payload { phieuNhap, donDatHang, maDT, soTien, hinhThuc, lyDo, ngayChi, sessionUser }
+   * @param {Object} payload { phieuNhap, donDatHang, phieuDoiTra, maDT, soTien, hinhThuc, lyDo, ngayChi, sessionUser }
    */
   async taoPhieuChi(payload = {}) {
     const {
       phieuNhap,
       donDatHang,
+      phieuDoiTra,
       maDT = '',
       soTien,
       hinhThuc = 'Tien mat',
@@ -76,6 +79,7 @@ class ThanhToanService extends BaseService {
     const phieuChi = await PhieuChi.create({
       phieuNhap: phieuNhap || null,
       donDatHang: donDatHang || null,
+      phieuDoiTra: phieuDoiTra || null,
       maDT: maDT || '',
       soTien: amount,
       hinhThuc: selectedHinhThuc,

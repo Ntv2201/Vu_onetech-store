@@ -13,6 +13,7 @@ class DatTruocController extends BaseController {
     this.create = this.create.bind(this);
     this.cancel = this.cancel.bind(this);
     this.updateStatus = this.updateStatus.bind(this);
+    this.chuyenHoaDon = this.chuyenHoaDon.bind(this);
   }
 
   /**
@@ -74,6 +75,19 @@ class DatTruocController extends BaseController {
       return this.sendSuccess(res, result, 'Cập nhật trạng thái đơn đặt trước thành công!');
     } catch (error) {
       return this.handleError(res, error, 'Lỗi khi cập nhật trạng thái đơn đặt trước');
+    }
+  }
+
+  /**
+   * PUT /api/dat-truoc/:id/chuyen-hoa-don - Khách nhận máy, cấn trừ cọc và xuất hóa đơn POS
+   */
+  async chuyenHoaDon(req, res) {
+    try {
+      const sessionUser = req.session ? req.session.user : null;
+      const result = await DatTruocService.chuyenHoaDon(req.params.id, req.body, sessionUser);
+      return this.sendSuccess(res, result, 'Xuất hóa đơn bán hàng và cấn trừ tiền cọc thành công!');
+    } catch (error) {
+      return this.handleError(res, error, 'Lỗi khi chuyển đơn đặt trước sang hóa đơn');
     }
   }
 }

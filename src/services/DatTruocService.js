@@ -313,6 +313,65 @@ class DatTruocService extends BaseService {
     await don.save();
     return await this.getDatTruocDetail(don._id);
   }
+
+  /**
+   * Chuyển đơn đặt trước sang Hóa đơn bán hàng POS (Khách đến nhận máy)
+   * Tự động cấn trừ tiền cọc vào hóa đơn và cập nhật trạng thái đơn
+   * @param {String} id ID đơn đặt trước
+   * @param {Object} payload { imei, danhSachPhuKien, hinhThucThanhToan, ghiChu }
+   * @param {Object} sessionUser Nhân viên bán hàng
+   */
+  async chuyenHoaDon(id, payload = {}, sessionUser = null) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw this.createError('Mã đơn đặt hàng trước không hợp lệ', 400);
+    }
+
+    const don = await DonDatHangTruoc.findById(id).populate('khachHang sanPham');
+    if (!don) {
+      throw this.createError('Không tìm thấy đơn đặt hàng trước', 404);
+    }
+
+    if (don.trangThai === 'Da huy') {
+      throw this.createError('Đơn đặt hàng trước đã bị hủy, không thể xuất bán', 400);
+    }
+
+    if (don.trangThai === 'Da nhan hang' || don.trangThai === 'Da nhan may') {
+      throw this.createError('Đơn đặt hàng trước đã được xuất hóa đơn nhận máy trước đó', 400);
+    }
+
+    const selectedImei = payload.imei || don.imei;
+    if (!selectedImei) {
+      throw this.createError('Vui lòng chọn hoặc nhập số IMEI máy xuất cho khách', 400);
+    }
+
+    const HoaDonService = require('./HoaDonService');
+
+    const orderPayload = {
+      khachHang: don.khachHang._id,
+      nhanVien: sessionUser ? (sessionUser._id || sessionUser.id) : undefined,
+      danhSachIMEI: [selectedImei],
+      danhSachPhuKien: payload.danhSachPhuKien || [],
+      donDatHangId: don._id,
+      hinhThucThanhToan: payload.hinhThucThanhToan || 'Da thanh toan',
+      ghiChu: payload.ghiChu || `Xuất máy theo đơn đặt trước #${don._id}`
+    };
+
+    const result = await HoaDonService.taoHoaDonBanHang(orderPayload, sessionUser);
+
+    don.trangThai = 'Da nhan hang';
+    don.imei = selectedImei;
+    await don.save();
+
+    const updatedDetail = await this.getDatTruocDetail(don._id);
+
+    return {
+      hoaDon: result.hoaDon,
+      phieuXuatKho: result.phieuXuatKho,
+      donDatHang: updatedDetail.donDatHang,
+      tienCocDaTru: result.hoaDon.tienCocDaTru || 0,
+      soTienThanhToan: result.hoaDon.soTienThanhToan || result.hoaDon.tongTien
+    };
+  }
 }
 
 module.exports = new DatTruocService();

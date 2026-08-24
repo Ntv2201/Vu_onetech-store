@@ -21,4 +21,7 @@ router.put('/:id/huy', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân'), 
 // PUT /api/dat-truoc/:id/trang-thai - Cập nhật trạng thái / gán IMEI cho đơn đặt trước
 router.put('/:id/trang-thai', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân', 'Thủ kho'), datTruocController.updateStatus);
 
+// PUT /api/dat-truoc/:id/chuyen-hoa-don - Khách nhận máy, cấn trừ cọc và xuất hóa đơn POS
+router.put('/:id/chuyen-hoa-don', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân'), datTruocController.chuyenHoaDon);
+
 module.exports = router;

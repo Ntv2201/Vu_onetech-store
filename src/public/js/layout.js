@@ -45,6 +45,14 @@ const MENU_SCHEMA = [
         shortLabel: 'Đặt trước (Pre-order)',
         icon: 'bi-bookmark-star',
         roles: ['Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán']
+      },
+      {
+        path: '/doi-tra/index.html',
+        dataPath: '/doi-tra/',
+        label: 'Đổi trả máy & Hoàn tiền',
+        shortLabel: 'Đổi trả máy',
+        icon: 'bi-arrow-left-right',
+        roles: ['Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán', 'Thủ kho', 'Kỹ thuật']
       }
     ]
   },
