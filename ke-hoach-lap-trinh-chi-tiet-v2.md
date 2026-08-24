@@ -275,13 +275,13 @@
   3. Tự động gọi `taoPhieuChi` của Vượng hoàn tiền cọc cho khách.
 - [x] Viết bộ kiểm thử tự động 32/32 test cases PASS (`tests/test_viet_module.js`).
 
-#### Tuần 4: Chuyển đổi Hóa đơn & Xây dựng Phân hệ Đổi trả máy (Trọng tâm)
-- [ ] `PUT /api/dat-truoc/:id/chuyen-hoa-don` — Khách đến nhận máy:
+#### Tuần 4 [HIỆN TẠI]: Chuyển đổi Hóa đơn & Xây dựng Phân hệ Đổi trả máy (Trọng tâm) [ĐÃ HOÀN THÀNH 100%]
+- [x] `PUT /api/dat-truoc/:id/chuyen-hoa-don` — Khách đến nhận máy:
   1. Kiểm tra đơn đặt trước hợp lệ.
   2. Nhận IMEI máy chọn, gọi `HoaDonService.banHang()` của Tuấn kèm `donDatHangId` để **cấn trừ tiền cọc** vào hóa đơn.
-  3. Đổi trạng thái `DONDATHANGTRUOC` $\rightarrow$ `Da nhan may`.
-- [ ] Xây dựng `DoiTraService` kế thừa `BaseService`, `DoiTraController`, route `/api/doi-tra`.
-- [ ] `POST /api/doi-tra` — payload: `{ soHD, imeiCu, imeiMoi, lyDo, ghiChu }`:
+  3. Đổi trạng thái `DONDATHANGTRUOC` $\rightarrow$ `Da nhan may` (hoặc `Da nhan hang`).
+- [x] Xây dựng `DoiTraService` kế thừa `BaseService`, `DoiTraController`, route `/api/doi-tra`.
+- [x] `POST /api/doi-tra` — payload: `{ soHD, imeiCu, imeiMoi, lyDo, ghiChu }`:
   1. Kiểm tra `imeiCu` thuộc đúng hóa đơn `soHD` (qua `CT_HOADON_MAY`).
   2. Kiểm tra thời hạn đổi trả cho phép (VD: trong vòng 30 ngày từ `NgayLap`).
   3. Kiểm tra `imeiMoi` đang có `TrangThai = 'Con hang'` trong kho.
@@ -292,7 +292,8 @@
      - Giá máy mới > máy cũ: Gọi `taoPhieuThu` của Vượng thu thêm tiền chênh lệch.
      - Giá máy mới < máy cũ: Gọi `taoPhieuChi` của Vượng hoàn tiền thừa cho khách.
      - Bằng giá: Không tạo phiếu thu/chi.
-- [ ] `GET /api/doi-tra`, `GET /api/doi-tra/:id`, `GET /api/doi-tra/lich-su-imei/:imei`.
+- [x] `GET /api/doi-tra`, `GET /api/doi-tra/:id`, `GET /api/doi-tra/lich-su-imei/:imei`.
+- [x] Viết bộ kiểm thử tự động 39/39 test cases PASS (`tests/test_viet_tuan4.js`).
 
 #### Tuần 5: Hoàn thiện Tình huống Biên & Phân quyền
 - [ ] Gắn middleware `requireRole(['QuanLy', 'BanHang', 'ThuNgan'])` cho các route Đổi trả & Đặt trước.

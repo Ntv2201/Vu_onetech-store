@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const phieuChiSchema = new mongoose.Schema({
   phieuNhap: { type: mongoose.Schema.Types.ObjectId, ref: 'PhieuNhap' },
   donDatHang: { type: mongoose.Schema.Types.ObjectId, ref: 'DonDatHangTruoc' },
+  phieuDoiTra: { type: mongoose.Schema.Types.ObjectId, ref: 'PhieuDoiTra' },
   maDT: { type: String, default: '' }, // Mã đối tượng chi (NCC, Khách hàng...)
   soTien: { type: Number, required: true, min: 0 },
   ngayChi: { type: Date, default: Date.now },

@@ -346,6 +346,47 @@
       </form>
     </div>
   </div>
+<!-- MODAL: KHÁCH ĐẾN NHẬN MÁY & XUẤT HÓA ĐƠN CẤN TRỪ CỌC -->
+<div class="modal fade" id="modalDeliverPreorder" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-box-seam me-2"></i>Bàn Giao Máy & Xuất Hóa Đơn</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="deliverPreorderForm">
+        <div class="modal-body">
+          <input type="hidden" id="deliverOrderId">
+          <p>Xuất bán máy cho khách hàng <strong id="deliverCustomerName"></strong></p>
+          <div class="alert alert-success py-2 mb-3">
+            <i class="bi bi-info-circle me-1"></i> Số tiền cọc sẽ được cấn trừ tự động: <strong id="deliverDepositAmount" class="text-danger">0 đ</strong>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Số IMEI máy xuất cho khách <span class="text-danger">*</span></label>
+            <input type="text" id="deliverImeiInput" class="form-control font-monospace" placeholder="Nhập hoặc chọn số IMEI xuất kho" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Hình thức thanh toán tiền còn lại</label>
+            <select id="deliverHinhThucSelect" class="form-select">
+              <option value="Da thanh toan">Đã thanh toán đủ (Tiền mặt / CK)</option>
+              <option value="Cong no">Ghi nhận công nợ</option>
+              <option value="Tra gop">Chuyển sang hợp đồng trả góp</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Ghi chú hóa đơn</label>
+            <input type="text" id="deliverGhiChuInput" class="form-control" placeholder="Ghi chú xuất bán...">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-success fw-semibold" id="btnConfirmDeliver">
+            <i class="bi bi-check-circle me-1"></i> Xuất Hóa Đơn & Nhận Máy
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let modalDetail = null;
   let modalCancel = null;
   let modalStatus = null;
+  let modalDeliver = null;
 
   const modalDetailEl = document.getElementById('modalPreorderDetail');
   if (modalDetailEl && window.bootstrap) {
@@ -43,6 +44,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const modalStatusEl = document.getElementById('modalUpdateStatus');
   if (modalStatusEl && window.bootstrap) {
     modalStatus = new bootstrap.Modal(modalStatusEl);
+  }
+  const modalDeliverEl = document.getElementById('modalDeliverPreorder');
+  if (modalDeliverEl && window.bootstrap) {
+    modalDeliver = new bootstrap.Modal(modalDeliverEl);
   }
 
   // Load initial dropdowns
@@ -174,6 +179,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } catch (err) {
         showToast(err.message || 'Lỗi khi cập nhật trạng thái', 'danger');
+      }
+    });
+  }
+
+  // Deliver / Create Invoice Form Submit
+  const deliverPreorderForm = document.getElementById('deliverPreorderForm');
+  if (deliverPreorderForm) {
+    deliverPreorderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('deliverOrderId')?.value;
+      const imei = document.getElementById('deliverImeiInput')?.value.trim();
+      const hinhThucThanhToan = document.getElementById('deliverHinhThucSelect')?.value || 'Da thanh toan';
+      const ghiChu = document.getElementById('deliverGhiChuInput')?.value.trim();
+
+      if (!imei) {
+        showToast('Vui lòng nhập hoặc chọn số IMEI xuất cho khách', 'warning');
+        return;
+      }
+
+      try {
+        const res = await api.put(`/dat-truoc/${id}/chuyen-hoa-don`, { imei, hinhThucThanhToan, ghiChu });
+
+        if (res && res.success) {
+          const soHD = res.data && res.data.hoaDon ? res.data.hoaDon.soHD : (res.hoaDon ? res.hoaDon.soHD : '');
+          showToast(`Đã xuất hóa đơn ${soHD} và cấn trừ tiền cọc thành công!`, 'success');
+          if (modalDeliver) modalDeliver.hide();
+          loadPreorders();
+        } else {
+          showToast(res.message || 'Không thể xuất hóa đơn cho đơn đặt trước', 'danger');
+        }
+      } catch (err) {
+        showToast(err.message || 'Lỗi khi xuất hóa đơn', 'danger');
       }
     });
   }
@@ -350,6 +387,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <i class="bi bi-eye"></i>
               </button>
               ${isUpdatable ? `
+                <button type="button" class="btn btn-outline-success btn-deliver-order" data-id="${order._id}" data-name="${order.khachHang ? escapeHtml(order.khachHang.hoTen) : ''}" data-deposit="${order.soTienCoc || 0}" data-imei="${order.imei || ''}" title="Khách nhận máy & Xuất hóa đơn cấn trừ cọc">
+                  <i class="bi bi-box-seam"></i>
+                </button>
                 <button type="button" class="btn btn-outline-secondary btn-update-status" data-id="${order._id}" data-status="${order.trangThai}" data-imei="${order.imei || ''}" title="Cập nhật trạng thái / Gán IMEI">
                   <i class="bi bi-pencil"></i>
                 </button>
@@ -368,6 +408,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Attach row events
     document.querySelectorAll('.btn-view-detail').forEach(btn => {
       btn.addEventListener('click', () => viewDetail(btn.getAttribute('data-id')));
+    });
+
+    document.querySelectorAll('.btn-deliver-order').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        const deposit = Number(btn.getAttribute('data-deposit')) || 0;
+        const imei = btn.getAttribute('data-imei');
+        const idInput = document.getElementById('deliverOrderId');
+        const nameEl = document.getElementById('deliverCustomerName');
+        const depositEl = document.getElementById('deliverDepositAmount');
+        const imeiInput = document.getElementById('deliverImeiInput');
+        const noteInput = document.getElementById('deliverGhiChuInput');
+
+        if (idInput) idInput.value = id;
+        if (nameEl) nameEl.textContent = name;
+        if (depositEl) depositEl.textContent = deposit.toLocaleString('vi-VN') + ' đ';
+        if (imeiInput) imeiInput.value = imei || '';
+        if (noteInput) noteInput.value = '';
+        if (modalDeliver) modalDeliver.show();
+      });
     });
 
     document.querySelectorAll('.btn-update-status').forEach(btn => {

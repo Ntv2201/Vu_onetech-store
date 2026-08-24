@@ -11,6 +11,7 @@ const PhuKienService = require('./PhuKienService');
 const AuthService = require('./AuthService');
 const DashboardService = require('./DashboardService');
 const DatTruocService = require('./DatTruocService');
+const DoiTraService = require('./DoiTraService');
 const ThanhToanService = require('./ThanhToanService');
 const TonKhoService = require('./TonKhoService');
 const PhieuNhapService = require('./PhieuNhapService');
@@ -30,6 +31,7 @@ module.exports = {
   AuthService,
   DashboardService,
   DatTruocService,
+  DoiTraService,
   ThanhToanService,
   TonKhoService,
   PhieuNhapService,
