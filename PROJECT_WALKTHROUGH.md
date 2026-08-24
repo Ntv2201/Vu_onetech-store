@@ -254,13 +254,19 @@ Tất cả API trả về định dạng JSON thống nhất theo quy ước d�
 ### 6.3. Bán hàng & Hóa đơn (`/api/hoa-don`) — *Module Nguyễn Quang Tuấn*
 * `GET /api/hoa-don`: Lấy danh sách hóa đơn (hỗ trợ lọc `tuNgay`, `denNgay`, `maKH`, `trangThai`, `search`, phân trang).
 * `GET /api/hoa-don/:id`: Chi tiết 1 hóa đơn kèm danh sách máy IMEI, danh sách phụ kiện, thông tin phiếu xuất kho.
+* `GET /api/hoa-don/imei-kha-dung`: Danh sách máy IMEI đang có trạng thái `Con hang` hỗ trợ POS quét barcode và chọn máy xuất bán nhanh.
+* `GET /api/hoa-don/kiem-tra-doi-tra/:imei`: Tra cứu kiểm tra điều kiện đổi trả theo số IMEI trong vòng 30 ngày từ ngày mua (phục vụ phân hệ Đổi trả của Việt).
+* `GET /api/hoa-don/thong-ke-nhanh`: Thống kê nhanh doanh thu hôm nay, số lượng hóa đơn, số máy đã bán.
+* `GET /api/hoa-don/dat-truoc/tim-kiem`: Tìm kiếm đơn đặt hàng trước còn hiệu lực phục vụ cấn trừ tiền cọc trực tiếp tại quầy POS.
 * `POST /api/hoa-don`: **Bán hàng theo danh sách IMEI & phụ kiện**:
   - Khóa & kiểm tra trạng thái IMEI: Nếu có bất kỳ máy nào không ở trạng thái `Con hang` $\rightarrow$ ném lỗi **`409 Conflict`**.
-  - Kiểm tra tồn kho phụ kiện $\rightarrow$ ném lỗi nếu không đủ hàng.
+  - Tích hợp cấn trừ tiền cọc từ Đơn đặt trước (`donDatHangId`) và tự động chuyển trạng thái đơn sang `Da nhan hang`.
   - Tạo `HoaDon`, tạo `CT_HoaDon_May`, `CT_HoaDon_PhuKien`.
   - Cập nhật `MayImei.trangThai = 'Da ban'`.
-  - Trừ số lượng tồn phụ kiện.
+  - Trừ số lượng tồn phụ kiện & gọi `TonKhoService.capNhatTonKho` giảm tồn kho Model.
   - Tự động sinh `PhieuXuatKho`.
+  - **Tích hợp liên Service:** Tự động gọi `ThanhToanService.taoPhieuThu` sinh Phiếu Thu trong Sổ quỹ (nếu thanh toán ngay) hoặc gọi `CongNoService.taoCongNo` tạo hồ sơ Công Nợ Khách Hàng (nếu mua ghi nợ).
+* **Kiểm thử tự động:** Bộ test `tests/test_tuan_module.js` với 44/44 test cases PASS 100%.
 
 ### 6.4. Dịch vụ & Bảo hành theo IMEI (`/api/bao-hanh`) — *Module Nguyễn Quang Tuấn*
 * `GET /api/bao-hanh/tra-cuu/:imei`: **Tra cứu dòng đời IMEI**: Trả về ngày nhập kho, ngày bán, hạn bảo hành (`NgayBan + SoThangBH tháng`), số ngày còn lại, và lịch sử tất cả các lần bảo hành cùng linh kiện đã thay.

@@ -12,14 +12,17 @@ const {
   CT_HoaDon_PhuKien,
   PhieuXuatKho,
   PhieuBaoHanh,
-  CT_PBH_LinhKien
+  CT_PBH_LinhKien,
+  DonDatHangTruoc,
+  PhieuThu,
+  CongNo
 } = require('../src/models');
 
-const { HoaDonService, BaoHanhService } = require('../src/services');
+const { HoaDonService, BaoHanhService, ThanhToanService, CongNoService, TonKhoService } = require('../src/services');
 
 async function runTests() {
   console.log('===============================================================');
-  console.log('🚀 BẮT ĐẦU KIỂM THỬ MODULE NGUYỄN QUANG TUẤN (OOP & BÁN HÀNG - BẢO HÀNH)');
+  console.log('🚀 BẮT ĐẦU KIỂM THỬ MODULE NGUYỄN QUANG TUẤN (OOP & BÁN HÀNG - BẢO HÀNH - TUẦN 4)');
   console.log('===============================================================\n');
 
   const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/onetech_store';
@@ -71,7 +74,6 @@ async function runTests() {
     // TEST 3: Bán hàng theo IMEI & Phụ kiện (taoHoaDonBanHang)
     // -------------------------------------------------------------
     console.log('\n--- TEST 3: Bán hàng theo IMEI & Tự sinh Phiếu xuất kho ---');
-    // Tạo 1 IMEI mới riêng biệt cho luồng test bán hàng & bảo hành
     const testImei1 = 'TUAN' + Date.now().toString().slice(-11);
     const mayConHang = await MayImei.create({
       imei: testImei1,
@@ -215,9 +217,6 @@ async function runTests() {
     // TEST 10 (Tuần 3): Bán hàng cấn trừ tiền cọc từ Đơn đặt trước
     // -------------------------------------------------------------
     console.log('\n--- TEST 10 (Tuần 3): Bán hàng cấn trừ tiền cọc Đơn đặt trước ---');
-    const { DonDatHangTruoc } = require('../src/models');
-    
-    // Tạo 1 máy còn hàng để bán kèm cọc
     const testImei2 = 'TUAN_COC_' + Date.now().toString().slice(-6);
     const mayChoCoc = await MayImei.create({
       imei: testImei2,
@@ -227,10 +226,8 @@ async function runTests() {
       dungLuong: '256GB',
       trangThai: 'Con hang'
     });
-    const giaMay = spIphone.giaBan || 29990000;
     const soTienCoc = 2000000;
 
-    // Tạo đơn đặt trước mẫu
     const donDatMoi = await DonDatHangTruoc.create({
       khachHang: kh._id,
       sanPham: spIphone._id,
@@ -246,7 +243,7 @@ async function runTests() {
       danhSachIMEI: [mayChoCoc.imei],
       danhSachPhuKien: [],
       donDatHangId: donDatMoi._id,
-      hinhThucThanhToan: 'Da thanh toan',
+      hinhThucThanhToan: 'Chuyen khoan',
       ghiChu: 'Xuất máy cho khách đã cọc'
     }, nv);
 
@@ -274,7 +271,6 @@ async function runTests() {
     if (mayConcurrent) {
       const imeiConcurrent = mayConcurrent.imei;
       
-      // Gửi 2 request bán hàng song song cùng 1 lúc
       const [req1, req2] = await Promise.allSettled([
         HoaDonService.taoHoaDonBanHang({
           khachHang: kh._id,
@@ -297,12 +293,90 @@ async function runTests() {
       assert(conflictCount === 1, `Giao dịch thứ 2 bị chặn với mã lỗi 409 Conflict (Kết quả: ${conflictCount})`);
     }
 
+    // -------------------------------------------------------------
+    // TEST 12 (Tuần 4): Bán hàng tự động sinh Phiếu Thu Sổ Quỹ (Vượng)
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 12 (Tuần 4): Tích hợp Bán hàng -> Tự sinh Phiếu Thu Sổ Quỹ ---');
+    const testImeiThu = 'TUAN_THU_' + Date.now().toString().slice(-5);
+    const mayThu = await MayImei.create({
+      imei: testImeiThu,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Tự Nhiên',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+
+    const orderThu = await HoaDonService.taoHoaDonBanHang({
+      khachHang: kh._id,
+      nhanVien: nv._id,
+      danhSachIMEI: [mayThu.imei],
+      hinhThucThanhToan: 'Chuyen khoan',
+      ghiChu: 'Bán hàng thu tiền qua chuyển khoản'
+    }, nv);
+
+    const phieuThuLienKet = await PhieuThu.findOne({ hoaDon: orderThu.hoaDon._id });
+    assert(phieuThuLienKet !== null, 'Hệ thống tự động sinh Phiếu Thu trong Sổ quỹ');
+    assert(phieuThuLienKet && phieuThuLienKet.soTien === orderThu.hoaDon.soTienThanhToan, 'Số tiền trên Phiếu Thu khớp 100% với số tiền thanh toán của Hóa đơn');
+
+    // -------------------------------------------------------------
+    // TEST 13 (Tuần 4): Bán hàng Ghi nợ -> Tự sinh Công Nợ Khách Hàng (An)
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 13 (Tuần 4): Tích hợp Bán hàng Ghi nợ -> Tự sinh Công Nợ KH ---');
+    const testImeiNo = 'TUAN_NO_' + Date.now().toString().slice(-5);
+    const mayNo = await MayImei.create({
+      imei: testImeiNo,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Tự Nhiên',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+
+    const orderNo = await HoaDonService.taoHoaDonBanHang({
+      khachHang: kh._id,
+      nhanVien: nv._id,
+      danhSachIMEI: [mayNo.imei],
+      hinhThucThanhToan: 'Cong no',
+      ghiChu: 'Khách mua trả chậm ghi nợ'
+    }, nv);
+
+    const congNoLienKet = await CongNo.findOne({ hoaDon: orderNo.hoaDon._id });
+    assert(congNoLienKet !== null, 'Tự động tạo hồ sơ Công Nợ cho Khách Hàng');
+    assert(congNoLienKet && congNoLienKet.loaiDoiTuong === 'KhachHang', 'Loại đối tượng công nợ: "KhachHang"');
+    assert(congNoLienKet && congNoLienKet.soTienNo === orderNo.hoaDon.soTienThanhToan, 'Số tiền công nợ khớp với hóa đơn');
+
+    // -------------------------------------------------------------
+    // TEST 14 (Tuần 4): Tra cứu danh sách IMEI khả dụng cho POS
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 14 (Tuần 4): Tra cứu IMEI khả dụng cho POS bán hàng ---');
+    const imeiListKhaDung = await HoaDonService.layImeiKhaDung({ search: 'Titan' });
+    assert(Array.isArray(imeiListKhaDung), 'layImeiKhaDung trả về danh sách dạng mảng');
+    assert(imeiListKhaDung.every(m => m.trangThai === 'Con hang'), 'Tất cả máy trả về đều có trạng thái "Con hang"');
+
+    // -------------------------------------------------------------
+    // TEST 15 (Tuần 4): Kiểm tra điều kiện đổi trả theo IMEI (Hỗ trợ Việt)
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 15 (Tuần 4): Kiểm tra điều kiện đổi trả theo IMEI (Hỗ trợ Việt) ---');
+    const checkDoiTra = await HoaDonService.kiemTraImeiDoiTra(imeiToSell);
+    assert(checkDoiTra.conHanDoiTra === true, 'Máy vừa bán còn trong thời hạn 30 ngày đổi trả');
+    assert(checkDoiTra.hoaDon !== null, 'Lấy được thông tin hóa đơn gốc đã mua máy');
+    assert(checkDoiTra.donGiaBan > 0, 'Lấy được đơn giá bán ban đầu để tính bù/hoàn tiền chênh lệch');
+
+    // -------------------------------------------------------------
+    // TEST 16 (Tuần 4): Thống kê bán hàng nhanh trong ngày
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 16 (Tuần 4): Thống kê bán hàng nhanh ---');
+    const thongKe = await HoaDonService.getThongKeNhanh();
+    assert(thongKe.soHoaDonHomNay > 0, `Đã ghi nhận ${thongKe.soHoaDonHomNay} hóa đơn bán hôm nay`);
+    assert(thongKe.doanhThuHomNay > 0, `Doanh thu hôm nay: ${thongKe.doanhThuHomNay.toLocaleString('vi-VN')} đ`);
+
     console.log('\n===============================================================');
     console.log(`🎉 KẾT QUẢ KIỂM THỬ: ${passed} PASS, ${failed} FAIL`);
     console.log('===============================================================');
 
     if (failed === 0) {
-      console.log('✅ TẤT CẢ CÁC TEST CASES ĐÃ VƯỢT QUA 100%!');
+      console.log('✅ TẤT CẢ CÁC TEST CASES TUẦN 4 CỦA NGUYỄN QUANG TUẤN ĐÃ VƯỢT QUA 100%!');
       process.exit(0);
     } else {
       console.error('❌ CÓ TEST CASE BỊ LỖI!');

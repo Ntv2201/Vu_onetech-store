@@ -88,11 +88,16 @@
 - [x] `PUT /api/bao-hanh/:id/hoan-tat` — Đổi phiếu `Da sua xong`, trả `MAY_IMEI` về `Da ban`.
 - [x] Viết bộ test tự động 26/26 test cases PASS ([`tests/test_tuan_module.js`](tests/test_tuan_module.js)).
 
-#### Tuần 3-4 [HIỆN TẠI]: Hỗ trợ tích hợp Cấn trừ Cọc & Mở rộng Nghiệp vụ [ĐÃ HOÀN THÀNH TUẦN 3]
-- [x] Mở rộng `HoaDonService.banHang()` / `taoHoaDonBanHang()`: Tiếp nhận tham số `donDatHangId` từ bạn Việt để tự động cấn trừ số tiền cọc đã thu vào tổng thanh toán hóa đơn.
+#### Tuần 3-4 [HIỆN TẠI]: Hỗ trợ tích hợp Cấn trừ Cọc & Mở rộng Nghiệp vụ Bán hàng [ĐÃ HOÀN THÀNH 100%]
+- [x] Mở rộng `HoaDonService.taoHoaDonBanHang()`: Tiếp nhận tham số `donDatHangId` từ bạn Việt để tự động cấn trừ số tiền cọc đã thu vào tổng thanh toán hóa đơn.
 - [x] Tối ưu hóa xử lý concurrency & atomic lock khi nhiều giao dịch cùng thao tác trên 1 IMEI (chặn xung đột 409 Conflict).
 - [x] Bổ sung API `GET /api/hoa-don/dat-truoc/tim-kiem` và giao diện chọn đơn đặt trước cấn trừ cọc trên POS bán hàng.
-- [x] Đã kiểm thử 32/32 test cases PASS bao gồm kiểm thử cấn trừ cọc và race condition lock.
+- [x] Tích hợp liên Service: Bán hàng tự động gọi `ThanhToanService.taoPhieuThu` sinh Phiếu Thu trong Sổ quỹ hoặc gọi `CongNoService.taoCongNo` tạo hồ sơ Công Nợ khi bán ghi nợ.
+- [x] Tự động gọi `TonKhoService.capNhatTonKho` giảm tồn kho sản phẩm khi bán máy IMEI.
+- [x] `GET /api/hoa-don/imei-kha-dung` — Danh sách máy IMEI khả dụng bán hàng POS.
+- [x] `GET /api/hoa-don/kiem-tra-doi-tra/:imei` — Kiểm tra điều kiện đổi trả theo IMEI trong 30 ngày (hỗ trợ phân hệ Đổi trả của Việt).
+- [x] `GET /api/hoa-don/thong-ke-nhanh` — Thống kê nhanh doanh thu và số lượng đơn hôm nay.
+- [x] Đã kiểm thử 44/44 test cases PASS ([`tests/test_tuan_module.js`](tests/test_tuan_module.js)).
 
 #### Tuần 5-6: Hỗ trợ tích hợp E2E & Tối ưu Luồng Bán hàng
 - [ ] Phối hợp với Vũ hoàn thiện trải nghiệm POS bán hàng (phím tắt quét barcode IMEI, in nhanh).
