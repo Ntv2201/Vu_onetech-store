@@ -191,9 +191,10 @@ body {
   transition: opacity 0.2s;
 }
 
+
 .sidebar-link i {
   font-size: 1.1rem;
-  width: 22px;
+  width: 23px;
   text-align: center;
   transition: transform 0.2s ease;
   flex-shrink: 0;
