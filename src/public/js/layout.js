@@ -445,8 +445,10 @@ function highlightCurrentMenu() {
     if (dataPath) {
       if (dataPath === '/index.html' && (currentPath === '/' || currentPath === '/index.html')) {
         link.classList.add('active');
+        link.scrollIntoView({ block: 'nearest' });
       } else if (dataPath !== '/index.html' && currentPath.includes(dataPath)) {
         link.classList.add('active');
+        link.scrollIntoView({ block: 'nearest' });
       }
     }
   });
