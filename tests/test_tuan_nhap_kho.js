@@ -130,7 +130,7 @@ async function runTests() {
     });
 
     assert(pnNo && pnNo._id, 'Tạo phiếu nhập ghi nợ thành công');
-    const congNo = await CongNo.findOne({ loaiDoiTuong: 'NhaCungCap', nhaCungCap: ncc._id });
+    const congNo = await CongNo.findOne({ loaiDoiTuong: 'NhaCungCap', phieuNhap: pnNo._id });
     assert(congNo !== null, 'Tự động tạo bản ghi Công Nợ cho Nhà Cung Cấp');
     assert(congNo.soTienNo >= 20000000, 'Số tiền công nợ được cập nhật chính xác');
     assert(congNo.trangThai === 'Con no', 'Trạng thái công nợ: "Con no"');
