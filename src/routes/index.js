@@ -14,6 +14,7 @@ const hoaDonRoutes = require('./hoaDonRoutes');
 const baoHanhRoutes = require('./baoHanhRoutes');
 const datTruocRoutes = require('./datTruocRoutes');
 const thanhToanRoutes = require('./thanhToanRoutes');
+const phieuNhapRoutes = require('./phieuNhapRoutes');
 
 // Mount toàn bộ REST API endpoints
 router.use('/auth', authRoutes);
@@ -29,5 +30,6 @@ router.use('/hoa-don', hoaDonRoutes);
 router.use('/bao-hanh', baoHanhRoutes);
 router.use('/dat-truoc', datTruocRoutes);
 router.use('/thanh-toan', thanhToanRoutes);
+router.use('/phieu-nhap', phieuNhapRoutes);
 
 module.exports = router;

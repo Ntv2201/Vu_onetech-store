@@ -78,6 +78,14 @@ const MENU_SCHEMA = [
     category: 'Quản lý Hàng hóa',
     items: [
       {
+        path: '/nhap-kho/index.html',
+        dataPath: '/nhap-kho/',
+        label: 'Nhập kho (IMEI & Phụ kiện)',
+        shortLabel: 'Nhập kho',
+        icon: 'bi-box-arrow-in-down',
+        roles: ['Quản lý', 'Thủ kho', 'Kế toán']
+      },
+      {
         path: '/san-pham/index.html',
         dataPath: '/san-pham/',
         label: 'Sản phẩm',

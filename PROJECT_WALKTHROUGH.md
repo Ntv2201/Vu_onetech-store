@@ -323,57 +323,36 @@ Tất cả API trả về định dạng JSON thống nhất theo quy ước d�
   - Tab Biến động dòng tiền, Phiếu Thu, Phiếu Chi, Modal lập phiếu và in chứng từ trực tiếp.
 * **Kiểm thử tự động:** Bộ test `tests/test_vuong_module.js` với 37/37 test cases PASS 100%.
 
+### 6.9. Phân hệ Nhập kho & Tồn kho dùng chung (`PhieuNhapService`, `TonKhoService`) — *Module Phạm Đăng Tuân*
+* `PhieuNhapService.taoPhieuNhap({ maNCC, maNV, danhSachMay, danhSachPhuKien, hinhThucThanhToan, ghiChu })`:
+  - Kiểm tra tính hợp lệ của đối tác Nhà cung cấp và Nhân viên lập phiếu.
+  - Kiểm tra chặn trùng IMEI ngay trong danh sách gửi lên (400) và IMEI đã có trong CSDL (409 Conflict).
+  - Bulk insert `MayImei` với trạng thái `Con hang` và `CT_PhieuNhap`.
+  - Tự động gọi `TonKhoService.capNhatTonKho` để tăng số lượng tồn kho sản phẩm.
+  - Tăng số lượng tồn kho phụ kiện `PhuKien.soLuongTon`.
+  - Xử lý liên kết tài chính: Thanh toán ngay $\rightarrow$ tự động gọi `ThanhToanService.taoPhieuChi` tạo Phiếu Chi; Ghi nợ $\rightarrow$ tự động tạo bản ghi `CongNo` cho Nhà cung cấp.
+* `TonKhoService.capNhatTonKho(maSP, maKho, delta)`:
+  - Hàm dùng chung cập nhật số lượng tồn kho của 1 sản phẩm tại kho cụ thể (dùng cho Nhập kho, Bán hàng, Đổi trả).
+* **RESTful API Endpoints (`/api/phieu-nhap`):**
+  - `GET /api/phieu-nhap`: Lấy danh sách phiếu nhập kho (RBAC: `Quản lý`, `Thủ kho`, `Kế toán`).
+  - `GET /api/phieu-nhap/:id`: Chi tiết phiếu nhập & danh sách máy IMEI (RBAC: `Quản lý`, `Thủ kho`, `Kế toán`).
+  - `POST /api/phieu-nhap`: Lập phiếu nhập kho (RBAC: `Quản lý`, `Thủ kho`).
+* **Giao diện người dùng (`src/public/pages/nhap-kho/index.html` & `src/public/js/nhapkho.js`):**
+  - Thẻ thống kê phiếu nhập, chi phí nhập hàng và số NCC.
+  - Form thêm dòng máy IMEI & phụ kiện linh hoạt, tự động tính tổng tiền dự tính và in phiếu nhập kho.
+* **Kiểm thử tự động:** Bộ test `tests/test_tuan_nhap_kho.js` với 25/25 test cases PASS 100%.
+
 ---
 
 ## 7. HƯỚNG DẪN DÀNH CHO CÁC THÀNH VIÊN KHI CODE MODULE MỚI
 
-Khi bạn (hoặc thành viên khác) tiếp tục triển khai các module tiếp theo (nhập kho của Tuân, công nợ/trả góp của An, kiểm kê/báo cáo của Vượng), hãy tuân thủ kiến trúc OOP phân tầng như sau:
+Khi các thành viên tiếp tục triển khai các module tiếp theo (công nợ/trả góp của An, kiểm kê/báo cáo của Vượng, đổi trả của Việt), hãy tuân thủ kiến trúc OOP phân tầng như sau:
 
 ### Bước 1: Tạo Service Class (`src/services/`)
-* Kế thừa `BaseService`, đóng gói toàn bộ business rules:
-  ```javascript
-  const BaseService = require('./BaseService');
-  const { PhieuNhap, MayImei, CT_PhieuNhap } = require('../models');
-
-  class PhieuNhapService extends BaseService {
-    constructor() {
-      super(PhieuNhap);
-    }
-
-    async taoPhieuNhap(payload, sessionUser) {
-      // Validate, kiểm tra trùng IMEI -> 409
-      // Tạo PhieuNhap, tạo MayImei, tạo CT_PhieuNhap
-      // Gọi service cập nhật tồn kho dùng chung
-    }
-  }
-
-  module.exports = new PhieuNhapService();
-  ```
+* Kế thừa `BaseService`, đóng gói toàn bộ business rules.
 
 ### Bước 2: Tạo Controller Class (`src/controllers/`)
-* Kế thừa `BaseController`, sử dụng `this.sendSuccess`, `this.sendError`, `this.handleError`:
-  ```javascript
-  const BaseController = require('./BaseController');
-  const { PhieuNhapService } = require('../services');
-
-  class PhieuNhapController extends BaseController {
-    constructor() {
-      super();
-      this.create = this.create.bind(this);
-    }
-
-    async create(req, res) {
-      try {
-        const result = await PhieuNhapService.taoPhieuNhap(req.body, req.session.user);
-        return this.sendSuccess(res, result, 'Tạo phiếu nhập thành công', 201);
-      } catch (error) {
-        return this.handleError(res, error, 'Lỗi khi nhập kho');
-      }
-    }
-  }
-
-  module.exports = new PhieuNhapController();
-  ```
+* Kế thừa `BaseController`, sử dụng `this.sendSuccess`, `this.sendError`, `this.handleError`.
 
 ### Bước 3: Tạo Route & Gắn Middleware RBAC (`src/routes/`)
 * Tạo route và sử dụng `requireAuth`, `requireRole(...)`.
@@ -396,6 +375,7 @@ Khi bạn (hoặc thành viên khác) tiếp tục triển khai các module ti�
    node tests/test_tuan_module.js
    node tests/test_viet_module.js
    node tests/test_vuong_module.js
+   node tests/test_tuan_nhap_kho.js
    node tests/verify_all_logins.js
    node tests/test_http_endpoints.js
    ```
@@ -409,3 +389,4 @@ Khi bạn (hoặc thành viên khác) tiếp tục triển khai các module ti�
    - Tra cứu & Bảo hành: `http://localhost:3000/bao-hanh/`
    - Đặt hàng trước (Pre-order): `http://localhost:3000/dat-truoc/`
    - Thu - Chi & Sổ quỹ: `http://localhost:3000/so-quy/`
+   - Nhập kho hàng hóa: `http://localhost:3000/nhap-kho/`
