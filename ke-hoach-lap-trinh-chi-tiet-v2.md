@@ -47,7 +47,7 @@
    ├─ Module Đổi trả máy IMEI + Cấn trừ cọc Đơn đặt trước [ĐÃ XONG 100%] (Việt)
    ├─ Quản lý NCC & Nhập kho hàng loạt từ text/file (Tuân)
    ├─ Phân hệ Kiểm kê kho & Điều chỉnh lệch IMEI thực tế (Vượng)
-   ├─ Đối soát chi tiết & Cảnh báo Công nợ quá hạn (An)
+   ├─ Đối soát chi tiết & Cảnh báo Công nợ quá hạn [ĐÃ XONG 100%] (An)
    ├─ Màn hình Đổi trả & Kiểm kê kho (Vũ)
    └─ Thiết lập Master Test Matrix, Rà soát 8 Test Suites & Test E2E liên module (Việt Anh - QA)
 
@@ -163,9 +163,11 @@
 - [x] Xây dựng giao diện Quản lý Công nợ `src/public/pages/cong-no/index.html` và `src/public/js/congno.js`.
 - [x] Viết bộ kiểm thử tự động 28/28 test cases PASS ([`tests/test_an_tuan3.js`](tests/test_an_tuan3.js)).
 
-#### Tuần 4 [HIỆN TẠI]: Đối soát Công nợ & Quản lý Quá hạn
-- [ ] `GET /api/cong-no/:id` — Xem chi tiết hồ sơ nợ kèm danh sách các Phiếu Thu / Phiếu Chi liên quan đã thanh toán.
-- [ ] Quản lý hạn thanh toán, chuyển trạng thái sang `Qua han` khi nợ vượt hạn cam kết.
+#### Tuần 4 [HIỆN TẠI]: Đối soát Công nợ & Quản lý Quá hạn [ĐÃ HOÀN THÀNH 100%]
+- [x] `GET /api/cong-no/:id` — Xem chi tiết hồ sơ nợ kèm danh sách các Phiếu Thu / Phiếu Chi liên quan đã thanh toán (`lichSuThanhToan`).
+- [x] Quản lý hạn thanh toán (`hanThanhToan`), chuyển trạng thái sang `Qua han` khi nợ vượt hạn cam kết và tự động quét cập nhật qua `POST /api/cong-no/kiem-tra-qua-han`.
+- [x] `GET /api/cong-no/doi-soat` — Báo cáo thống kê đối soát công nợ tổng hợp Khách Hàng, Nhà Cung Cấp, nợ quá hạn và tổng dư nợ toàn hệ thống.
+- [x] Viết bộ kiểm thử tự động 24/24 test cases PASS ([`tests/test_an_tuan4.js`](tests/test_an_tuan4.js)).
 
 #### Tuần 5: Phân hệ Hợp đồng Trả góp
 - [ ] `POST /api/tra-gop` — payload: `{ soHD, soTienTraTruoc, soKy }` (3/6/9/12 tháng).
