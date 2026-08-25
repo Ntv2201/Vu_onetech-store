@@ -27,6 +27,17 @@
     .cart-table th, .cart-table td {
       vertical-align: middle;
     }
+    .pos-shortcut-btn {
+      transition: all 0.15s ease-in-out;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .pos-shortcut-btn:hover {
+      background-color: #e9ecef;
+      border-color: #0d6efd !important;
+      color: #0d6efd !important;
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 <body>
@@ -45,14 +56,28 @@
       <!-- Shortcut Banner -->
       <div class="d-flex flex-wrap gap-2 mb-3 align-items-center bg-white p-2 rounded-3 border small text-muted shadow-sm">
         <span class="fw-bold text-dark"><i class="bi bi-keyboard me-1 text-primary"></i>Phím tắt POS:</span>
-        <span class="badge bg-secondary-subtle text-secondary border font-monospace" title="Di chuyển con trỏ vào ô quét IMEI">F1: Quét IMEI / Tìm</span>
-        <span class="badge bg-secondary-subtle text-secondary border font-monospace" title="Chọn khách hàng">F2: Chọn Khách hàng</span>
-        <span class="badge bg-secondary-subtle text-secondary border font-monospace" title="Thực hiện bán hàng và xuất kho">F4: Hoàn tất đơn</span>
-        <span class="badge bg-secondary-subtle text-secondary border font-monospace" title="Mở danh sách đơn đặt hàng trước cấn trừ cọc">F7: Chọn Đơn cọc</span>
-        <span class="badge bg-secondary-subtle text-secondary border font-monospace" title="Xóa toàn bộ sản phẩm trong giỏ">F8: Xóa giỏ hàng</span>
-        <span class="badge bg-secondary-subtle text-secondary border font-monospace" title="In phiếu hóa đơn">F9: In hóa đơn</span>
-        <span class="badge bg-secondary-subtle text-secondary border font-monospace" title="Đóng modal hoặc hủy thao tác">Esc: Đóng modal</span>
-        <span class="badge bg-primary-subtle text-primary border font-monospace" title="Nhập hoặc quét Barcode rồi ấn Enter để thêm ngay vào giỏ"><i class="bi bi-upc-scan me-1"></i>Enter: Thêm máy quét</span>
+        <button type="button" class="btn btn-sm btn-light border font-monospace py-0 px-2 pos-shortcut-btn" onclick="shortcutAction('F1')" title="Bấm F1 hoặc Alt+1: Quét / Tìm IMEI">
+          <span class="fw-bold text-primary">F1</span> / <span class="fw-semibold">Alt+1</span>: Quét IMEI
+        </button>
+        <button type="button" class="btn btn-sm btn-light border font-monospace py-0 px-2 pos-shortcut-btn" onclick="shortcutAction('F2')" title="Bấm F2 hoặc Alt+2: Chọn Khách hàng">
+          <span class="fw-bold text-primary">F2</span> / <span class="fw-semibold">Alt+2</span>: Chọn KH
+        </button>
+        <button type="button" class="btn btn-sm btn-light border font-monospace py-0 px-2 pos-shortcut-btn" onclick="shortcutAction('F4')" title="Bấm F4 hoặc Alt+4 hoặc Alt+S: Hoàn tất đơn hàng">
+          <span class="fw-bold text-primary">F4</span> / <span class="fw-semibold">Alt+4</span>: Hoàn tất đơn
+        </button>
+        <button type="button" class="btn btn-sm btn-light border font-monospace py-0 px-2 pos-shortcut-btn" onclick="shortcutAction('F7')" title="Bấm F7 hoặc Alt+7: Mở Đơn đặt trước cấn trừ cọc">
+          <span class="fw-bold text-primary">F7</span> / <span class="fw-semibold">Alt+7</span>: Đơn cọc
+        </button>
+        <button type="button" class="btn btn-sm btn-light border font-monospace py-0 px-2 pos-shortcut-btn" onclick="shortcutAction('F8')" title="Bấm F8 hoặc Alt+8: Xóa sạch giỏ hàng">
+          <span class="fw-bold text-primary">F8</span> / <span class="fw-semibold">Alt+8</span>: Xóa giỏ
+        </button>
+        <button type="button" class="btn btn-sm btn-light border font-monospace py-0 px-2 pos-shortcut-btn" onclick="shortcutAction('F9')" title="Bấm F9 hoặc Alt+9 hoặc Alt+P: In hóa đơn">
+          <span class="fw-bold text-primary">F9</span> / <span class="fw-semibold">Alt+9</span>: In HĐ
+        </button>
+        <button type="button" class="btn btn-sm btn-light border font-monospace py-0 px-2 pos-shortcut-btn" onclick="shortcutAction('Escape')" title="Bấm Esc: Đóng modal">
+          <span class="fw-bold text-primary">Esc</span>: Đóng
+        </button>
+        <span class="badge bg-primary-subtle text-primary border font-monospace" title="Quét Barcode hoặc nhập IMEI rồi bấm Enter"><i class="bi bi-upc-scan me-1"></i>Enter: Thêm máy quét</span>
         <span class="ms-auto badge bg-success-subtle text-success border"><i class="bi bi-volume-up me-1"></i>Âm thanh POS: BẬT</span>
       </div>
 

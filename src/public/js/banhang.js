@@ -141,117 +141,107 @@ function initGlobalBarcodeListener() {
   });
 }
 
-function initKeyboardShortcuts() {
-  document.addEventListener('keydown', (e) => {
-    // F1: Focus ô quét / tìm kiếm IMEI
-    if (e.key === 'F1') {
-      e.preventDefault();
-      switchToPosTab();
+function shortcutAction(key) {
+  if (key === 'F1' || key === '1') {
+    switchToPosTab();
+    const searchInput = document.getElementById('searchImeiInput');
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.select();
+    }
+  } else if (key === 'F2' || key === '2' || key === 'k' || key === 'K') {
+    switchToPosTab();
+    const selectKh = document.getElementById('selectKhachHang');
+    if (selectKh) {
+      selectKh.focus();
+      selectKh.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  } else if (key === 'F3' || key === '3') {
+    switchToPosTab();
+    const filterSp = document.getElementById('filterPosSanPham');
+    if (filterSp) {
+      filterSp.focus();
+      filterSp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  } else if (key === 'F4' || key === '4' || key === 's' || key === 'S') {
+    switchToPosTab();
+    const btnSubmit = document.getElementById('btnSubmitOrder');
+    if (btnSubmit) {
+      if (btnSubmit.disabled) {
+        playBeep('error');
+        showToast('Giỏ hàng đang trống! Vui lòng chọn máy IMEI trước [F1 / Alt+1]', 'warning');
+      } else {
+        btnSubmit.click();
+      }
+    }
+  } else if (key === 'F7' || key === '7' || key === 'd' || key === 'D') {
+    switchToPosTab();
+    const btnOpen = document.getElementById('btnOpenPreOrderModal');
+    if (btnOpen) btnOpen.click();
+  } else if (key === 'F8' || key === '8' || key === 'x' || key === 'X') {
+    switchToPosTab();
+    const btnClear = document.getElementById('btnClearCart');
+    if (btnClear) {
+      if (cart.imeis.length === 0 && cart.phuKiens.length === 0) {
+        showToast('Giỏ hàng hiện đang trống', 'info');
+      } else {
+        btnClear.click();
+        playBeep('warning');
+        showToast('Đã xóa sạch giỏ hàng [F8 / Alt+8]', 'info');
+      }
+    }
+  } else if (key === 'F9' || key === '9' || key === 'p' || key === 'P') {
+    const invoiceModal = document.getElementById('invoiceDetailModal');
+    if (invoiceModal && invoiceModal.classList.contains('show')) {
+      window.print();
+    } else {
+      const btnPrint = document.getElementById('btnPrintInvoice');
+      if (btnPrint) btnPrint.click();
+    }
+  } else if (key === 'Escape') {
+    const shownModals = document.querySelectorAll('.modal.show');
+    if (shownModals.length > 0) {
+      shownModals.forEach(m => {
+        const instance = bootstrap.Modal.getInstance(m);
+        if (instance) instance.hide();
+      });
+    } else {
       const searchInput = document.getElementById('searchImeiInput');
-      if (searchInput) {
-        searchInput.focus();
-        searchInput.select();
+      if (searchInput && document.activeElement === searchInput) {
+        searchInput.value = '';
+        filterImeiDisplay();
       }
-      return;
     }
+  }
+}
 
-    // F2: Chọn Khách hàng
-    if (e.key === 'F2') {
+function initKeyboardShortcuts() {
+  window.addEventListener('keydown', (e) => {
+    // 1. Phím chức năng F1 -> F9 (dùng capture phase để chặn hành vi mặc định của trình duyệt)
+    if (['F1', 'F2', 'F3', 'F4', 'F7', 'F8', 'F9'].includes(e.key)) {
       e.preventDefault();
-      switchToPosTab();
-      const selectKh = document.getElementById('selectKhachHang');
-      if (selectKh) {
-        selectKh.focus();
-        selectKh.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      return;
+      e.stopPropagation();
+      shortcutAction(e.key);
+      return false;
     }
 
-    // F3: Lọc theo Model máy
-    if (e.key === 'F3') {
-      e.preventDefault();
-      switchToPosTab();
-      const filterSp = document.getElementById('filterPosSanPham');
-      if (filterSp) {
-        filterSp.focus();
-        filterSp.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      return;
-    }
-
-    // F4: Hoàn tất đơn hàng POS
-    if (e.key === 'F4') {
-      e.preventDefault();
-      switchToPosTab();
-      const btnSubmit = document.getElementById('btnSubmitOrder');
-      if (btnSubmit) {
-        if (btnSubmit.disabled) {
-          playBeep('error');
-          showToast('Giỏ hàng đang trống! Vui lòng chọn IMEI trước [F1]', 'warning');
-        } else {
-          btnSubmit.click();
-        }
-      }
-      return;
-    }
-
-    // F7: Mở chọn Đơn đặt hàng trước cấn trừ cọc
-    if (e.key === 'F7') {
-      e.preventDefault();
-      switchToPosTab();
-      const btnOpen = document.getElementById('btnOpenPreOrderModal');
-      if (btnOpen) btnOpen.click();
-      return;
-    }
-
-    // F8: Xóa giỏ hàng
-    if (e.key === 'F8') {
-      e.preventDefault();
-      switchToPosTab();
-      const btnClear = document.getElementById('btnClearCart');
-      if (btnClear) {
-        if (cart.imeis.length === 0 && cart.phuKiens.length === 0) {
-          showToast('Giỏ hàng hiện đang trống', 'info');
-        } else {
-          btnClear.click();
-          playBeep('warning');
-          showToast('Đã xóa sạch giỏ hàng [F8]', 'info');
-        }
-      }
-      return;
-    }
-
-    // F9: In hóa đơn
-    if (e.key === 'F9') {
-      e.preventDefault();
-      const invoiceModal = document.getElementById('invoiceDetailModal');
-      if (invoiceModal && invoiceModal.classList.contains('show')) {
-        window.print();
-      } else {
-        const btnPrint = document.getElementById('btnPrintInvoice');
-        if (btnPrint) btnPrint.click();
-      }
-      return;
-    }
-
-    // Escape: Đóng các modal đang mở hoặc xóa ô tìm kiếm
+    // 2. Phím Escape
     if (e.key === 'Escape') {
-      const shownModals = document.querySelectorAll('.modal.show');
-      if (shownModals.length > 0) {
-        shownModals.forEach(m => {
-          const instance = bootstrap.Modal.getInstance(m);
-          if (instance) instance.hide();
-        });
-      } else {
-        const searchInput = document.getElementById('searchImeiInput');
-        if (searchInput && document.activeElement === searchInput) {
-          searchInput.value = '';
-          filterImeiDisplay();
-        }
-      }
+      shortcutAction('Escape');
       return;
     }
-  });
+
+    // 3. Tổ hợp phím Alt + Phím số / Phím chữ (tránh xung đột phím tắt mặc định của trình duyệt / Fn trên laptop)
+    if (e.altKey && !e.ctrlKey && !e.shiftKey) {
+      const k = e.key.toLowerCase();
+      if (['1', '2', '3', '4', '7', '8', '9', 's', 'k', 'p', 'd', 'x'].includes(k)) {
+        e.preventDefault();
+        e.stopPropagation();
+        shortcutAction(k);
+        return false;
+      }
+    }
+  }, { capture: true });
 
   // Kích hoạt lắng nghe máy quét barcode
   initGlobalBarcodeListener();
@@ -1070,3 +1060,4 @@ window.changePhuKienQty = changePhuKienQty;
 window.viewInvoiceDetail = viewInvoiceDetail;
 window.selectPreOrder = selectPreOrder;
 window.loadReportsData = loadReportsData;
+window.shortcutAction = shortcutAction;
