@@ -12,6 +12,7 @@ const congNoSchema = new mongoose.Schema({
   phieuNhap: { type: mongoose.Schema.Types.ObjectId, ref: 'PhieuNhap' },
   soTienNo: { type: Number, required: true, default: 0, min: 0 },
   soTienDaTra: { type: Number, required: true, default: 0, min: 0 },
+  hanThanhToan: { type: Date },
   trangThai: {
     type: String,
     required: true,
@@ -23,7 +24,7 @@ const congNoSchema = new mongoose.Schema({
 });
 
 // Hook validate đa hình
-congNoSchema.pre('save', function(next) {
+congNoSchema.pre('save', function (next) {
   if (this.loaiDoiTuong === 'KhachHang') {
     if (!this.khachHang) {
       return next(new Error("ValidationError: Đối tượng Khách Hàng bắt buộc phải có thông tin 'khachHang'"));

@@ -7,6 +7,8 @@ class CongNoController extends BaseController {
     this.layDanhSach = this.layDanhSach.bind(this);
     this.layChiTiet = this.layChiTiet.bind(this);
     this.thanhToan = this.thanhToan.bind(this);
+    this.kiemTraQuaHan = this.kiemTraQuaHan.bind(this);
+    this.layThongKeDoiSoat = this.layThongKeDoiSoat.bind(this);
   }
 
   /**
@@ -16,6 +18,30 @@ class CongNoController extends BaseController {
     try {
       const data = await CongNoService.layDanhSachCongNo(req.query);
       return this.sendSuccess(res, data, 'Lấy danh sách công nợ thành công');
+    } catch (err) {
+      return this.handleError(res, err);
+    }
+  }
+
+  /**
+   * GET /api/cong-no/doi-soat
+   */
+  async layThongKeDoiSoat(req, res) {
+    try {
+      const data = await CongNoService.layThongKeDoiSoat(req.query);
+      return this.sendSuccess(res, data, 'Lấy thống kê đối soát công nợ thành công');
+    } catch (err) {
+      return this.handleError(res, err);
+    }
+  }
+
+  /**
+   * POST /api/cong-no/kiem-tra-qua-han
+   */
+  async kiemTraQuaHan(req, res) {
+    try {
+      const data = await CongNoService.kiemTraVaCapNhatQuaHan();
+      return this.sendSuccess(res, data, 'Kiểm tra và cập nhật công nợ quá hạn thành công');
     } catch (err) {
       return this.handleError(res, err);
     }

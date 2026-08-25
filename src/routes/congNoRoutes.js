@@ -4,6 +4,8 @@ const CongNoController = require('../controllers/CongNoController');
 const { requireAuth, requireRole } = require('../middlewares/auth');
 
 router.get('/', requireAuth, requireRole('Kế toán', 'Thu ngân'), CongNoController.layDanhSach);
+router.get('/doi-soat', requireAuth, requireRole('Kế toán', 'Thu ngân'), CongNoController.layThongKeDoiSoat);
+router.post('/kiem-tra-qua-han', requireAuth, requireRole('Kế toán', 'Thu ngân'), CongNoController.kiemTraQuaHan);
 router.get('/:id', requireAuth, requireRole('Kế toán', 'Thu ngân'), CongNoController.layChiTiet);
 router.post('/:id/thanh-toan', requireAuth, requireRole('Kế toán', 'Thu ngân'), CongNoController.thanhToan);
 

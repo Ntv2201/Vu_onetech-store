@@ -1,5 +1,5 @@
 const BaseService = require("./BaseService");
-const { CongNo, KhachHang, NhaCungCap } = require("../models");
+const { CongNo, KhachHang, NhaCungCap, PhieuThu, PhieuChi } = require("../models");
 const ThanhToanService = require("./ThanhToanService");
 
 const LOAI_DOI_TUONG = ["KhachHang", "NhaCungCap"];
@@ -80,6 +80,7 @@ class CongNoService extends BaseService {
     hoaDon,
     phieuNhap,
     soTienNo,
+    hanThanhToan,
     session = null,
   }) {
     await this.validateDoiTuongCongNo({ loaiDoiTuong, khachHang, nhaCungCap });
@@ -97,6 +98,7 @@ class CongNoService extends BaseService {
       phieuNhap: phieuNhap || undefined,
       soTienNo: soTien,
       soTienDaTra: 0,
+      hanThanhToan: hanThanhToan ? new Date(hanThanhToan) : undefined,
       trangThai: "Con no",
     });
     await congNo.save({ session });
@@ -133,24 +135,48 @@ class CongNoService extends BaseService {
 
   /**
    * GET /api/cong-no/:id
+   * Chi tiết hồ sơ công nợ kèm lịch sử phiếu thu / chi liên quan
    */
   async layChiTietCongNo(id) {
     const congNo = await CongNo.findById(id)
-      .populate("khachHang", "hoTen sdt diaChi")
-      .populate("nhaCungCap", "tenNCC sdt diaChi")
+      .populate("khachHang", "hoTen sdt diaChi email")
+      .populate("nhaCungCap", "tenNCC sdt diaChi email")
       .populate("hoaDon")
       .populate("phieuNhap");
     if (!congNo) throw this.createError("Không tìm thấy khoản công nợ", 404);
-    return congNo;
+
+    let lichSuThanhToan = [];
+    if (congNo.loaiDoiTuong === 'KhachHang') {
+      lichSuThanhToan = await PhieuThu.find({ congNo: congNo._id })
+        .sort({ ngayThu: -1, createdAt: -1 })
+        .lean();
+    } else if (congNo.loaiDoiTuong === 'NhaCungCap') {
+      const filterChi = [];
+      if (congNo.phieuNhap) {
+        filterChi.push({ phieuNhap: congNo.phieuNhap._id || congNo.phieuNhap });
+      }
+      if (congNo.nhaCungCap) {
+        filterChi.push({ maDT: String(congNo.nhaCungCap._id || congNo.nhaCungCap) });
+      }
+      if (filterChi.length > 0) {
+        lichSuThanhToan = await PhieuChi.find({ $or: filterChi })
+          .sort({ ngayChi: -1, createdAt: -1 })
+          .lean();
+      }
+    }
+
+    const result = congNo.toObject ? congNo.toObject() : congNo;
+    result.soTienConLai = Math.max(0, (result.soTienNo || 0) - (result.soTienDaTra || 0));
+    result.lichSuThanhToan = lichSuThanhToan;
+    return result;
   }
 
   /**
    * Tính lại trạng thái công nợ theo đúng enum thật: Con no / Da tra het / Qua han.
-   * (Qua han do phía gọi tự set riêng khi có logic hạn thanh toán — hàm này chỉ
-   * phân biệt Con no / Da tra het theo số tiền.)
    */
-  tinhTrangThai(soTienNo, soTienDaTra, trangThaiHienTai) {
+  tinhTrangThai(soTienNo, soTienDaTra, trangThaiHienTai, hanThanhToan = null) {
     if (soTienDaTra >= soTienNo) return "Da tra het";
+    if (hanThanhToan && new Date(hanThanhToan) < new Date()) return "Qua han";
     if (trangThaiHienTai === "Qua han") return "Qua han";
     return "Con no";
   }
@@ -159,8 +185,6 @@ class CongNoService extends BaseService {
    * POST /api/cong-no/:id/thanh-toan
    * KhachHang  -> THU nợ khách  -> gọi ThanhToanService.taoPhieuThu({ congNo })
    * NhaCungCap -> TRẢ nợ NCC    -> gọi ThanhToanService.taoPhieuChi({ phieuNhap })
-   *   (PhieuChi không có field congNo trực tiếp trong model thật, nên trả nợ NCC
-   *    phải tham chiếu qua phieuNhap gốc đã lưu sẵn trên bản ghi CongNo)
    */
   async thanhToanCongNo(id, { soTien, hinhThuc, ghiChu, session = null } = {}) {
     const amount = Number(soTien);
@@ -202,11 +226,100 @@ class CongNoService extends BaseService {
       congNo.soTienNo,
       congNo.soTienDaTra,
       congNo.trangThai,
+      congNo.hanThanhToan
     );
     await congNo.save({ session });
 
     return { congNo, phieu };
   }
+
+  /**
+   * Tự động kiểm tra và cập nhật các khoản công nợ 'Con no' đã quá hạn hanThanhToan sang 'Qua han'
+   */
+  async kiemTraVaCapNhatQuaHan() {
+    const now = new Date();
+    const filter = {
+      trangThai: "Con no",
+      hanThanhToan: { $lt: now }
+    };
+
+    const listOverdue = await CongNo.find(filter);
+    let updatedCount = 0;
+
+    for (const item of listOverdue) {
+      if (item.soTienDaTra < item.soTienNo) {
+        item.trangThai = "Qua han";
+        await item.save();
+        updatedCount++;
+      }
+    }
+
+    return {
+      updatedCount,
+      message: `Đã cập nhật ${updatedCount} khoản công nợ quá hạn`
+    };
+  }
+
+  /**
+   * Lấy báo cáo đối soát tổng hợp công nợ
+   */
+  async layThongKeDoiSoat(query = {}) {
+    const allDebts = await CongNo.find()
+      .populate("khachHang", "hoTen sdt")
+      .populate("nhaCungCap", "tenNCC sdt")
+      .lean();
+
+    let tongNoKhachHang = 0;
+    let tongDaTraKhachHang = 0;
+    let tongConNoKhachHang = 0;
+
+    let tongNoNhaCungCap = 0;
+    let tongDaTraNhaCungCap = 0;
+    let tongConNoNhaCungCap = 0;
+
+    let soKhoanQuaHan = 0;
+    let tongTienQuaHan = 0;
+
+    allDebts.forEach(item => {
+      const remaining = Math.max(0, item.soTienNo - item.soTienDaTra);
+      if (item.loaiDoiTuong === 'KhachHang') {
+        tongNoKhachHang += item.soTienNo;
+        tongDaTraKhachHang += item.soTienDaTra;
+        tongConNoKhachHang += remaining;
+      } else {
+        tongNoNhaCungCap += item.soTienNo;
+        tongDaTraNhaCungCap += item.soTienDaTra;
+        tongConNoNhaCungCap += remaining;
+      }
+
+      if (item.trangThai === 'Qua han' || (item.hanThanhToan && new Date(item.hanThanhToan) < new Date() && remaining > 0)) {
+        soKhoanQuaHan++;
+        tongTienQuaHan += remaining;
+      }
+    });
+
+    return {
+      khachHang: {
+        tongNo: tongNoKhachHang,
+        tongDaTra: tongDaTraKhachHang,
+        tongConNo: tongConNoKhachHang
+      },
+      nhaCungCap: {
+        tongNo: tongNoNhaCungCap,
+        tongDaTra: tongDaTraNhaCungCap,
+        tongConNo: tongConNoNhaCungCap
+      },
+      quaHan: {
+        soKhoanQuaHan,
+        tongTienQuaHan
+      },
+      tongCong: {
+        tongDuNoHienTai: tongConNoKhachHang + tongConNoNhaCungCap,
+        tongSoKhoan: allDebts.length
+      }
+    };
+  }
 }
 
 module.exports = new CongNoService();
+
