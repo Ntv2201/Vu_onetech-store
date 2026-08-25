@@ -43,29 +43,218 @@ function playBeep(type = 'success') {
   }
 }
 
+let barcodeBuffer = '';
+let lastKeyTime = 0;
+
 document.addEventListener('DOMContentLoaded', async () => {
-  await initPosPage();
-  await initInvoiceListPage();
-  await initReportsTab();
+  // Đăng ký phím tắt & quét barcode ngay lập tức
   initKeyboardShortcuts();
+
+  try {
+    await initPosPage();
+    await initInvoiceListPage();
+    await initReportsTab();
+  } catch (err) {
+    console.error('Lỗi khi tải dữ liệu trang bán hàng POS:', err);
+  }
+
+  // Tự động focus ô tìm / quét IMEI khi vào trang
+  const searchInput = document.getElementById('searchImeiInput');
+  if (searchInput) searchInput.focus();
 });
+
+function switchToPosTab() {
+  const posTabBtn = document.getElementById('tab-pos-tab');
+  if (posTabBtn && !posTabBtn.classList.contains('active')) {
+    const tabInstance = bootstrap.Tab.getOrCreateInstance(posTabBtn);
+    if (tabInstance) tabInstance.show();
+  }
+}
+
+function handleScanOrEnterImei(rawText) {
+  if (!rawText) return;
+  const keyword = rawText.trim();
+  const searchInput = document.getElementById('searchImeiInput');
+
+  // 1. Tìm chính xác IMEI
+  let found = allAvailableImeis.find(m => m.imei.toLowerCase() === keyword.toLowerCase());
+
+  // 2. Nếu không khớp chính xác, thử tìm máy duy nhất khớp một phần
+  if (!found) {
+    const inCartImeis = new Set(cart.imeis.map(m => m.imei));
+    const candidates = allAvailableImeis.filter(m => {
+      if (inCartImeis.has(m.imei)) return false;
+      return m.imei.toLowerCase().includes(keyword.toLowerCase()) ||
+             (m.sanPham && m.sanPham.tenMay.toLowerCase().includes(keyword.toLowerCase()));
+    });
+    if (candidates.length === 1) {
+      found = candidates[0];
+    }
+  }
+
+  if (found) {
+    const alreadyInCart = cart.imeis.some(m => m.imei === found.imei);
+    if (alreadyInCart) {
+      playBeep('error');
+      showToast(`Máy IMEI "${found.imei}" đã có trong giỏ hàng!`, 'warning');
+    } else {
+      addImeiToCart(found.imei);
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+      }
+      filterImeiDisplay();
+    }
+  } else {
+    playBeep('error');
+    showToast(`Không tìm thấy máy IMEI "${keyword}" còn hàng trong kho!`, 'danger');
+  }
+}
+
+function initGlobalBarcodeListener() {
+  document.addEventListener('keydown', (e) => {
+    // Bỏ qua các phím chức năng hoặc tổ hợp phím
+    if (e.key.startsWith('F') || e.key === 'Escape' || e.key === 'Tab' || e.ctrlKey || e.altKey) {
+      return;
+    }
+
+    const now = Date.now();
+    const timeDelta = now - lastKeyTime;
+    lastKeyTime = now;
+
+    if (e.key === 'Enter') {
+      // Nếu máy quét mã vạch đẩy chuỗi ký tự nhanh (< 80ms) và kết thúc bằng Enter
+      if (barcodeBuffer.length >= 4 && timeDelta < 80) {
+        e.preventDefault();
+        switchToPosTab();
+        handleScanOrEnterImei(barcodeBuffer);
+        barcodeBuffer = '';
+        return;
+      }
+      barcodeBuffer = '';
+    } else if (e.key.length === 1) {
+      if (timeDelta > 80) {
+        barcodeBuffer = '';
+      }
+      barcodeBuffer += e.key;
+    }
+  });
+}
 
 function initKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
+    // F1: Focus ô quét / tìm kiếm IMEI
+    if (e.key === 'F1') {
+      e.preventDefault();
+      switchToPosTab();
+      const searchInput = document.getElementById('searchImeiInput');
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.select();
+      }
+      return;
+    }
+
+    // F2: Chọn Khách hàng
     if (e.key === 'F2') {
       e.preventDefault();
+      switchToPosTab();
       const selectKh = document.getElementById('selectKhachHang');
-      if (selectKh) selectKh.focus();
-    } else if (e.key === 'F4') {
+      if (selectKh) {
+        selectKh.focus();
+        selectKh.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    // F3: Lọc theo Model máy
+    if (e.key === 'F3') {
       e.preventDefault();
+      switchToPosTab();
+      const filterSp = document.getElementById('filterPosSanPham');
+      if (filterSp) {
+        filterSp.focus();
+        filterSp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    // F4: Hoàn tất đơn hàng POS
+    if (e.key === 'F4') {
+      e.preventDefault();
+      switchToPosTab();
       const btnSubmit = document.getElementById('btnSubmitOrder');
-      if (btnSubmit && !btnSubmit.disabled) btnSubmit.click();
-    } else if (e.key === 'F9') {
+      if (btnSubmit) {
+        if (btnSubmit.disabled) {
+          playBeep('error');
+          showToast('Giỏ hàng đang trống! Vui lòng chọn IMEI trước [F1]', 'warning');
+        } else {
+          btnSubmit.click();
+        }
+      }
+      return;
+    }
+
+    // F7: Mở chọn Đơn đặt hàng trước cấn trừ cọc
+    if (e.key === 'F7') {
       e.preventDefault();
-      const btnPrint = document.getElementById('btnPrintInvoice');
-      if (btnPrint) btnPrint.click();
+      switchToPosTab();
+      const btnOpen = document.getElementById('btnOpenPreOrderModal');
+      if (btnOpen) btnOpen.click();
+      return;
+    }
+
+    // F8: Xóa giỏ hàng
+    if (e.key === 'F8') {
+      e.preventDefault();
+      switchToPosTab();
+      const btnClear = document.getElementById('btnClearCart');
+      if (btnClear) {
+        if (cart.imeis.length === 0 && cart.phuKiens.length === 0) {
+          showToast('Giỏ hàng hiện đang trống', 'info');
+        } else {
+          btnClear.click();
+          playBeep('warning');
+          showToast('Đã xóa sạch giỏ hàng [F8]', 'info');
+        }
+      }
+      return;
+    }
+
+    // F9: In hóa đơn
+    if (e.key === 'F9') {
+      e.preventDefault();
+      const invoiceModal = document.getElementById('invoiceDetailModal');
+      if (invoiceModal && invoiceModal.classList.contains('show')) {
+        window.print();
+      } else {
+        const btnPrint = document.getElementById('btnPrintInvoice');
+        if (btnPrint) btnPrint.click();
+      }
+      return;
+    }
+
+    // Escape: Đóng các modal đang mở hoặc xóa ô tìm kiếm
+    if (e.key === 'Escape') {
+      const shownModals = document.querySelectorAll('.modal.show');
+      if (shownModals.length > 0) {
+        shownModals.forEach(m => {
+          const instance = bootstrap.Modal.getInstance(m);
+          if (instance) instance.hide();
+        });
+      } else {
+        const searchInput = document.getElementById('searchImeiInput');
+        if (searchInput && document.activeElement === searchInput) {
+          searchInput.value = '';
+          filterImeiDisplay();
+        }
+      }
+      return;
     }
   });
+
+  // Kích hoạt lắng nghe máy quét barcode
+  initGlobalBarcodeListener();
 }
 
 async function initPosPage() {
@@ -79,11 +268,17 @@ async function initPosPage() {
     inputDiscount.addEventListener('input', () => renderCart());
   }
 
-  // Search & Filter IMEI
+  // Search & Filter IMEI (hỗ trợ nhập hoặc quét Barcode + Enter)
   const searchInput = document.getElementById('searchImeiInput');
   const filterSp = document.getElementById('filterPosSanPham');
   if (searchInput) {
     searchInput.addEventListener('input', () => filterImeiDisplay());
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleScanOrEnterImei(searchInput.value);
+      }
+    });
   }
   if (filterSp) {
     filterSp.addEventListener('change', () => filterImeiDisplay());
