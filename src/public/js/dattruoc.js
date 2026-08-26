@@ -620,9 +620,112 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${hoaDonHtml}
         `;
       }
+
+      // Xử lý nút In Phiếu
+      const btnPrint = document.getElementById('btnPrintPreorder');
+      if (btnPrint) {
+        btnPrint.onclick = () => {
+          printPreorderReceipt(data);
+        };
+      }
     } catch (err) {
       if (detailContent) detailContent.innerHTML = `<div class="alert alert-danger">Lỗi tải chi tiết: ${err.message}</div>`;
     }
+  }
+
+  function printPreorderReceipt(data) {
+    const { donDatHang, phieuThuList = [] } = data;
+    if (!donDatHang) return;
+
+    const kh = donDatHang.khachHang || {};
+    const sp = donDatHang.sanPham || {};
+    const depositStr = (donDatHang.soTienCoc || 0).toLocaleString('vi-VN') + ' đ';
+    const priceStr = (sp.giaBan || 0).toLocaleString('vi-VN') + ' đ';
+    const createdDateStr = new Date(donDatHang.createdAt).toLocaleDateString('vi-VN');
+    const hanLayStr = donDatHang.hanLay ? new Date(donDatHang.hanLay).toLocaleDateString('vi-VN') : 'Khi có hàng sớm nhất';
+
+    const printWindow = window.open('', '_blank', 'width=700,height=800');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Phiếu Đặt Cọc #${donDatHang._id.slice(-6).toUpperCase()} - OneTech Store</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #222; font-size: 13px; line-height: 1.5; }
+          .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 12px; margin-bottom: 15px; }
+          .title { font-size: 18px; font-weight: bold; margin: 5px 0; text-transform: uppercase; }
+          .store-info { font-size: 12px; color: #555; }
+          .section-title { font-weight: bold; font-size: 14px; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+          th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+          th { background: #f5f5f5; }
+          .text-end { text-align: right; }
+          .fw-bold { font-weight: bold; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; }
+          .signature-box { width: 45%; }
+          .signature-space { height: 60px; }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div style="font-weight: bold; font-size: 16px;">HỆ THỐNG BÁN LẺ ĐIỆN THOẠI ONETECH STORE</div>
+          <div class="store-info">Địa chỉ: 123 Đường Cầu Giấy, Hà Nội | Hotline: 1900 6868</div>
+          <div class="title">PHIẾU TIẾP NHẬN ĐẶT HÀNG TRƯỚC (PRE-ORDER)</div>
+          <div>Mã đơn: <strong>#${donDatHang._id.slice(-6).toUpperCase()}</strong> | Ngày lập: ${createdDateStr}</div>
+        </div>
+
+        <div class="section-title">1. THÔNG TIN KHÁCH HÀNG</div>
+        <div>Họ và tên: <strong>${escapeHtml(kh.hoTen || 'Khách vãng lai')}</strong></div>
+        <div>Số điện thoại: <strong>${escapeHtml(kh.sdt || 'Chưa có')}</strong></div>
+        <div>Địa chỉ: ${escapeHtml(kh.diaChi || 'Tại cửa hàng')}</div>
+
+        <div class="section-title">2. THÔNG TIN SẢN PHẨM & TIỀN CỌC</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Sản phẩm / Model</th>
+              <th>Dự kiến giao</th>
+              <th class="text-end">Giá niêm yết</th>
+              <th class="text-end">Tiền đặt cọc</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>${escapeHtml(sp.tenMay || 'Điện thoại')}</strong></td>
+              <td>${hanLayStr}</td>
+              <td class="text-end">${priceStr}</td>
+              <td class="text-end fw-bold">${depositStr}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top: 10px; font-size: 12px; font-style: italic;">
+          * Lưu ý: Tiền cọc sẽ được cấn trừ trực tiếp vào hóa đơn khi nhận máy. Nếu quý khách hủy đơn theo chính sách, cửa hàng sẽ hoàn cọc 100%.
+        </div>
+
+        <div class="signatures">
+          <div class="signature-box">
+            <strong>KHÁCH HÀNG</strong><br><small>(Ký và ghi rõ họ tên)</small>
+            <div class="signature-space"></div>
+            <div>${escapeHtml(kh.hoTen || '')}</div>
+          </div>
+          <div class="signature-box">
+            <strong>NHÂN VIÊN TIẾP NHẬN</strong><br><small>(Ký và ghi rõ họ tên)</small>
+            <div class="signature-space"></div>
+            <div>OneTech Store</div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   }
 
   /**
