@@ -21,4 +21,7 @@ router.get('/:id', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế
 // POST /api/doi-tra - Lập phiếu đổi trả máy (Chỉ cho phép Quản lý, NV bán hàng, Thu ngân; Chặn Kỹ thuật/Thủ kho)
 router.post('/', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân'), doiTraController.create);
 
+// PUT /api/doi-tra/:id/huy - Hủy / Thu hồi phiếu đổi trả (Dành riêng cho Quản lý - Tuần 5 RBAC)
+router.put('/:id/huy', requireRole('Quản lý'), doiTraController.cancel);
+
 module.exports = router;

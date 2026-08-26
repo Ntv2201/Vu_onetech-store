@@ -1,21 +1,26 @@
 /**
  * Module Xử lý Logic Giao diện Đổi Trả Máy (Exchange & Return)
- * Thành viên 6: Tô Quốc Việt (Tuần 4)
+ * Thành viên 6: Tô Quốc Việt (Tuần 4 - 5)
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
   let currentPage = 1;
   let currentSearch = '';
   let currentLoai = 'All';
+  let currentTrangThai = 'All';
 
   let validatedData = null; // Dữ liệu máy cũ & HĐ sau khi kiểm tra hợp lệ
   let allAvailableImeis = [];
   let allSanPhams = [];
+  let allPhuKiens = [];
+  let selectedPhuKienList = []; // Mảng phụ kiện mua kèm: [{ phuKienId, tenPK, soLuong, donGia }]
+  let currentViewingDetailId = null;
 
   // DOM Elements - Danh sách
   const doiTraTableBody = document.getElementById('doiTraTableBody');
   const searchDoiTraInput = document.getElementById('searchDoiTraInput');
   const filterLoaiDoiTra = document.getElementById('filterLoaiDoiTra');
+  const filterTrangThaiDoiTra = document.getElementById('filterTrangThaiDoiTra');
   const filterTuNgay = document.getElementById('filterTuNgay');
   const filterDenNgay = document.getElementById('filterDenNgay');
   const btnRefreshList = document.getElementById('btnRefreshList');
@@ -42,9 +47,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const selectSanPhamMoi = document.getElementById('selectSanPhamMoi');
   const selectImeiMoi = document.getElementById('selectImeiMoi');
 
+  // Phụ kiện đính kèm
+  const selectPhuKienMoi = document.getElementById('selectPhuKienMoi');
+  const inputSoLuongPhuKien = document.getElementById('inputSoLuongPhuKien');
+  const btnAddPhuKien = document.getElementById('btnAddPhuKien');
+  const selectedPhuKienContainer = document.getElementById('selectedPhuKienContainer');
+
+  // Bảng tính
   const displayGiaMayCu = document.getElementById('displayGiaMayCu');
   const displayGiaMayMoi = document.getElementById('displayGiaMayMoi');
   const rowGiaMayMoi = document.getElementById('rowGiaMayMoi');
+  const rowGiaPhuKien = document.getElementById('rowGiaPhuKien');
+  const displayGiaPhuKien = document.getElementById('displayGiaPhuKien');
   const labelTienChenhLech = document.getElementById('labelTienChenhLech');
   const displayTienChenhLech = document.getElementById('displayTienChenhLech');
   const noteChenhLech = document.getElementById('noteChenhLech');
@@ -57,9 +71,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnLookupImei = document.getElementById('btnLookupImei');
   const lookupResultContainer = document.getElementById('lookupResultContainer');
 
-  // Modal
+  // Modal & Nút Hủy
   let modalDetail = null;
   const modalDetailEl = document.getElementById('modalDoiTraDetail');
+  const btnCancelDoiTraModal = document.getElementById('btnCancelDoiTraModal');
   if (modalDetailEl && window.bootstrap) {
     modalDetail = new bootstrap.Modal(modalDetailEl);
   }
@@ -73,6 +88,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (filterLoaiDoiTra) {
     filterLoaiDoiTra.addEventListener('change', (e) => {
       currentLoai = e.target.value;
+      currentPage = 1;
+      loadDoiTraList();
+    });
+  }
+
+  if (filterTrangThaiDoiTra) {
+    filterTrangThaiDoiTra.addEventListener('change', (e) => {
+      currentTrangThai = e.target.value;
       currentPage = 1;
       loadDoiTraList();
     });
@@ -179,14 +202,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 4. Reset form tạo mới
+  // 4. Thêm phụ kiện đi kèm
+  if (btnAddPhuKien) {
+    btnAddPhuKien.addEventListener('click', () => {
+      const pkId = selectPhuKienMoi?.value;
+      const qty = parseInt(inputSoLuongPhuKien?.value, 10) || 1;
+
+      if (!pkId) {
+        showToast('Vui lòng chọn phụ kiện', 'warning');
+        return;
+      }
+
+      const pkDoc = allPhuKiens.find(p => p._id === pkId);
+      if (!pkDoc) return;
+
+      if (pkDoc.soLuongTon < qty) {
+        showToast(`Phụ kiện "${pkDoc.tenPK}" chỉ còn ${pkDoc.soLuongTon} cái trong kho`, 'warning');
+        return;
+      }
+
+      const existingIndex = selectedPhuKienList.findIndex(p => p.phuKienId === pkId);
+      if (existingIndex >= 0) {
+        selectedPhuKienList[existingIndex].soLuong += qty;
+      } else {
+        selectedPhuKienList.push({
+          phuKienId: pkDoc._id,
+          tenPK: pkDoc.tenPK,
+          soLuong: qty,
+          donGia: pkDoc.giaBan || 0
+        });
+      }
+
+      renderSelectedPhuKien();
+      calculatePriceDifference();
+      selectPhuKienMoi.value = '';
+      if (inputSoLuongPhuKien) inputSoLuongPhuKien.value = '1';
+    });
+  }
+
+  // 5. Reset form tạo mới
   if (btnResetCreateForm) {
     btnResetCreateForm.addEventListener('click', () => {
       resetCreateForm();
     });
   }
 
-  // 5. Submit tạo phiếu đổi trả
+  // 6. Submit tạo phiếu đổi trả
   if (createDoiTraForm) {
     createDoiTraForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -218,6 +279,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           imeiCu,
           imeiMoi: imeiMoi || undefined,
           loaiDoiTra,
+          danhSachPhuKien: selectedPhuKienList.map(pk => ({
+            phuKien: pk.phuKienId,
+            soLuong: pk.soLuong,
+            donGia: pk.donGia
+          })),
           hinhThuc,
           lyDo,
           ghiChu
@@ -241,7 +307,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 6. Tra cứu lịch sử IMEI
+  // 7. Xử lý Hủy / Thu hồi phiếu đổi trả (Chỉ dành cho Quản lý)
+  if (btnCancelDoiTraModal) {
+    btnCancelDoiTraModal.addEventListener('click', async () => {
+      if (!currentViewingDetailId) return;
+
+      const lyDoHuy = prompt('Nhập lý do Quản lý hủy / thu hồi phiếu đổi trả này:');
+      if (lyDoHuy === null) return; // Khách bấm cancel
+      if (!lyDoHuy.trim()) {
+        showToast('Vui lòng nhập lý do hủy phiếu', 'warning');
+        return;
+      }
+
+      btnCancelDoiTraModal.disabled = true;
+      btnCancelDoiTraModal.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang hủy...';
+
+      try {
+        const res = await api.put(`/doi-tra/${currentViewingDetailId}/huy`, { lyDoHuy });
+        if (res && res.success) {
+          showToast('Đã hủy phiếu đổi trả và hoàn tác kho, sổ quỹ thành công!', 'success');
+          if (modalDetail) modalDetail.hide();
+          loadDoiTraList();
+          loadMasterData();
+        } else {
+          showToast(res.message || 'Không thể hủy phiếu đổi trả', 'danger');
+        }
+      } catch (err) {
+        showToast(err.message || 'Lỗi khi hủy phiếu đổi trả', 'danger');
+      } finally {
+        btnCancelDoiTraModal.disabled = false;
+        btnCancelDoiTraModal.innerHTML = '<i class="bi bi-x-circle me-1"></i> Hủy / Thu Hồi Phiếu Đổi Trả (Quản lý)';
+      }
+    });
+  }
+
+  // 8. Tra cứu lịch sử IMEI
   if (btnLookupImei) {
     btnLookupImei.addEventListener('click', async () => {
       const imei = lookupImeiInput?.value.trim();
@@ -321,13 +421,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     `;
   }
 
+  function renderSelectedPhuKien() {
+    if (!selectedPhuKienContainer) return;
+    if (selectedPhuKienList.length === 0) {
+      selectedPhuKienContainer.innerHTML = '';
+      if (rowGiaPhuKien) rowGiaPhuKien.style.display = 'none';
+      return;
+    }
+
+    if (rowGiaPhuKien) rowGiaPhuKien.style.display = 'flex';
+
+    selectedPhuKienContainer.innerHTML = `
+      <div class="table-responsive mt-2">
+        <table class="table table-sm table-bordered bg-white mb-0 small">
+          <thead class="table-light">
+            <tr>
+              <th>Tên phụ kiện</th>
+              <th class="text-center" style="width: 70px;">SL</th>
+              <th class="text-end" style="width: 110px;">Đơn giá</th>
+              <th class="text-end" style="width: 120px;">Thành tiền</th>
+              <th class="text-center" style="width: 40px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${selectedPhuKienList.map((pk, idx) => `
+              <tr>
+                <td>${escapeHtml(pk.tenPK)}</td>
+                <td class="text-center">${pk.soLuong}</td>
+                <td class="text-end">${pk.donGia.toLocaleString('vi-VN')} đ</td>
+                <td class="text-end fw-semibold">${(pk.donGia * pk.soLuong).toLocaleString('vi-VN')} đ</td>
+                <td class="text-center">
+                  <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="window.removeDoiTraPhuKien(${idx})">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  window.removeDoiTraPhuKien = (idx) => {
+    selectedPhuKienList.splice(idx, 1);
+    renderSelectedPhuKien();
+    calculatePriceDifference();
+  };
+
   function calculatePriceDifference() {
     if (!validatedData) return;
 
     const giaMayCu = validatedData.giaMayCu || 0;
     const loai = selectLoaiDoiTra.value;
+    const tongTienPhuKien = selectedPhuKienList.reduce((sum, pk) => sum + (pk.donGia * pk.soLuong), 0);
 
     if (displayGiaMayCu) displayGiaMayCu.textContent = giaMayCu.toLocaleString('vi-VN') + ' đ';
+    if (displayGiaPhuKien) displayGiaPhuKien.textContent = (tongTienPhuKien > 0 ? '+' : '') + tongTienPhuKien.toLocaleString('vi-VN') + ' đ';
 
     if (loai === 'Tra hang') {
       if (displayGiaMayMoi) displayGiaMayMoi.textContent = '0 đ';
@@ -351,7 +501,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (displayGiaMayMoi) displayGiaMayMoi.textContent = giaMayMoi.toLocaleString('vi-VN') + ' đ';
 
-    const diff = giaMayMoi - giaMayCu;
+    const diff = (giaMayMoi + tongTienPhuKien) - giaMayCu;
 
     if (diff > 0) {
       if (labelTienChenhLech) labelTienChenhLech.textContent = 'Khách cần thanh toán thêm (Thu thêm):';
@@ -359,7 +509,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         displayTienChenhLech.textContent = '+' + diff.toLocaleString('vi-VN') + ' đ';
         displayTienChenhLech.className = 'font-monospace fs-5 text-success';
       }
-      if (noteChenhLech) noteChenhLech.textContent = 'Máy mới giá cao hơn máy cũ -> Hệ thống sẽ tự động tạo Phiếu Thu tiền chênh lệch.';
+      if (noteChenhLech) noteChenhLech.textContent = 'Máy mới/phụ kiện giá cao hơn máy cũ -> Hệ thống sẽ tự động tạo Phiếu Thu tiền chênh lệch.';
     } else if (diff < 0) {
       if (labelTienChenhLech) labelTienChenhLech.textContent = 'Cửa hàng hoàn tiền thừa cho khách:';
       if (displayTienChenhLech) {
@@ -379,6 +529,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function resetCreateForm() {
     validatedData = null;
+    selectedPhuKienList = [];
     if (checkSoHDInput) checkSoHDInput.value = '';
     if (checkImeiInput) checkImeiInput.value = '';
     if (checkResultContainer) {
@@ -390,25 +541,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       createDoiTraForm.style.display = 'none';
     }
     if (doiMaySection) doiMaySection.style.display = 'block';
+    renderSelectedPhuKien();
     populateImeiOptions();
   }
 
   /**
-   * Tải danh mục sản phẩm và các máy IMEI còn hàng
+   * Tải danh mục sản phẩm, phụ kiện và các máy IMEI còn hàng
    */
   async function loadMasterData() {
     try {
-      const [resSp, resMay] = await Promise.all([
+      const [resSp, resMay, resPk] = await Promise.all([
         api.get('/san-pham'),
-        api.get('/may-imei?trangThai=Con hang')
+        api.get('/may-imei?trangThai=Con hang'),
+        api.get('/phu-kien')
       ]);
 
       allSanPhams = resSp.data && Array.isArray(resSp.data.data) ? resSp.data.data : (Array.isArray(resSp.data) ? resSp.data : (resSp.sanPhams || []));
       allAvailableImeis = resMay.data && Array.isArray(resMay.data.data) ? resMay.data.data : (Array.isArray(resMay.data) ? resMay.data : (resMay.mayImeis || []));
+      allPhuKiens = resPk.data && Array.isArray(resPk.data.data) ? resPk.data.data : (Array.isArray(resPk.data) ? resPk.data : (resPk.phuKiens || []));
 
       if (selectSanPhamMoi) {
         selectSanPhamMoi.innerHTML = '<option value="">-- Tất cả Model máy mới --</option>' +
           allSanPhams.map(sp => `<option value="${sp._id}">${escapeHtml(sp.tenMay)} (${(sp.giaBan || 0).toLocaleString('vi-VN')} đ)</option>`).join('');
+      }
+
+      if (selectPhuKienMoi) {
+        selectPhuKienMoi.innerHTML = '<option value="">-- Chọn phụ kiện trong kho --</option>' +
+          allPhuKiens.filter(p => p.soLuongTon > 0).map(p => `<option value="${p._id}">${escapeHtml(p.tenPK)} - ${(p.giaBan || 0).toLocaleString('vi-VN')} đ (Tồn: ${p.soLuongTon})</option>`).join('');
       }
 
       populateImeiOptions();
@@ -446,7 +605,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       doiTraTableBody.innerHTML = `
         <tr>
-          <td colspan="9" class="text-center py-4 text-muted">
+          <td colspan="10" class="text-center py-4 text-muted">
             <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
             Đang tải dữ liệu...
           </td>
@@ -455,6 +614,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const params = { page: currentPage, limit: 10 };
       if (currentLoai !== 'All') params.loaiDoiTra = currentLoai;
+      if (currentTrangThai !== 'All') params.trangThai = currentTrangThai;
       if (currentSearch) params.search = currentSearch;
       if (filterTuNgay && filterTuNgay.value) params.tuNgay = filterTuNgay.value;
       if (filterDenNgay && filterDenNgay.value) params.denNgay = filterDenNgay.value;
@@ -470,7 +630,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Lỗi tải danh sách đổi trả:', err);
       doiTraTableBody.innerHTML = `
         <tr>
-          <td colspan="9" class="text-center py-4 text-danger">
+          <td colspan="10" class="text-center py-4 text-danger">
             <i class="bi bi-exclamation-triangle me-2"></i> Không thể tải danh sách phiếu đổi trả: ${err.message}
           </td>
         </tr>
@@ -482,7 +642,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!list || list.length === 0) {
       doiTraTableBody.innerHTML = `
         <tr>
-          <td colspan="9" class="text-center py-5 text-muted">
+          <td colspan="10" class="text-center py-5 text-muted">
             <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
             Chưa có phiếu đổi trả nào phù hợp.
           </td>
@@ -498,6 +658,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       const loaiBadge = item.loaiDoiTra === 'Doi may'
         ? '<span class="badge bg-primary"><i class="bi bi-phone-flip me-1"></i>Đổi máy</span>'
         : '<span class="badge bg-warning text-dark"><i class="bi bi-arrow-return-left me-1"></i>Trả hàng</span>';
+
+      const statusBadge = item.trangThai === 'Da huy'
+        ? '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Đã hủy</span>'
+        : '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Hoàn tất</span>';
 
       const imeiCuStr = `<span class="badge bg-danger-subtle text-danger font-monospace border border-danger-subtle">${escapeHtml(item.imeiCu || item.imei || '')}</span>`;
       const imeiMoiStr = item.imeiMoi
@@ -524,6 +688,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <td>${imeiCuStr}</td>
           <td>${imeiMoiStr}</td>
           <td class="text-end">${diffStr}</td>
+          <td>${statusBadge}</td>
           <td class="text-muted small">${dateStr}</td>
           <td class="text-end pe-3">
             <button type="button" class="btn btn-sm btn-outline-primary btn-view-detail" data-id="${item._id}" title="Xem chi tiết">
@@ -540,6 +705,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function viewDetail(id) {
+    currentViewingDetailId = id;
     const content = document.getElementById('modalDoiTraDetailContent');
     if (content) {
       content.innerHTML = `
@@ -548,16 +714,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
     }
+    if (btnCancelDoiTraModal) btnCancelDoiTraModal.style.display = 'none';
     if (modalDetail) modalDetail.show();
 
     try {
       const res = await api.get(`/doi-tra/${id}`);
       const data = res.data || res;
-      const { phieuDoiTra, mayCu, mayMoi, hoaDon, phieuThu, phieuChi } = data;
+      const { phieuDoiTra, mayCu, mayMoi, hoaDon, phieuThu, phieuChi, phieuThuDaoNguoc, phieuChiDaoNguoc, danhSachPhuKien = [] } = data;
 
       if (!phieuDoiTra) {
         if (content) content.innerHTML = '<div class="alert alert-danger">Không tìm thấy thông tin phiếu đổi trả</div>';
         return;
+      }
+
+      // Kiểm tra quyền Quản lý để hiển thị nút Hủy phiếu
+      const currentUser = api.getCurrentUser ? api.getCurrentUser() : null;
+      const isManager = currentUser && (currentUser.vaiTro === 'Quản lý' || currentUser.role === 'Quản lý');
+      if (btnCancelDoiTraModal) {
+        if (isManager && phieuDoiTra.trangThai !== 'Da huy') {
+          btnCancelDoiTraModal.style.display = 'inline-block';
+        } else {
+          btnCancelDoiTraModal.style.display = 'none';
+        }
       }
 
       const kh = phieuDoiTra.khachHang || (hoaDon ? hoaDon.khachHang : {}) || {};
@@ -587,6 +765,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
       }
 
+      let phuKienHtml = '';
+      if (danhSachPhuKien && danhSachPhuKien.length > 0) {
+        phuKienHtml = `
+          <div class="card p-3 mt-3 border bg-white">
+            <h6 class="fw-bold text-info mb-2"><i class="bi bi-bag me-1"></i>Phụ Kiện Mua Kèm / Đổi Kèm</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered mb-0 small">
+                <thead class="table-light">
+                  <tr>
+                    <th>Tên phụ kiện</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-end">Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${danhSachPhuKien.map(item => `
+                    <tr>
+                      <td>${escapeHtml(item.phuKien ? item.phuKien.tenPK : 'Phụ kiện')}</td>
+                      <td class="text-center">${item.soLuong}</td>
+                      <td class="text-end">${(item.donGia || 0).toLocaleString('vi-VN')} đ</td>
+                      <td class="text-end fw-semibold">${((item.donGia || 0) * (item.soLuong || 1)).toLocaleString('vi-VN')} đ</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      let cancelStatusHtml = '';
+      if (phieuDoiTra.trangThai === 'Da huy') {
+        cancelStatusHtml = `
+          <div class="alert alert-danger mt-3">
+            <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-octagon-fill me-1"></i> PHIẾU ĐÃ BỊ HỦY / THU HỒI BỞI QUẢN LÝ</h6>
+            <p class="mb-1 small"><strong>Lý do hủy:</strong> ${escapeHtml(phieuDoiTra.lyDoHuy || 'Không có lý do')}</p>
+            <p class="mb-0 small"><strong>Thời gian hủy:</strong> ${new Date(phieuDoiTra.ngayHuy).toLocaleString('vi-VN')}</p>
+            ${phieuThuDaoNguoc ? `<div class="small text-success mt-1">✓ Đã sinh Phiếu Thu đảo ngược: #${phieuThuDaoNguoc._id.slice(-6).toUpperCase()}</div>` : ''}
+            ${phieuChiDaoNguoc ? `<div class="small text-danger mt-1">✓ Đã sinh Phiếu Chi đảo ngược: #${phieuChiDaoNguoc._id.slice(-6).toUpperCase()}</div>` : ''}
+          </div>
+        `;
+      }
+
       if (content) {
         content.innerHTML = `
           <div class="row g-3">
@@ -611,7 +833,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="row g-3 mt-1">
             <div class="col-md-6">
               <div class="card p-3 border-danger border-start border-4">
-                <h6 class="fw-bold text-danger mb-2"><i class="bi bi-phone me-1"></i>Máy Cũ Thu Hồi (Trạng thái: Lỗi)</h6>
+                <h6 class="fw-bold text-danger mb-2"><i class="bi bi-phone me-1"></i>Máy Cũ Thu Hồi (Trạng thái: ${phieuDoiTra.trangThai === 'Da huy' ? 'Đã khôi phục Đã bán' : 'Lỗi'})</h6>
                 <p class="mb-1"><strong>Model:</strong> ${escapeHtml(spCu.tenMay || 'Điện thoại')}</p>
                 <p class="mb-1"><strong>IMEI cũ:</strong> <span class="font-monospace text-danger">${escapeHtml(phieuDoiTra.imeiCu)}</span></p>
                 <p class="mb-0"><strong>Giá trị tính đổi:</strong> ${(phieuDoiTra.giaMayCu || 0).toLocaleString('vi-VN')} đ</p>
@@ -619,7 +841,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
             <div class="col-md-6">
               <div class="card p-3 border-success border-start border-4">
-                <h6 class="fw-bold text-success mb-2"><i class="bi bi-phone-flip me-1"></i>Máy Mới Bàn Giao (Trạng thái: Đã bán)</h6>
+                <h6 class="fw-bold text-success mb-2"><i class="bi bi-phone-flip me-1"></i>Máy Mới Bàn Giao (Trạng thái: ${phieuDoiTra.trangThai === 'Da huy' ? 'Đã hoàn về Còn hàng' : 'Đã bán'})</h6>
                 ${phieuDoiTra.imeiMoi ? `
                   <p class="mb-1"><strong>Model:</strong> ${escapeHtml(spMoi.tenMay || 'Điện thoại')}</p>
                   <p class="mb-1"><strong>IMEI mới:</strong> <span class="font-monospace text-success">${escapeHtml(phieuDoiTra.imeiMoi)}</span></p>
@@ -630,6 +852,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               </div>
             </div>
           </div>
+
+          ${phuKienHtml}
 
           <div class="card p-3 mt-3 bg-light border">
             <div class="d-flex justify-content-between align-items-center">
@@ -642,6 +866,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ${phieuDoiTra.ghiChu ? `<div class="small text-muted mt-1"><strong>Ghi chú:</strong> ${escapeHtml(phieuDoiTra.ghiChu)}</div>` : ''}
           </div>
 
+          ${cancelStatusHtml}
           ${phieuThuHtml}
           ${phieuChiHtml}
         `;
@@ -680,6 +905,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <p class="mb-1 small"><strong>IMEI cũ:</strong> <span class="font-monospace text-danger">${escapeHtml(h.imeiCu || '')}</span></p>
                 ${h.imeiMoi ? `<p class="mb-1 small"><strong>IMEI mới đổi:</strong> <span class="font-monospace text-success">${escapeHtml(h.imeiMoi)}</span></p>` : ''}
                 <p class="mb-1 small"><strong>Chênh lệch tiền:</strong> ${(h.tienChenhLech || 0).toLocaleString('vi-VN')} đ</p>
+                <p class="mb-1 small"><strong>Trạng thái:</strong> <span class="badge ${h.trangThai === 'Da huy' ? 'bg-danger' : 'bg-success'}">${escapeHtml(h.trangThai)}</span></p>
                 <p class="mb-1 small"><strong>Lý do:</strong> ${escapeHtml(h.lyDo || '')}</p>
                 <small class="text-muted d-block mt-2">Ngày thực hiện: ${new Date(h.ngayDoiTra || h.createdAt).toLocaleString('vi-VN')}</small>
               </div>
@@ -739,7 +965,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (statDoiMayCount) statDoiMayCount.textContent = list.filter(i => i.loaiDoiTra === 'Doi may').length;
     if (statTraHangCount) statTraHangCount.textContent = list.filter(i => i.loaiDoiTra === 'Tra hang').length;
 
-    const totalThuThem = list.filter(i => i.tienChenhLech > 0).reduce((sum, i) => sum + (i.tienChenhLech || 0), 0);
+    const totalThuThem = list.filter(i => i.tienChenhLech > 0 && i.trangThai !== 'Da huy').reduce((sum, i) => sum + (i.tienChenhLech || 0), 0);
     if (statTotalThuThem) statTotalThuThem.textContent = totalThuThem.toLocaleString('vi-VN') + ' đ';
   }
 });

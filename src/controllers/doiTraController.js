@@ -3,7 +3,7 @@ const { DoiTraService } = require('../services');
 
 /**
  * DoiTraController - Controller tiếp nhận HTTP requests cho Phân hệ Đổi trả máy
- * Thành viên 6: Tô Quốc Việt (Tuần 4)
+ * Thành viên 6: Tô Quốc Việt (Tuần 4 - 5)
  */
 class DoiTraController extends BaseController {
   constructor() {
@@ -12,6 +12,7 @@ class DoiTraController extends BaseController {
     this.getDetail = this.getDetail.bind(this);
     this.checkCondition = this.checkCondition.bind(this);
     this.create = this.create.bind(this);
+    this.cancel = this.cancel.bind(this);
     this.getHistoryByImei = this.getHistoryByImei.bind(this);
   }
 
@@ -62,6 +63,19 @@ class DoiTraController extends BaseController {
       return this.sendSuccess(res, result, 'Lập phiếu đổi trả máy thành công!', 201);
     } catch (error) {
       return this.handleError(res, error, 'Lỗi khi lập phiếu đổi trả máy');
+    }
+  }
+
+  /**
+   * PUT /api/doi-tra/:id/huy - Hủy / thu hồi phiếu đổi trả (Dành riêng cho Quản lý - Tuần 5)
+   */
+  async cancel(req, res) {
+    try {
+      const sessionUser = req.session ? req.session.user : null;
+      const result = await DoiTraService.huyPhieuDoiTra(req.params.id, req.body, sessionUser);
+      return this.sendSuccess(res, result, 'Hủy phiếu đổi trả và hoàn tác kho, sổ quỹ thành công!');
+    } catch (error) {
+      return this.handleError(res, error, 'Không thể hủy phiếu đổi trả');
     }
   }
 

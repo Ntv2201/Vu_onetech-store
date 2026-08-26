@@ -8,12 +8,13 @@ const {
   MayImei,
   KhachHang,
   PhieuThu,
-  PhieuChi
+  PhieuChi,
+  PhuKien
 } = require('../models');
 
 /**
  * DoiTraService - Phân hệ Đổi Trả Máy & Hoàn Tiền Chênh Lệch
- * Module Thành viên 6: Tô Quốc Việt (Tuần 4)
+ * Module Thành viên 6: Tô Quốc Việt (Tuần 4 - 5)
  */
 class DoiTraService extends BaseService {
   constructor() {
@@ -69,10 +70,10 @@ class DoiTraService extends BaseService {
       throw this.createError(`Số IMEI "${cleanImei}" không thuộc danh sách sản phẩm của hóa đơn ${hoaDonDoc.soHD}`, 400);
     }
 
-    // 4. Kiểm tra máy đã từng được đổi trả trước đó hay chưa
+    // 4. Kiểm tra máy đã từng được đổi trả trước đó hay chưa (loại trừ các phiếu đã bị hủy hoặc từ chối)
     const existingDoiTra = await PhieuDoiTra.findOne({
       $or: [{ imeiCu: cleanImei }, { imei: cleanImei }],
-      trangThai: { $ne: 'Tu choi' }
+      trangThai: { $nin: ['Tu choi', 'Da huy'] }
     });
 
     if (existingDoiTra) {
@@ -96,7 +97,8 @@ class DoiTraService extends BaseService {
 
   /**
    * Tạo Phiếu Đổi Trả Máy & Tự động sinh Phiếu Thu / Chi chênh lệch tiền
-   * @param {Object} payload { soHD, imeiCu, imeiMoi, loaiDoiTra, lyDo, hinhThuc, ghiChu }
+   * Hỗ trợ đổi máy kèm phụ kiện phát sinh (Tuần 5)
+   * @param {Object} payload { soHD, imeiCu, imeiMoi, loaiDoiTra, danhSachPhuKien, lyDo, hinhThuc, ghiChu }
    * @param {Object} sessionUser Nhân viên thực hiện
    */
   async taoPhieuDoiTra(payload = {}, sessionUser = null) {
@@ -105,6 +107,7 @@ class DoiTraService extends BaseService {
       imeiCu,
       imeiMoi,
       loaiDoiTra,
+      danhSachPhuKien = [],
       lyDo,
       hinhThuc = 'Tien mat',
       ghiChu = ''
@@ -134,9 +137,6 @@ class DoiTraService extends BaseService {
     }
 
     let giaMayMoi = 0;
-    let tienChenhLech = 0;
-    let phieuThu = null;
-    let phieuChi = null;
     let mayMoiDoc = null;
 
     if (loai === 'Doi may') {
@@ -157,7 +157,6 @@ class DoiTraService extends BaseService {
       }
 
       giaMayMoi = mayMoiDoc.sanPham ? mayMoiDoc.sanPham.giaBan : (mayMoiDoc.giaNhap ? Math.round(mayMoiDoc.giaNhap * 1.15) : giaMayCu);
-      tienChenhLech = giaMayMoi - giaMayCu;
 
       // 4. Khóa nguyên tử cập nhật trạng thái máy mới -> 'Da ban'
       const lockNew = await MayImei.updateOne(
@@ -173,47 +172,83 @@ class DoiTraService extends BaseService {
         { imei: cleanImeiCu },
         { $set: { trangThai: 'Loi' } }
       );
-
-      // 6. Xử lý tài chính chênh lệch giá
-      if (tienChenhLech > 0) {
-        // Máy mới đắt hơn máy cũ -> Thu thêm tiền chênh lệch
-        phieuThu = await ThanhToanService.taoPhieuThu({
-          hoaDon: hoaDon._id,
-          soTien: tienChenhLech,
-          hinhThuc,
-          ghiChu: `Thu chênh lệch đổi máy ${cleanImeiCu} -> ${cleanImeiMoi} theo HĐ ${hoaDon.soHD}`,
-          sessionUser
-        });
-      } else if (tienChenhLech < 0) {
-        // Máy mới rẻ hơn máy cũ -> Hoàn tiền chênh lệch cho khách
-        const refundAmount = Math.abs(tienChenhLech);
-        phieuChi = await ThanhToanService.taoPhieuChi({
-          maDT: hoaDon.khachHang ? hoaDon.khachHang.hoTen : 'Khách hàng',
-          soTien: refundAmount,
-          hinhThuc,
-          lyDo: `Hoàn tiền chênh lệch đổi máy ${cleanImeiCu} -> ${cleanImeiMoi} theo HĐ ${hoaDon.soHD}`,
-          sessionUser
-        });
-      }
-      // Nếu tienChenhLech === 0: Bằng giá -> Không tạo phiếu thu/chi
     } else {
-      // 7. Nghiệp vụ Trả hàng hoàn tiền 100%
+      // Nghiệp vụ Trả hàng hoàn tiền 100%
       loai = 'Tra hang';
       giaMayMoi = 0;
-      tienChenhLech = -giaMayCu;
 
       // Cập nhật máy cũ -> 'Loi'
       await MayImei.updateOne(
         { imei: cleanImeiCu },
         { $set: { trangThai: 'Loi' } }
       );
+    }
 
-      // Hoàn tiền cho khách
+    // 6. Xử lý danh sách phụ kiện kèm theo (nếu có - Tuần 5 Edge Case)
+    let formattedPhuKien = [];
+    let tongTienPhuKien = 0;
+
+    if (Array.isArray(danhSachPhuKien) && danhSachPhuKien.length > 0) {
+      for (const item of danhSachPhuKien) {
+        const pkId = item.phuKien || item._id || item.id;
+        const qty = Number(item.soLuong) || 1;
+        if (qty <= 0) continue;
+
+        const pkDoc = await PhuKien.findById(pkId);
+        if (!pkDoc) {
+          throw this.createError(`Không tìm thấy phụ kiện ID ${pkId}`, 404);
+        }
+        if (pkDoc.soLuongTon < qty) {
+          throw this.createError(`Phụ kiện "${pkDoc.tenPK}" không đủ tồn kho (Còn ${pkDoc.soLuongTon}, yêu cầu ${qty})`, 400);
+        }
+
+        const donGia = Number(item.donGia) !== undefined && !isNaN(Number(item.donGia)) ? Number(item.donGia) : pkDoc.giaBan;
+        formattedPhuKien.push({
+          phuKien: pkDoc._id,
+          soLuong: qty,
+          donGia
+        });
+
+        tongTienPhuKien += donGia * qty;
+
+        // Trừ tồn kho phụ kiện
+        await PhuKien.updateOne(
+          { _id: pkDoc._id, soLuongTon: { $gte: qty } },
+          { $inc: { soLuongTon: -qty } }
+        );
+      }
+    }
+
+    // 7. Tính tổng tiền chênh lệch
+    let tienChenhLech = 0;
+    if (loai === 'Doi may') {
+      tienChenhLech = (giaMayMoi + tongTienPhuKien) - giaMayCu;
+    } else {
+      tienChenhLech = -giaMayCu;
+    }
+
+    let phieuThu = null;
+    let phieuChi = null;
+
+    if (tienChenhLech > 0) {
+      // Khách cần trả thêm tiền chênh lệch -> Sinh Phiếu Thu
+      phieuThu = await ThanhToanService.taoPhieuThu({
+        hoaDon: hoaDon._id,
+        soTien: tienChenhLech,
+        hinhThuc,
+        ghiChu: `Thu chênh lệch đổi máy ${cleanImeiCu} -> ${cleanImeiMoi || 'máy mới'}${tongTienPhuKien > 0 ? ` (kèm phụ kiện ${tongTienPhuKien.toLocaleString('vi-VN')} đ)` : ''} theo HĐ ${hoaDon.soHD}`,
+        sessionUser
+      });
+    } else if (tienChenhLech < 0) {
+      // Cửa hàng hoàn tiền cho khách -> Sinh Phiếu Chi
+      const refundAmount = Math.abs(tienChenhLech);
       phieuChi = await ThanhToanService.taoPhieuChi({
         maDT: hoaDon.khachHang ? hoaDon.khachHang.hoTen : 'Khách hàng',
-        soTien: giaMayCu,
+        soTien: refundAmount,
         hinhThuc,
-        lyDo: `Hoàn tiền 100% trả máy ${cleanImeiCu} theo HĐ ${hoaDon.soHD}. Lý do: ${lyDo}`,
+        lyDo: loai === 'Tra hang'
+          ? `Hoàn tiền 100% trả máy ${cleanImeiCu} theo HĐ ${hoaDon.soHD}. Lý do: ${lyDo}`
+          : `Hoàn tiền chênh lệch đổi máy ${cleanImeiCu} -> ${cleanImeiMoi} theo HĐ ${hoaDon.soHD}`,
         sessionUser
       });
     }
@@ -229,6 +264,8 @@ class DoiTraService extends BaseService {
       loaiDoiTra: loai,
       giaMayCu,
       giaMayMoi,
+      danhSachPhuKien: formattedPhuKien,
+      tongTienPhuKien,
       tienChenhLech,
       phieuThu: phieuThu ? phieuThu._id : null,
       phieuChi: phieuChi ? phieuChi._id : null,
@@ -250,14 +287,103 @@ class DoiTraService extends BaseService {
   }
 
   /**
+   * Hủy / Thu hồi Phiếu Đổi Trả (Dành riêng cho Quản lý - Tuần 5 Edge Case)
+   * Khôi phục trạng thái 2 máy và hoàn tác tài chính vào Sổ Quỹ
+   * @param {String} id ID phiếu đổi trả
+   * @param {Object} payload { lyDoHuy }
+   * @param {Object} sessionUser Quản lý thực hiện
+   */
+  async huyPhieuDoiTra(id, payload = {}, sessionUser = null) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw this.createError('Mã phiếu đổi trả không hợp lệ', 400);
+    }
+
+    const phieu = await PhieuDoiTra.findById(id).populate('phieuThu phieuChi');
+    if (!phieu) {
+      throw this.createError('Không tìm thấy phiếu đổi trả yêu cầu', 404);
+    }
+
+    if (phieu.trangThai === 'Da huy') {
+      throw this.createError('Phiếu đổi trả này đã bị hủy trước đó', 400);
+    }
+
+    const lyDoHuy = payload.lyDoHuy ? String(payload.lyDoHuy).trim() : 'Quản lý thu hồi / hủy phiếu đổi trả';
+
+    // 1. Khôi phục máy cũ: 'Loi' -> 'Da ban'
+    await MayImei.updateOne(
+      { imei: phieu.imeiCu },
+      { $set: { trangThai: 'Da ban' } }
+    );
+
+    // 2. Khôi phục máy mới (nếu có): 'Da ban' -> 'Con hang'
+    if (phieu.imeiMoi) {
+      await MayImei.updateOne(
+        { imei: phieu.imeiMoi },
+        { $set: { trangThai: 'Con hang' } }
+      );
+    }
+
+    // 3. Hoàn trả tồn kho phụ kiện (nếu có)
+    if (Array.isArray(phieu.danhSachPhuKien) && phieu.danhSachPhuKien.length > 0) {
+      for (const item of phieu.danhSachPhuKien) {
+        if (item.phuKien && item.soLuong > 0) {
+          await PhuKien.updateOne(
+            { _id: item.phuKien },
+            { $inc: { soLuongTon: item.soLuong } }
+          );
+        }
+      }
+    }
+
+    // 4. Đảo ngược giao dịch tài chính
+    let phieuChiDaoNguoc = null;
+    let phieuThuDaoNguoc = null;
+
+    if (phieu.phieuThu && phieu.phieuThu.soTien > 0) {
+      // Trước đó đã thu thêm tiền -> Nay hoàn lại tiền cho khách qua Phiếu Chi
+      phieuChiDaoNguoc = await ThanhToanService.taoPhieuChi({
+        maDT: phieu.khachHang ? String(phieu.khachHang) : 'Khách hàng',
+        soTien: phieu.phieuThu.soTien,
+        hinhThuc: phieu.hinhThuc || 'Tien mat',
+        lyDo: `Hoàn tiền do Quản lý hủy phiếu đổi trả ${phieu.maDT || phieu._id}. Lý do: ${lyDoHuy}`,
+        sessionUser
+      });
+    } else if (phieu.phieuChi && phieu.phieuChi.soTien > 0) {
+      // Trước đó đã chi tiền hoàn cho khách -> Nay thu lại tiền qua Phiếu Thu
+      phieuThuDaoNguoc = await ThanhToanService.taoPhieuThu({
+        hoaDon: phieu.hoaDon,
+        soTien: phieu.phieuChi.soTien,
+        hinhThuc: phieu.hinhThuc || 'Tien mat',
+        ghiChu: `Thu hồi tiền chi do Quản lý hủy phiếu đổi trả ${phieu.maDT || phieu._id}. Lý do: ${lyDoHuy}`,
+        sessionUser
+      });
+    }
+
+    // 5. Cập nhật trạng thái phiếu đổi trả -> 'Da huy'
+    phieu.trangThai = 'Da huy';
+    phieu.lyDoHuy = lyDoHuy;
+    phieu.ngayHuy = new Date();
+    phieu.nguoiHuy = sessionUser ? (sessionUser._id || sessionUser.id) : null;
+    phieu.phieuThuDaoNguoc = phieuThuDaoNguoc ? phieuThuDaoNguoc._id : null;
+    phieu.phieuChiDaoNguoc = phieuChiDaoNguoc ? phieuChiDaoNguoc._id : null;
+    await phieu.save();
+
+    return await this.getDoiTraDetail(phieu._id);
+  }
+
+  /**
    * Lấy danh sách phiếu đổi trả có bộ lọc, tìm kiếm và phân trang
-   * @param {Object} query { soHD, imei, loaiDoiTra, tuNgay, denNgay, page, limit, search }
+   * @param {Object} query { soHD, imei, loaiDoiTra, trangThai, tuNgay, denNgay, page, limit, search }
    */
   async getDoiTraList(query = {}) {
     const filter = {};
 
-    if (query.loaiDoiTra) {
+    if (query.loaiDoiTra && query.loaiDoiTra !== 'All') {
       filter.loaiDoiTra = query.loaiDoiTra;
+    }
+
+    if (query.trangThai && query.trangThai !== 'All') {
+      filter.trangThai = query.trangThai;
     }
 
     if (query.imei) {
@@ -303,6 +429,9 @@ class DoiTraService extends BaseService {
         .populate('nhanVien')
         .populate('phieuThu')
         .populate('phieuChi')
+        .populate('phieuThuDaoNguoc')
+        .populate('phieuChiDaoNguoc')
+        .populate('danhSachPhuKien.phuKien')
         .sort({ ngayDoiTra: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -322,7 +451,7 @@ class DoiTraService extends BaseService {
   }
 
   /**
-   * Lấy chi tiết 1 phiếu đổi trả kèm thông tin hóa đơn, máy và phiếu thu/chi
+   * Lấy chi tiết 1 phiếu đổi trả kèm thông tin hóa đơn, máy, phụ kiện và phiếu thu/chi
    * @param {String} id ID phiếu đổi trả
    */
   async getDoiTraDetail(id) {
@@ -337,8 +466,12 @@ class DoiTraService extends BaseService {
       })
       .populate('khachHang')
       .populate('nhanVien')
+      .populate('nguoiHuy')
       .populate('phieuThu')
-      .populate('phieuChi');
+      .populate('phieuChi')
+      .populate('phieuThuDaoNguoc')
+      .populate('phieuChiDaoNguoc')
+      .populate('danhSachPhuKien.phuKien');
 
     if (!phieu) {
       throw this.createError('Không tìm thấy phiếu đổi trả yêu cầu', 404);
@@ -356,7 +489,10 @@ class DoiTraService extends BaseService {
       mayMoi,
       hoaDon: phieu.hoaDon,
       phieuThu: phieu.phieuThu,
-      phieuChi: phieu.phieuChi
+      phieuChi: phieu.phieuChi,
+      phieuThuDaoNguoc: phieu.phieuThuDaoNguoc,
+      phieuChiDaoNguoc: phieu.phieuChiDaoNguoc,
+      danhSachPhuKien: phieu.danhSachPhuKien
     };
   }
 

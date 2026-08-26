@@ -3,83 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đổi Trả Máy & Hoàn Tiền - One Tech Store</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Đổi Trả Máy & Hoàn Tiền - OneTech Store</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
+<div class="d-flex" id="wrapper">
+  <!-- SIDEBAR (Render tự động bởi layout.js) -->
+  <aside id="sidebar-wrapper"></aside>
 
-<div class="app-wrapper">
-  <!-- Sidebar Inject Container -->
-  <div id="appSidebar"></div>
+  <!-- PAGE CONTENT -->
+  <div id="page-content-wrapper" class="flex-grow-1 d-flex flex-column min-vh-100">
+    <!-- NAVBAR (Render tự động bởi layout.js) -->
+    <header id="header-navbar"></header>
 
-  <!-- Main Content Wrapper -->
-  <div class="app-main">
-    <!-- Navbar Inject Container -->
-    <div id="appNavbar"></div>
-
-    <!-- Page Body -->
-    <main class="page-container">
-      <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- MAIN BODY -->
+    <main class="container-fluid px-4 py-3 flex-grow-1">
+      <!-- Breadcrumb & Header -->
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
-          <h4 class="fw-bold mb-1">Quản Lý Đổi Trả Máy (Exchange & Return)</h4>
-          <p class="text-muted small mb-0">Tiếp nhận đổi máy trong 30 ngày, tính toán chênh lệch giá và tự động sinh phiếu thu/chi vào sổ quỹ</p>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+              <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Trang chủ</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Đổi trả máy & Hoàn tiền</li>
+            </ol>
+          </nav>
+          <h4 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-arrow-left-right text-primary me-2"></i>Quản Lý Đổi Trả Máy & Hoàn Tiền
+          </h4>
         </div>
       </div>
 
       <!-- Thống kê nhanh -->
       <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-sm-6 col-xl-3">
           <div class="card-custom p-3 border-start border-primary border-4">
-            <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex justify-content-between align-items-center">
               <div>
-                <p class="text-muted small mb-1">Tổng phiếu đổi trả</p>
-                <h4 class="fw-bold mb-0" id="statTotalDoiTra">0</h4>
+                <span class="text-muted small">Tổng phiếu đổi trả</span>
+                <h4 class="fw-bold mb-0 mt-1" id="statTotalDoiTra">0</h4>
               </div>
-              <div class="bg-primary-subtle text-primary p-2 rounded-circle">
-                <i class="bi bi-arrow-left-right fs-4"></i>
+              <div class="bg-primary-subtle text-primary p-3 rounded-circle">
+                <i class="bi bi-file-earmark-text fs-4"></i>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-sm-6 col-xl-3">
           <div class="card-custom p-3 border-start border-info border-4">
-            <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex justify-content-between align-items-center">
               <div>
-                <p class="text-muted small mb-1">Đổi sang máy mới</p>
-                <h4 class="fw-bold mb-0 text-info" id="statDoiMayCount">0</h4>
+                <span class="text-muted small">Đổi máy sang máy mới</span>
+                <h4 class="fw-bold mb-0 mt-1 text-info" id="statDoiMayCount">0</h4>
               </div>
-              <div class="bg-info-subtle text-info p-2 rounded-circle">
+              <div class="bg-info-subtle text-info p-3 rounded-circle">
                 <i class="bi bi-phone-flip fs-4"></i>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-sm-6 col-xl-3">
           <div class="card-custom p-3 border-start border-warning border-4">
-            <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex justify-content-between align-items-center">
               <div>
-                <p class="text-muted small mb-1">Trả hàng hoàn tiền</p>
-                <h4 class="fw-bold mb-0 text-warning" id="statTraHangCount">0</h4>
+                <span class="text-muted small">Trả hàng hoàn tiền 100%</span>
+                <h4 class="fw-bold mb-0 mt-1 text-warning" id="statTraHangCount">0</h4>
               </div>
-              <div class="bg-warning-subtle text-warning p-2 rounded-circle">
-                <i class="bi bi-arrow-return-left fs-4"></i>
+              <div class="bg-warning-subtle text-warning p-3 rounded-circle">
+                <i class="bi bi-cash-coin fs-4"></i>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-sm-6 col-xl-3">
           <div class="card-custom p-3 border-start border-success border-4">
-            <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex justify-content-between align-items-center">
               <div>
-                <p class="text-muted small mb-1">Chênh lệch thu thêm</p>
-                <h4 class="fw-bold mb-0 text-success" id="statTotalThuThem">0 đ</h4>
+                <span class="text-muted small">Tổng thu thêm chênh lệch</span>
+                <h4 class="fw-bold mb-0 mt-1 text-success font-monospace" id="statTotalThuThem">0 đ</h4>
               </div>
-              <div class="bg-success-subtle text-success p-2 rounded-circle">
+              <div class="bg-success-subtle text-success p-3 rounded-circle">
                 <i class="bi bi-cash-stack fs-4"></i>
               </div>
             </div>
@@ -87,77 +91,87 @@
         </div>
       </div>
 
-      <!-- Nav Tabs -->
-      <ul class="nav nav-pills mb-4" id="doiTraTab" role="tablist">
+      <!-- NAV TABS -->
+      <ul class="nav nav-tabs mb-4" id="doiTraTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active fw-semibold" id="tab-list-btn" data-bs-toggle="pill" data-bs-target="#tab-list" type="button" role="tab">
-            <i class="bi bi-card-checklist me-1"></i> Danh Sách Phiếu Đổi Trả
+          <button class="nav-link active fw-semibold" id="tab-list-btn" data-bs-toggle="tab" data-bs-target="#tab-list" type="button" role="tab">
+            <i class="bi bi-list-ul me-1"></i> Danh Sách Phiếu Đổi Trả
           </button>
         </li>
-        <li class="nav-item" role="presentation" data-roles="Quản lý, NV bán hàng, Thu ngân">
-          <button class="nav-link fw-semibold" id="tab-create-btn" data-bs-toggle="pill" data-bs-target="#tab-create" type="button" role="tab">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold" id="tab-create-btn" data-bs-toggle="tab" data-bs-target="#tab-create" type="button" role="tab">
             <i class="bi bi-plus-circle me-1"></i> Lập Phiếu Đổi Trả Mới
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link fw-semibold" id="tab-lookup-btn" data-bs-toggle="pill" data-bs-target="#tab-lookup" type="button" role="tab">
+          <button class="nav-link fw-semibold" id="tab-lookup-btn" data-bs-toggle="tab" data-bs-target="#tab-lookup" type="button" role="tab">
             <i class="bi bi-search me-1"></i> Tra Cứu Lịch Sử IMEI
           </button>
         </li>
       </ul>
 
-      <!-- Tab Content -->
-      <div class="tab-content">
+      <!-- TAB CONTENT -->
+      <div class="tab-content" id="doiTraTabContent">
         <!-- TAB 1: DANH SÁCH PHIẾU ĐỔI TRẢ -->
         <div class="tab-pane fade show active" id="tab-list" role="tabpanel">
-          <div class="card-custom mb-3 p-3">
-            <div class="row g-2 align-items-center">
-              <div class="col-12 col-md-4">
-                <div class="input-group">
-                  <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                  <input type="text" id="searchDoiTraInput" class="form-control border-start-0 ps-0" placeholder="Tìm theo Mã phiếu, Số HĐ, IMEI, Lý do...">
+          <div class="card-custom p-0 overflow-hidden">
+            <!-- Filter Bar -->
+            <div class="p-3 bg-light border-bottom">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md-3">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchDoiTraInput" class="form-control" placeholder="Tìm theo mã phiếu, IMEI, HĐ, lý do...">
+                  </div>
+                </div>
+                <div class="col-6 col-md-2">
+                  <select id="filterLoaiDoiTra" class="form-select form-select-sm">
+                    <option value="All">-- Tất cả loại --</option>
+                    <option value="Doi may">Đổi máy mới</option>
+                    <option value="Tra hang">Trả hàng hoàn tiền</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-2">
+                  <select id="filterTrangThaiDoiTra" class="form-select form-select-sm">
+                    <option value="All">-- Tất cả trạng thái --</option>
+                    <option value="Hoan tat">Hoàn tất</option>
+                    <option value="Da huy">Đã hủy / Thu hồi</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-2">
+                  <input type="date" id="filterTuNgay" class="form-control form-control-sm" title="Từ ngày">
+                </div>
+                <div class="col-6 col-md-2">
+                  <input type="date" id="filterDenNgay" class="form-control form-control-sm" title="Đến ngày">
+                </div>
+                <div class="col-12 col-md-1 text-end">
+                  <button id="btnRefreshList" class="btn btn-sm btn-outline-secondary w-100" title="Làm mới">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
                 </div>
               </div>
-              <div class="col-6 col-md-3">
-                <select id="filterLoaiDoiTra" class="form-select">
-                  <option value="All">-- Tất cả hình thức --</option>
-                  <option value="Doi may">Đổi sang máy mới</option>
-                  <option value="Tra hang">Trả hàng hoàn tiền</option>
-                </select>
-              </div>
-              <div class="col-6 col-md-2">
-                <input type="date" id="filterTuNgay" class="form-control" title="Từ ngày">
-              </div>
-              <div class="col-6 col-md-2">
-                <input type="date" id="filterDenNgay" class="form-control" title="Đến ngày">
-              </div>
-              <div class="col-6 col-md-1 d-flex gap-1">
-                <button type="button" class="btn btn-outline-secondary w-100" id="btnRefreshList" title="Làm mới">
-                  <i class="bi bi-arrow-clockwise"></i>
-                </button>
-              </div>
             </div>
-          </div>
 
-          <div class="card-custom p-0 overflow-hidden">
+            <!-- Table -->
             <div class="table-responsive">
               <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                   <tr>
                     <th class="ps-3">Mã phiếu</th>
-                    <th>Hóa đơn gốc</th>
+                    <th>Số Hóa Đơn</th>
                     <th>Khách hàng</th>
                     <th>Loại</th>
                     <th>IMEI máy cũ</th>
                     <th>IMEI máy mới</th>
                     <th class="text-end">Chênh lệch tiền</th>
+                    <th>Trạng thái</th>
                     <th>Ngày lập</th>
                     <th class="text-end pe-3">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="doiTraTableBody">
                   <tr>
-                    <td colspan="9" class="text-center py-4 text-muted">
+                    <td colspan="10" class="text-center py-4 text-muted">
                       <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
                       Đang tải dữ liệu...
                     </td>
@@ -208,7 +222,7 @@
                 <!-- BƯỚC 2: CHỌN MÁY MỚI HOẶC TRẢ HÀNG -->
                 <form id="createDoiTraForm" style="display: none;">
                   <div class="card p-3 mb-4 border">
-                    <h6 class="fw-bold mb-3"><i class="bi bi-2-circle-fill text-primary me-2"></i>Bước 2: Chọn hình thức đổi trả & máy mới</h6>
+                    <h6 class="fw-bold mb-3"><i class="bi bi-2-circle-fill text-primary me-2"></i>Bước 2: Chọn hình thức đổi trả & máy mới / phụ kiện</h6>
                     
                     <div class="row g-3 mb-3">
                       <div class="col-md-6">
@@ -247,6 +261,28 @@
                       </div>
                     </div>
 
+                    <!-- Chọn phụ kiện mua kèm / đổi kèm (Tuần 5 Edge Case) -->
+                    <div class="mt-3 pt-3 border-top">
+                      <label class="form-label fw-semibold text-secondary small mb-2"><i class="bi bi-bag-plus me-1"></i>Phụ kiện mua kèm / đổi kèm (nếu có):</label>
+                      <div class="row g-2 align-items-center">
+                        <div class="col-md-7">
+                          <select id="selectPhuKienMoi" class="form-select form-select-sm">
+                            <option value="">-- Chọn phụ kiện trong kho --</option>
+                          </select>
+                        </div>
+                        <div class="col-md-3">
+                          <input type="number" id="inputSoLuongPhuKien" class="form-control form-control-sm" placeholder="SL" min="1" value="1">
+                        </div>
+                        <div class="col-md-2">
+                          <button type="button" id="btnAddPhuKien" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-plus"></i> Thêm
+                          </button>
+                        </div>
+                      </div>
+                      <!-- Danh sách phụ kiện đã chọn -->
+                      <div id="selectedPhuKienContainer" class="mt-2"></div>
+                    </div>
+
                     <!-- Bảng tính toán chênh lệch tiền -->
                     <div class="card mt-3 p-3 bg-light border-0">
                       <div class="d-flex justify-content-between align-items-center mb-2">
@@ -256,6 +292,10 @@
                       <div class="d-flex justify-content-between align-items-center mb-2" id="rowGiaMayMoi">
                         <span class="text-muted">Giá trị máy mới:</span>
                         <strong id="displayGiaMayMoi" class="font-monospace fs-6 text-primary">0 đ</strong>
+                      </div>
+                      <div class="d-flex justify-content-between align-items-center mb-2" id="rowGiaPhuKien" style="display: none;">
+                        <span class="text-muted">Tiền phụ kiện mua kèm:</span>
+                        <strong id="displayGiaPhuKien" class="font-monospace fs-6 text-info">0 đ</strong>
                       </div>
                       <hr class="my-2">
                       <div class="d-flex justify-content-between align-items-center">
@@ -329,8 +369,14 @@
           <div class="spinner-border text-primary" role="status"></div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+      <div class="modal-footer d-flex justify-content-between">
+        <div>
+          <!-- Nút Hủy phiếu đổi trả (Chỉ hiển thị cho Quản lý) -->
+          <button type="button" class="btn btn-outline-danger btn-sm" id="btnCancelDoiTraModal" style="display: none;">
+            <i class="bi bi-x-circle me-1"></i> Hủy / Thu Hồi Phiếu Đổi Trả (Quản lý)
+          </button>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
       </div>
     </div>
   </div>
