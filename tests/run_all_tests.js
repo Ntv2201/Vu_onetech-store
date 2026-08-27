@@ -20,7 +20,8 @@ const TEST_SUITES = [
   { name: 'Thu - Chi & Báo Cáo Sổ Quỹ Dùng Chung (Vượng - Tuần 3)', file: 'test_vuong_module.js' },
   { name: 'Ma Trận Đăng Nhập 6 Vai Trò (QA)', file: 'verify_all_logins.js' },
   { name: 'Bảo Vệ HTTP API & RBAC 403 Forbidden (QA)', file: 'test_http_endpoints.js' },
-  { name: 'Stress Test & Concurrency Atomic Lock (QA & Tối Ưu)', file: 'test_concurrency_stress.js' }
+  { name: 'Stress Test & Concurrency Atomic Lock (QA & Tối Ưu)', file: 'test_concurrency_stress.js' },
+  { name: 'Kiểm Thử Cấu Trúc Giao Diện HTML, Sidebar & Assets (QA & UI)', file: 'test_ui_html_structure.js' }
 ];
 
 console.log('======================================================================');
@@ -94,7 +95,7 @@ console.log(`✅ Thành công: ${totalPassCount} | ❌ Thất bại: ${totalFail
 console.log('======================================================================');
 
 if (results.every(r => r.passed)) {
-  console.log('\n🎉 TUYỆT VỜI! TOÀN BỘ 14/14 BỘ TEST SUITES ĐÃ PASS 100%!\n');
+  console.log(`\n🎉 TUYỆT VỜI! TOÀN BỘ ${TEST_SUITES.length}/${TEST_SUITES.length} BỘ TEST SUITES ĐÃ PASS 100%!\n`);
   process.exit(0);
 } else {
   console.error('\n❌ CẢNH BÁO: MỘT SỐ BỘ TEST BỊ THẤT BẠI. VUI LÒNG KIỂM TRA LẠI!\n');

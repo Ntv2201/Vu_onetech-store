@@ -51,6 +51,15 @@ async function runTests() {
       LinhKien.findOne({ tenLK: { $regex: 'Màn hình', $options: 'i' } })
     ]);
 
+    if (lkManHinh && lkManHinh.soLuongTon < 5) {
+      lkManHinh.soLuongTon = 50;
+      await lkManHinh.save();
+    }
+    if (pkSac && pkSac.soLuongTon < 5) {
+      pkSac.soLuongTon = 50;
+      await pkSac.save();
+    }
+
     // -------------------------------------------------------------
     // TEST 1: Lấy danh sách Hóa đơn
     // -------------------------------------------------------------
