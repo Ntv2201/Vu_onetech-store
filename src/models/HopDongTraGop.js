@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 
 const hopDongTraGopSchema = new mongoose.Schema({
   hoaDon: { type: mongoose.Schema.Types.ObjectId, ref: 'HoaDon', required: true, unique: true },
+  soTienTraTruoc: { type: Number, default: 0, min: 0 },
   soTienTraGop: { type: Number, required: true, min: 0 },
-  soKy: { type: Number, required: true, min: 1 }, // Số kỳ trả góp (ví dụ: 6, 12 tháng)
+  soKy: { type: Number, required: true, min: 1 }, // Số kỳ trả góp (ví dụ: 3, 6, 9, 12 tháng)
   soTienMoiKy: { type: Number, default: 0 },
+  soKyDaThu: { type: Number, default: 0, min: 0 },
   trangThaiDuyet: {
     type: String,
     required: true,
