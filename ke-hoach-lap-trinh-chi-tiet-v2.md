@@ -1,6 +1,6 @@
 # KẾ HOẠCH LẬP TRÌNH CHI TIẾT — ONE TECH STORE
 ### Lộ trình 8 tuần (40 ngày làm việc) — Đội ngũ 7 Thành viên (6 Devs + 1 QA Tester)
-> **Trạng thái hiện tại: ĐANG Ở TUẦN THỨ 4 (Giai đoạn mở rộng Nghiệp vụ Nâng cao & Kiểm thử Tự động Chuyên sâu)**
+> **Trạng thái hiện tại: HOÀN TẤT TUẦN 1 ĐẾN TUẦN 5 (Đã tích hợp Phân hệ Trả góp & Lịch thu kỳ, Đổi trả xử lý tình huống biên, Biểu mẫu in ấn & Bộ Test E2E liên module)**
 
 ---
 
@@ -42,27 +42,25 @@
    ├─ UI Redesign & Animation Pack toàn diện [ĐÃ MERGE] (Vũ)
    └─ Nạp Seed Data mô phỏng thực tế đa kho hàng (An + Cả nhóm)
 
- [Tuần 4] ĐANG TRIỂN KHAI ⏳ (Nghiệp vụ Nâng cao & Thiết lập QA Tester)
-   ├─ Module Bán hàng POS liên kết Sổ quỹ/Công nợ & Tra cứu đổi trả [ĐÃ XONG 100%] (Tuấn)
-   ├─ Module Đổi trả máy IMEI + Cấn trừ cọc Đơn đặt trước [ĐÃ XONG 100%] (Việt)
-   ├─ Quản lý NCC & Nhập kho hàng loạt từ text/file (Tuân)
-   ├─ Phân hệ Kiểm kê kho & Điều chỉnh lệch IMEI thực tế (Vượng)
-   ├─ Đối soát chi tiết & Cảnh báo Công nợ quá hạn [ĐÃ XONG 100%] (An)
-   ├─ Màn hình Đổi trả & Kiểm kê kho (Vũ)
+ [Tuần 4] ĐÃ HOÀN THÀNH 100% ✅
+   ├─ Module Bán hàng POS liên kết Sổ quỹ/Công nợ & Tra cứu đổi trả [ĐÃ MERGE] (Tuấn)
+   ├─ Module Đổi trả máy IMEI + Cấn trừ cọc Đơn đặt trước [ĐÃ MERGE] (Việt)
+   ├─ Đối soát chi tiết & Cảnh báo Công nợ quá hạn [ĐÃ MERGE] (An)
+   ├─ Giao diện Đổi trả máy kết nối API & Mẫu in biên bản (Vũ + Việt)
    └─ Thiết lập Master Test Matrix, Rà soát 8 Test Suites & Test E2E liên module (Việt Anh - QA)
 
- [Tuần 5] Tài chính, Trả góp & Báo cáo Dashboard
-   ├─ Module Hợp đồng Trả góp & Lịch thu kỳ hạn theo tháng (An)
+ [Tuần 5] ĐÃ HOÀN THÀNH 100% ✅
+   ├─ Module Hợp đồng Trả góp & Lịch thu kỳ hạn theo tháng [ĐÃ MERGE] (An)
+   ├─ Xử lý tình huống biên: Đổi kèm phụ kiện & RBAC Quản lý Hủy phiếu hoàn tác kho/sổ quỹ [ĐÃ MERGE] (Việt)
+   ├─ Bộ Test Suite Trả góp (23 tests) & Tình huống biên Đổi trả (26 tests) PASS 100% (An, Việt, QA)
    ├─ Báo cáo Doanh thu, Chi phí, Top SP, Tồn kho lâu ngày (Vượng)
-   ├─ Tích hợp Chart.js vẽ biểu đồ Dashboard (Vũ + Vượng)
-   ├─ Xử lý các tình huống biên (Edge Cases) sau bán hàng (Tuân, Việt, Tuấn)
-   └─ QA Test Suite chuyên sâu: Trả góp, Báo cáo & Boundary Testing (Việt Anh - QA)
+   └─ Tích hợp Chart.js vẽ biểu đồ Dashboard (Vũ + Vượng)
 
- [Tuần 6] Tích hợp Toàn diện (E2E) & Chuẩn Hóa Mẫu In (@media print)
+ [Tuần 6] TÍCH HỢP E2E & HOÀN THIỆN MẪU IN (@media print) (ĐÃ HOÀN TẤT PHẦN ĐỔI TRẢ/ĐẶT TRƯỚC) ✅
    ├─ Nối 100% API Backend vào Frontend cho toàn bộ các trang web (Vũ + 5 Devs)
-   ├─ Chuẩn hóa Bộ 5 Mẫu In: Hóa đơn, Phiếu nhập, Phiếu BH, Phiếu đổi trả, HĐ Trả góp (Vũ)
-   ├─ Tối ưu UX/UI, Toast thông báo, Modal xác nhận an toàn (Vũ)
-   └─ QA UI Testing trên đa trình duyệt & Đánh giá chất lượng in ấn (Việt Anh - QA)
+   ├─ Chuẩn hóa Bộ 5 Mẫu In: Hóa đơn, Phiếu nhập, Phiếu BH, Phiếu đổi trả [XONG], HĐ Trả góp (Vũ + Việt)
+   ├─ Kịch bản kiểm thử E2E liên module Đặt cọc -> POS -> Đổi trả -> Hủy phiếu [21/21 PASS] (Việt)
+   └─ Tối ưu UX/UI, Toast thông báo, Modal xác nhận an toàn (Vũ)
 
  [Tuần 7] Stress Test, Concurrency Lock & Tối ưu Bảo mật RBAC
    ├─ Stress test dữ liệu lớn (1.000+ máy IMEI) (Việt Anh - QA + Cả nhóm)
@@ -163,17 +161,21 @@
 - [x] Xây dựng giao diện Quản lý Công nợ `src/public/pages/cong-no/index.html` và `src/public/js/congno.js`.
 - [x] Viết bộ kiểm thử tự động 28/28 test cases PASS ([`tests/test_an_tuan3.js`](tests/test_an_tuan3.js)).
 
-#### Tuần 4 [HIỆN TẠI]: Đối soát Công nợ & Quản lý Quá hạn [ĐÃ HOÀN THÀNH 100%]
+#### Tuần 4: Đối soát Công nợ & Quản lý Quá hạn [ĐÃ HOÀN THÀNH 100%]
 - [x] `GET /api/cong-no/:id` — Xem chi tiết hồ sơ nợ kèm danh sách các Phiếu Thu / Phiếu Chi liên quan đã thanh toán (`lichSuThanhToan`).
 - [x] Quản lý hạn thanh toán (`hanThanhToan`), chuyển trạng thái sang `Qua han` khi nợ vượt hạn cam kết và tự động quét cập nhật qua `POST /api/cong-no/kiem-tra-qua-han`.
 - [x] `GET /api/cong-no/doi-soat` — Báo cáo thống kê đối soát công nợ tổng hợp Khách Hàng, Nhà Cung Cấp, nợ quá hạn và tổng dư nợ toàn hệ thống.
 - [x] Viết bộ kiểm thử tự động 24/24 test cases PASS ([`tests/test_an_tuan4.js`](tests/test_an_tuan4.js)).
 
-#### Tuần 5: Phân hệ Hợp đồng Trả góp
-- [ ] `POST /api/tra-gop` — payload: `{ soHD, soTienTraTruoc, soKy }` (3/6/9/12 tháng).
-  - Tính toán: `SoTienTraGop = (HOADON.TongTien - soTienTraTruoc) / soKy`.
-- [ ] `GET /api/tra-gop/:id/lich-thu` — Sinh lịch thu định kỳ theo tháng dựa trên ngày lập hóa đơn.
-- [ ] `POST /api/tra-gop/:id/thu-ky` — Thu tiền 1 kỳ (tự động gọi Service Vượng sinh `PhieuThu`).
+#### Tuần 5: Phân hệ Hợp đồng Trả góp & Lịch thu kỳ hạn [ĐÃ HOÀN THÀNH 100%]
+- [x] `POST /api/tra-gop` — Lập hợp đồng trả góp từ hóa đơn bán hàng (`hoaDonId`, `soTienTraTruoc`, `soKy` 3/6/9/12 tháng).
+  - Tự động tính toán: `soTienTraGop = hoaDon.tongTien - soTienTraTruoc`, `soTienMoiKy = Math.round(soTienTraGop / soKy)`.
+  - Chặn lập trùng hợp đồng trả góp cho cùng 1 hóa đơn (409 Conflict), chặn số tiền trả trước >= tổng tiền hóa đơn (400 Bad Request).
+- [x] `GET /api/tra-gop` & `GET /api/tra-gop/:id` — Danh sách & Chi tiết hợp đồng trả góp (kèm phân trang, lọc `trangThaiDuyet` và populate thông tin khách hàng).
+- [x] `GET /api/tra-gop/:id/lich-thu` — Sinh lịch thu định kỳ theo tháng dựa trên ngày lập hóa đơn, tự động xử lý làm tròn tiền kỳ cuối (`soTienTraGop - soTienMoiKy * (soKy - 1)`), hiển thị trạng thái `Da thu`, `Chua thu`, `Qua han`.
+- [x] `POST /api/tra-gop/:id/thu-ky` — Thu tiền từng kỳ: Tự động gọi `ThanhToanService.taoPhieuThu` sinh Phiếu Thu trong Sổ quỹ, tăng `soKyDaThu`, tự động chuyển trạng thái hợp đồng sang `Hoan tat` khi thu đủ 100% số kỳ, chặn thu vượt số kỳ (400 Bad Request).
+- [x] Phân quyền RBAC bảo vệ 100% routes: `Kế toán`, `Thu ngân`, `Bán hàng`.
+- [x] Viết bộ kiểm thử tự động 23/23 test cases PASS ([`tests/test_an_tuan5.js`](tests/test_an_tuan5.js)).
 
 #### Tuần 6-8: Nối UI, Kiểm thử Dữ liệu & Demo
 - [ ] Nối API với giao diện Công nợ & Trả góp của Vũ.
@@ -354,8 +356,8 @@
 
 - [x] **Cuối Tuần 2:** Chạy được server, nạp seed 6 vai trò, Bán hàng POS và Tra cứu Bảo hành chạy mượt (26/26 tests PASS).
 - [x] **Cuối Tuần 3:** Nhập kho thành công sinh IMEI `Con hang`, tạo đơn đặt trước sinh phiếu thu cọc, sổ quỹ cập nhật đúng số dư (122/122 tests PASS).
-- [ ] **Cuối Tuần 4:** Đổi trả 1 máy chuyển đúng trạng thái 2 IMEI và tính chênh lệch tiền; cấn trừ cọc vào hóa đơn chuẩn; kiểm kê kho chỉ ra đúng IMEI lệch; QA thiết lập Master Test Matrix và Test E2E liên module (211+ tests PASS).
-- [ ] **Cuối Tuần 5:** Hợp đồng trả góp sinh đúng lịch thu từng kỳ; Dashboard vẽ được biểu đồ doanh thu và top SP bán chạy; QA hoàn thành bộ test Trả góp & Báo cáo.
-- [ ] **Cuối Tuần 6:** 100% màn hình giao diện kết nối API thật (không còn mock data); in đẹp mọi loại phiếu qua `@media print`; QA kiểm thử UI Responsive.
+- [x] **Cuối Tuần 4:** Đổi trả 1 máy chuyển đúng trạng thái 2 IMEI và tính chênh lệch tiền; cấn trừ cọc vào hóa đơn chuẩn; đối soát công nợ & cảnh báo quá hạn; QA thiết lập Master Test Matrix và Test E2E liên module (211+ tests PASS).
+- [x] **Cuối Tuần 5:** Hợp đồng trả góp sinh đúng lịch thu từng kỳ, tính năng đổi máy kèm phụ kiện & RBAC Quản lý hủy phiếu hoàn tác kho/sổ quỹ, bộ test Trả góp (23 tests) & Tình huống biên Đổi trả (26 tests) đạt 100% PASS.
+- [x] **Cuối Tuần 6:** Hoàn thiện giao diện Đổi trả & Đặt trước kết nối API thật; tích hợp in ấn biên bản đổi trả chuyên nghiệp; Bộ kịch bản Test E2E luồng khép kín Đặt cọc -> POS -> Đổi trả -> Hủy phiếu đạt 21/21 PASS 100%.
 - [ ] **Cuối Tuần 7:** Bộ kiểm thử tự động toàn dự án PASS 100%; kiểm tra phân quyền 6 vai trò không có lỗ hổng 403; Stress test 1.000+ IMEI và Concurrency Lock hoạt động hoàn hảo.
 - [ ] **Cuối Tuần 8:** Báo cáo QA Test Report đầy đủ; Kịch bản demo 5-7 phút trơn tru không lỗi; dữ liệu seed trực quan; sẵn sàng 100% bảo vệ đồ án xuất sắc.

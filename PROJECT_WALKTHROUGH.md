@@ -90,8 +90,16 @@ onetech/
 ├── README.md                            # Hướng dẫn cài đặt & tài khoản demo
 ├── PROJECT_WALKTHROUGH.md               # Bản Walkthrough kỹ thuật (File này)
 ├── tests/                               # Bộ kiểm thử tự động
-│   ├── test_tuan_module.js              # Kiểm thử 32 test cases luồng Bán hàng, IMEI, Bảo hành
-│   ├── test_viet_module.js              # Kiểm thử 32 test cases Đặt hàng trước, Cọc & Hoàn cọc
+│   ├── test_tuan_module.js              # Kiểm thử 44 test cases luồng Bán hàng POS, IMEI, Bảo hành
+│   ├── test_viet_module.js              # Kiểm thử 32 test cases Đặt hàng trước, Cọc & Hoàn cọc (Tuần 3)
+│   ├── test_viet_tuan4.js               # Kiểm thử 39 test cases Đổi trả máy & Cấn trừ cọc (Tuần 4)
+│   ├── test_viet_tuan5.js               # Kiểm thử 26 test cases Tình huống biên đổi kèm PK, Hủy phiếu RBAC (Tuần 5)
+│   ├── test_viet_tuan6_e2e.js           # Kiểm thử 21 test cases Luồng E2E khép kín Đặt cọc -> POS -> Đổi trả -> Hủy phiếu (Tuần 6)
+│   ├── test_an_tuan3.js                 # Kiểm thử 28 test cases Tồn kho dùng chung & Công nợ đa hình (Tuần 3)
+│   ├── test_an_tuan4.js                 # Kiểm thử 24 test cases Đối soát công nợ & Quản lý quá hạn (Tuần 4)
+│   ├── test_an_tuan5.js                 # Kiểm thử 23 test cases Hợp đồng Trả góp & Lịch thu kỳ hạn (Tuần 5)
+│   ├── test_tuan_nhap_kho.js            # Kiểm thử 25 test cases Nhập kho máy IMEI & Phụ kiện (Tuần 3)
+│   ├── test_vuong_module.js             # Kiểm thử 37 test cases Thu - Chi & Báo cáo Sổ quỹ dùng chung (Tuần 3)
 │   ├── test_http_endpoints.js           # Kiểm thử tích hợp HTTP API & RBAC 403 Forbidden
 │   └── verify_all_logins.js             # Kiểm thử đăng nhập 6 vai trò
 └── src/
@@ -113,6 +121,11 @@ onetech/
     │   ├── HoaDonService.js             # Bán hàng theo IMEI, chống xung đột 409, cấn trừ cọc
     │   ├── BaoHanhService.js            # Tiếp nhận, tính hạn BH, tra cứu, xuất linh kiện, hoàn tất
     │   ├── DatTruocService.js           # Đặt hàng trước, thu tiền cọc, hủy đơn hoàn cọc, gán IMEI
+    │   ├── DoiTraService.js             # Đổi trả máy, đổi kèm phụ kiện, tính chênh lệch, hủy phiếu hoàn tác
+    │   ├── TraGopService.js             # Lập HĐ trả góp, sinh lịch thu kỳ, thu tiền kỳ, tự sinh Phiếu Thu
+    │   ├── CongNoService.js             # Công nợ đa hình, thanh toán nợ, đối soát & cảnh báo quá hạn
+    │   ├── TonKhoService.js             # Hàm tồn kho dùng chung capNhatTonKho, thống kê tồn, phiếu xuất
+    │   ├── PhieuNhapService.js          # Nhập kho máy IMEI & phụ kiện, tự tăng tồn, chi tiền/ghi nợ
     │   ├── ThanhToanService.js          # Sổ quỹ & Thu - Chi dùng chung (taoPhieuThu, taoPhieuChi)
     │   ├── MayImeiService.js            # Quản lý vòng đời máy IMEI (nhập lẻ / hàng loạt)
     │   ├── SanPhamService.js            # Quản lý Model máy & tính tồn kho tổng hợp
@@ -131,6 +144,12 @@ onetech/
     │   ├── hoaDonController.js          # GET /api/hoa-don, GET /:id, POST / (Bán hàng)
     │   ├── baoHanhController.js         # Tra cứu, tiếp nhận, xuất linh kiện, hoàn tất
     │   ├── datTruocController.js        # Đặt hàng trước, hủy hoàn cọc, gán IMEI
+    │   ├── doiTraController.js          # Đổi trả máy, kiểm tra điều kiện, hủy phiếu RBAC
+    │   ├── TraGopController.js          # Lập HĐ trả góp, xem lịch thu, thu tiền kỳ
+    │   ├── congNoController.js          # CRUD công nợ, thanh toán nợ, đối soát, kiểm tra quá hạn
+    │   ├── khoController.js             # Thống kê tồn kho, phiếu xuất
+    │   ├── phieuNhapController.js       # Lập phiếu nhập kho, chi tiết
+    │   ├── thanhToanController.js       # Thu, Chi, Báo cáo Sổ quỹ
     │   ├── mayImeiController.js         # CRUD máy IMEI
     │   ├── sanPhamController.js         # CRUD sản phẩm
     │   ├── khachHangController.js       # CRUD khách hàng
@@ -141,6 +160,8 @@ onetech/
     ├── routes/                          # Định tuyến REST API & Gắn RBAC Middleware
     │   ├── authRoutes.js, dashboardRoutes.js
     │   ├── hoaDonRoutes.js, baoHanhRoutes.js, datTruocRoutes.js
+    │   ├── doiTraRoutes.js, traGopRoutes.js, congNoRoutes.js
+    │   ├── khoRoutes.js, phieuNhapRoutes.js, thanhToanRoutes.js
     │   ├── sanPhamRoutes.js, mayImeiRoutes.js
     │   ├── khachHangRoutes.js, nhaCungCapRoutes.js
     │   ├── nhanVienRoutes.js, danhMucRoutes.js, phuKienRoutes.js
@@ -148,7 +169,7 @@ onetech/
     ├── middlewares/
     │   └── auth.js                      # requireAuth, requireRole (Trả JSON 401/403)
     ├── seeds/
-    │   └── seed.js                      # Nạp dữ liệu mẫu 6 vai trò, SP, IMEI, HĐ, BH
+    │   └── seed.js                      # Nạp dữ liệu mẫu 6 vai trò, SP, IMEI, HĐ, BH, Đổi trả
     └── public/                          # Frontend tĩnh (Tách bạch CSS, JS, HTML Pages)
         ├── css/                         # 🎨 TOÀN BỘ FILE STYLESHEET
         │   └── style.css                # CSS thiết kế giao diện, animations & theme
@@ -158,6 +179,10 @@ onetech/
         │   ├── banhang.js               # Logic POS bán hàng, giỏ hàng, in hóa đơn
         │   ├── baohanh.js               # Logic tra cứu IMEI, lập phiếu BH, xuất linh kiện
         │   ├── dattruoc.js              # Logic Đặt trước (Pre-order), thu/hoàn cọc
+        │   ├── doitra.js                # Logic Đổi trả máy, đổi kèm phụ kiện, in biên bản, hủy phiếu
+        │   ├── congno.js                # Logic Quản lý Công nợ & Thanh toán nợ
+        │   ├── nhapkho.js               # Logic Nhập kho máy IMEI & Phụ kiện
+        │   ├── soquy.js                 # Logic Báo cáo Sổ quỹ & Quản lý Thu/Chi
         │   └── auth.js, dashboard.js, sanpham.js, mayimei.js...
         └── pages/                       # 📄 TOÀN BỘ CÁC TRANG HTML GIAO DIỆN
             ├── index.html               # Dashboard tổng quan
@@ -166,6 +191,10 @@ onetech/
             ├── ban-hang/index.html      # Màn hình Bán hàng POS theo IMEI & Quản lý HĐ
             ├── bao-hanh/index.html      # Màn hình Tra cứu dòng đời IMEI & Quản lý BH
             ├── dat-truoc/index.html     # Màn hình Quản lý Đơn đặt trước & Thu cọc
+            ├── doi-tra/index.html       # Màn hình Quản lý Đổi trả máy, đổi kèm PK, in biên bản
+            ├── cong-no/index.html       # Màn hình Quản lý Công nợ & Đối soát
+            ├── nhap-kho/index.html      # Màn hình Nhập kho hàng hóa
+            ├── so-quy/index.html        # Màn hình Sổ quỹ Thu - Chi
             ├── san-pham/                # index.html, form.html, detail.html
             ├── may-imei/                # index.html, form.html
             ├── khach-hang/              # index.html, form.html
@@ -195,16 +224,16 @@ onetech/
 │   ├── HoaDon (soHD, khachHang, nhanVien, donDatHang, ngayLap, tongTien, trangThai, hanThanhToan)
 │   ├── CT_HoaDon_May (hoaDon -> HoaDon, imei -> MayImei, donGiaBan) [SL luôn = 1]
 │   ├── CT_HoaDon_PhuKien (hoaDon -> HoaDon, phuKien -> PhuKien, soLuong, donGiaBan)
-│   └── HopDongTraGop (hoaDon, soTienTraGop, soKy, soTienMoiKy, ngayBatDau, trangThaiDuyet)
+│   └── HopDongTraGop (hoaDon, soTienTraTruoc, soTienTraGop, soKy, soTienMoiKy, soKyDaThu, trangThaiDuyet, ghiChu)
 │
 ├── 3. Mua hàng & Chi phí (Purchasing)
 │   ├── PhieuNhap (nhaCungCap, nhanVien, ngayNhap, tongTien, ghiChu)
 │   ├── CT_PhieuNhap (phieuNhap, imei -> MayImei, donGiaNhap)
-│   └── PhieuChi (phieuNhap, doiTuong, soTien, ngayChi, lyDo)
+│   └── PhieuChi (phieuNhap, donDatHang, phieuDoiTra, maDT, soTien, hinhThuc, ngayChi, lyDo)
 │
 ├── 4. Thanh toán & Công nợ (Finance)
-│   ├── CongNo (loaiDoiTuong ['KhachHang'|'NhaCungCap'], khachHang, nhaCungCap, hoaDon, phieuNhap, soTienNo, soTienDaTra, trangThai)
-│   └── PhieuThu (hoaDon, donDatHang, congNo, soTien, ngayThu, phuongThuc)
+│   ├── CongNo (loaiDoiTuong ['KhachHang'|'NhaCungCap'], khachHang, nhaCungCap, hoaDon, phieuNhap, soTienNo, soTienDaTra, hanThanhToan, trangThai)
+│   └── PhieuThu (hoaDon, donDatHang, congNo, soTien, hinhThuc, ngayThu, ghiChu)
 │
 ├── 5. Kho vận (Warehouse)
 │   ├── Kho (tenKho, diaChi)
@@ -216,7 +245,7 @@ onetech/
 └── 6. Bảo hành & Đổi trả (Warranty & Returns)
     ├── PhieuBaoHanh (maPBH, imei -> MayImei, khachHang, nhanVien, moTaLoi, ngayTiepNhan, trangThai, ghiChu)
     ├── CT_PBH_LinhKien (phieuBaoHanh -> PhieuBaoHanh, linhKien -> LinhKien, soLuong, donGia)
-    └── PhieuDoiTra (hoaDon, imeiCu, imeiMoi, lyDo, ngayDoiTra, trangThai)
+    └── PhieuDoiTra (maDT, hoaDon, khachHang, nhanVien, imeiCu, imeiMoi, loaiDoiTra, giaMayCu, giaMayMoi, danhSachPhuKien, tongTienPhuKien, tienChenhLech, phieuThu, phieuChi, phieuThuDaoNguoc, phieuChiDaoNguoc, lyDo, trangThai, nguoiHuy, ngayHuy)
 ```
 
 ---
@@ -367,11 +396,75 @@ Tất cả API trả về định dạng JSON thống nhất theo quy ước d�
   - Bộ lọc theo đối tượng và trạng thái, modal thanh toán nợ 1-click tự động cập nhật sổ quỹ.
 * **Kiểm thử tự động:** Bộ test `tests/test_an_tuan3.js` với 28/28 test cases PASS 100%.
 
+### 6.11. Phân hệ Đổi trả máy, Đổi kèm Phụ kiện & Hủy phiếu RBAC (`DoiTraService`, `DoiTraController`) — *Module Tô Quốc Việt*
+* `DoiTraService.kiemTraDieuKienDoiTra(soHD, imeiCu)`:
+  - Kiểm tra điều kiện đổi trả trong vòng 30 ngày kể từ ngày mua trên Hóa đơn (`HD.ngayLap`).
+  - Kiểm tra trạng thái máy cũ `MayImei.trangThai === 'Da ban'`.
+* `DoiTraService.taoPhieuDoiTra({ soHD, imeiCu, imeiMoi, loaiDoiTra, danhSachPhuKien, hinhThuc, lyDo, ghiChu }, sessionUser)`:
+  - **Đổi máy (`loaiDoiTra = 'Doi may'`):** Chuyển `imeiCu` sang `Loi`, chuyển `imeiMoi` sang `Da ban`.
+  - **Đổi kèm phụ kiện mua thêm:** Tự động tính tổng tiền phụ kiện, trừ tồn kho `PhuKien.soLuongTon` (chặn nếu tồn kho không đủ, mã 400).
+  - **Tính chênh lệch tài chính:** `tienChenhLech = (giaMayMoi + tongTienPhuKien) - giaMayCu`.
+    - Nếu `tienChenhLech > 0` $\rightarrow$ Tự động sinh `Phiếu Thu` qua `ThanhToanService`.
+    - Nếu `tienChenhLech < 0` $\rightarrow$ Tự động sinh `Phiếu Chi` qua `ThanhToanService`.
+  - **Trả hàng hoàn tiền (`loaiDoiTra = 'Tra hang'`):** Chuyển `imeiCu` sang `Loi`, sinh `Phiếu Chi` hoàn 100% tiền mua cho khách.
+* `DoiTraService.huyPhieuDoiTra(id, { lyDoHuy }, sessionUser)` — **Chức năng độc quyền của Quản lý:**
+  - Hoàn tác trạng thái 2 máy IMEI: `imeiCu` khôi phục `Da ban`, `imeiMoi` hoàn trả `Con hang`.
+  - Hoàn trả nguyên vẹn số lượng tồn kho phụ kiện đã lấy.
+  - Tự động sinh giao dịch tài chính đảo ngược trong Sổ quỹ: Sinh `Phiếu Chi đảo ngược` (nếu trước đó đã thu tiền) hoặc sinh `Phiếu Thu đảo ngược` (nếu trước đó đã chi tiền hoàn).
+* `DoiTraService.getLichSuImei(imei)`: Tra cứu toàn bộ lịch sử các lần đổi trả gắn với một số IMEI.
+* **RESTful API Endpoints (`/api/doi-tra`):**
+  - `GET /api/doi-tra`, `GET /api/doi-tra/:id`, `GET /api/doi-tra/kiem-tra-dieu-kien`: RBAC `Quản lý`, `NV bán hàng`, `Thu ngân`, `Kế toán`.
+  - `POST /api/doi-tra`: Lập phiếu đổi trả (RBAC: `Quản lý`, `NV bán hàng`, `Thu ngân`).
+  - `PUT /api/doi-tra/:id/huy`: Hủy / Thu hồi phiếu đổi trả (**Dành riêng cho `Quản lý`**).
+  - `GET /api/doi-tra/lich-su-imei/:imei`: Tra cứu lịch sử đổi trả theo IMEI.
+* **Giao diện & Biểu mẫu In (`src/public/pages/doi-tra/index.html` & `src/public/js/doitra.js`):**
+  - Giao diện tra cứu điều kiện đổi trả trực quan, chọn máy mới, thêm phụ kiện mua kèm, modal xác nhận hủy phiếu cho Quản lý.
+  - Biểu mẫu in Biên bản tiếp nhận đổi trả sản phẩm chuyên nghiệp khổ A5/K80 (`@media print`).
+* **Kiểm thử tự động:** Bộ test `tests/test_viet_tuan4.js` (39 tests), `tests/test_viet_tuan5.js` (26 tests), `tests/test_viet_tuan6_e2e.js` (21 tests) PASS 100%.
+
+### 6.12. Phân hệ Hợp đồng Trả góp & Lịch thu kỳ hạn (`TraGopService`, `TraGopController`) — *Module Trương Thế An*
+* `TraGopService.taoHopDongTraGop({ hoaDonId, soTienTraTruoc, soKy, ghiChu })`:
+  - Kiểm tra tính hợp lệ của kỳ hạn trả góp (3, 6, 9, 12 tháng).
+  - Chặn lập trùng hợp đồng trả góp cho cùng 1 hóa đơn (409 Conflict).
+  - Chặn số tiền trả trước >= tổng tiền hóa đơn (400 Bad Request).
+  - Tính toán: `soTienTraGop = hoaDon.tongTien - soTienTraTruoc`, `soTienMoiKy = Math.round(soTienTraGop / soKy)`.
+  - Tạo bản ghi `HopDongTraGop` với trạng thái ban đầu `Da duyet`.
+* `TraGopService.layLichThuKy(id)`:
+  - Sinh mảng lịch thu định kỳ theo tháng tương ứng số kỳ trả góp.
+  - Xử lý số dư làm tròn ở kỳ cuối cùng: `soTienKyCuoi = soTienTraGop - soTienMoiKy * (soKy - 1)`.
+  - Tự động gán trạng thái từng kỳ: `Da thu` (nếu `ky <= soKyDaThu`), `Qua han` (nếu ngày đến hạn < hiện tại), `Chua thu`.
+  - Thống kê tổng đã thu và tổng còn lại.
+* `TraGopService.thuTienKy(id, { hinhThuc, ghiChu })`:
+  - Thu tiền kỳ kế tiếp: Tự động gọi `ThanhToanService.taoPhieuThu` sinh Phiếu Thu trong Sổ quỹ.
+  - Tăng `soKyDaThu += 1`.
+  - Khi đã thu đủ 100% số kỳ $\rightarrow$ Tự động chuyển trạng thái hợp đồng sang `Hoan tat`.
+  - Chặn thu vượt số kỳ hoặc thu khi hợp đồng đã hoàn tất (400 Bad Request).
+* **RESTful API Endpoints (`/api/tra-gop`):**
+  - `POST /api/tra-gop`: Lập hợp đồng trả góp (RBAC: `Kế toán`, `Thu ngân`, `Bán hàng`).
+  - `GET /api/tra-gop`, `GET /api/tra-gop/:id`, `GET /api/tra-gop/:id/lich-thu`: Danh sách & Chi tiết & Lịch thu (RBAC: `Kế toán`, `Thu ngân`).
+  - `POST /api/tra-gop/:id/thu-ky`: Thu tiền kỳ hạn (RBAC: `Kế toán`, `Thu ngân`).
+* **Kiểm thử tự động:** Bộ test `tests/test_an_tuan5.js` với 23/23 test cases PASS 100%.
+
+### 6.13. Phân hệ Đối soát Công nợ & Quản lý Quá hạn (`CongNoService`) — *Module Trương Thế An*
+* `CongNoService.layChiTietCongNo(id)`:
+  - Lấy chi tiết hồ sơ công nợ kèm mảng `lichSuThanhToan` (tổng hợp danh sách các `PhieuThu` / `PhieuChi` liên quan).
+  - Tính chính xác số tiền còn nợ (`soTienConNo = soTienNo - soTienDaTra`).
+* `CongNoService.kiemTraVaCapNhatQuaHan()`:
+  - Tự động quét toàn bộ các khoản nợ có `hanThanhToan < hiện tại` và `trangThai === 'Con no'` để chuyển trạng thái sang `Qua han`.
+* `CongNoService.layBaoCaoDoiSoat()`:
+  - Thống kê tổng hợp công nợ Khách Hàng (Tổng nợ, Đã trả, Còn nợ).
+  - Thống kê tổng hợp công nợ Nhà Cung Cấp (Tổng nợ, Đã trả, Còn nợ).
+  - Thống kê số lượng khoản nợ quá hạn và tổng nợ quá hạn trên toàn hệ thống.
+* **RESTful API Endpoints:**
+  - `GET /api/cong-no/doi-soat`: Báo cáo thống kê đối soát công nợ (RBAC: `Quản lý`, `Kế toán`).
+  - `POST /api/cong-no/kiem-tra-qua-han`: Quét và cập nhật trạng thái nợ quá hạn (RBAC: `Quản lý`, `Kế toán`).
+* **Kiểm thử tự động:** Bộ test `tests/test_an_tuan4.js` với 24/24 test cases PASS 100%.
+
 ---
 
 ## 7. HƯỚNG DẪN DÀNH CHO CÁC THÀNH VIÊN KHI CODE MODULE MỚI
 
-Khi các thành viên tiếp tục triển khai các module tiếp theo (trả góp của An, kiểm kê/báo cáo của Vượng, đổi trả của Việt), hãy tuân thủ kiến trúc OOP phân tầng như sau:
+Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm kê/báo cáo của Vượng, stress test của QA), hãy tuân thủ kiến trúc OOP phân tầng như sau:
 
 ### Bước 1: Tạo Service Class (`src/services/`)
 * Kế thừa `BaseService`, đóng gói toàn bộ business rules.
@@ -397,13 +490,18 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (trả g
    ```
 3. **Chạy kiểm thử tự động toàn bộ module:**
    ```bash
-   node tests/test_tuan_module.js
-   node tests/test_viet_module.js
-   node tests/test_vuong_module.js
-   node tests/test_tuan_nhap_kho.js
-   node tests/test_an_tuan3.js
-   node tests/verify_all_logins.js
-   node tests/test_http_endpoints.js
+   node tests/test_tuan_module.js       # 44 tests Bán hàng POS, IMEI, Bảo hành
+   node tests/test_viet_module.js       # 32 tests Đặt hàng trước (Tuần 3)
+   node tests/test_viet_tuan4.js        # 39 tests Đổi trả máy & Cấn trừ cọc (Tuần 4)
+   node tests/test_viet_tuan5.js        # 26 tests Tình huống biên & Hủy phiếu RBAC (Tuần 5)
+   node tests/test_viet_tuan6_e2e.js    # 21 tests Kịch bản E2E toàn trình (Tuần 6)
+   node tests/test_an_tuan3.js          # 28 tests Tồn kho dùng chung & Công nợ (Tuần 3)
+   node tests/test_an_tuan4.js          # 24 tests Đối soát công nợ & Quá hạn (Tuần 4)
+   node tests/test_an_tuan5.js          # 23 tests Hợp đồng Trả góp & Lịch thu kỳ (Tuần 5)
+   node tests/test_tuan_nhap_kho.js     # 25 tests Nhập kho máy IMEI (Tuần 3)
+   node tests/test_vuong_module.js      # 37 tests Thu - Chi & Sổ quỹ (Tuần 3)
+   node tests/test_http_endpoints.js    # Kiểm thử HTTP API & Phân quyền RBAC
+   node tests/verify_all_logins.js      # Kiểm thử đăng nhập 6 vai trò
    ```
 4. **Chạy server phát triển:**
    ```bash
@@ -414,6 +512,7 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (trả g
    - Bán hàng POS: `http://localhost:3000/ban-hang/`
    - Tra cứu & Bảo hành: `http://localhost:3000/bao-hanh/`
    - Đặt hàng trước (Pre-order): `http://localhost:3000/dat-truoc/`
+   - Đổi trả sản phẩm: `http://localhost:3000/doi-tra/`
    - Thu - Chi & Sổ quỹ: `http://localhost:3000/so-quy/`
    - Nhập kho hàng hóa: `http://localhost:3000/nhap-kho/`
-   - Quản lý Công nợ: `http://localhost:3000/cong-no/`
+   - Quản lý Công nợ & Đối soát: `http://localhost:3000/cong-no/`
