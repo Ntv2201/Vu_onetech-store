@@ -32,4 +32,7 @@ hoaDonSchema.pre('save', function(next) {
   next();
 });
 
+hoaDonSchema.index({ ngayLap: -1, trangThai: 1 });
+hoaDonSchema.index({ khachHang: 1, ngayLap: -1 });
+
 module.exports = mongoose.model('HoaDon', hoaDonSchema, 'HOADON');

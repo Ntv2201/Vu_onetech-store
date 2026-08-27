@@ -39,4 +39,7 @@ congNoSchema.pre('save', function (next) {
   next();
 });
 
+congNoSchema.index({ loaiDoiTuong: 1, trangThai: 1 });
+congNoSchema.index({ hanThanhToan: 1, trangThai: 1 });
+
 module.exports = mongoose.model('CongNo', congNoSchema, 'CONGNO');

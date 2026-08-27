@@ -64,7 +64,8 @@ class HoaDonService extends BaseService {
         .populate('donDatHang', 'soTienCoc trangThai')
         .sort({ ngayLap: -1, createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       HoaDon.countDocuments(filter)
     ]);
 
@@ -440,22 +441,29 @@ class HoaDonService extends BaseService {
 
     // 5. Cập nhật MayImei -> 'Da ban' (Dùng atomic update với kiểm tra trangThai === 'Con hang' để chống race condition)
     if (imeis.length > 0) {
-      const updateResult = await MayImei.updateMany(
-        { imei: { $in: imeis }, trangThai: 'Con hang' },
-        { $set: { trangThai: 'Da ban' } }
-      );
+      const updatedImeis = [];
+      for (const targetImei of imeis) {
+        const updatedDoc = await MayImei.findOneAndUpdate(
+          { imei: targetImei, trangThai: 'Con hang' },
+          { $set: { trangThai: 'Da ban' } },
+          { new: true }
+        );
 
-      if (updateResult.modifiedCount !== imeis.length) {
-        // Rollback nếu có IMEI vừa bị đổi ở luồng khác
-        await MayImei.updateMany(
-          { imei: { $in: imeis } },
-          { $set: { trangThai: 'Con hang' } }
-        );
-        throw this.createError(
-          'Phát hiện xung đột đồng thời khi bán máy! Một hoặc nhiều IMEI vừa được bán ở giao dịch khác.',
-          409,
-          { expected: imeis.length, actual: updateResult.modifiedCount }
-        );
+        if (!updatedDoc) {
+          // Rollback chỉ những IMEI đã lỡ cập nhật trong mẻ này
+          if (updatedImeis.length > 0) {
+            await MayImei.updateMany(
+              { imei: { $in: updatedImeis } },
+              { $set: { trangThai: 'Con hang' } }
+            );
+          }
+          throw this.createError(
+            `Phát hiện xung đột đồng thời khi bán máy! Máy IMEI "${targetImei}" không còn ở trạng thái khả dụng hoặc vừa được bán ở quầy khác.`,
+            409,
+            { failedImei: targetImei }
+          );
+        }
+        updatedImeis.push(targetImei);
       }
     }
 

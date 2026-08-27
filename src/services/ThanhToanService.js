@@ -245,8 +245,8 @@ class ThanhToanService extends BaseService {
     }
 
     const [danhSachThu, danhSachChi] = await Promise.all([
-      PhieuThu.find(filterThu).sort({ ngayThu: -1, createdAt: -1 }),
-      PhieuChi.find(filterChi).sort({ ngayChi: -1, createdAt: -1 })
+      PhieuThu.find(filterThu).sort({ ngayThu: -1, createdAt: -1 }).lean(),
+      PhieuChi.find(filterChi).sort({ ngayChi: -1, createdAt: -1 }).lean()
     ]);
 
     let tongThu = 0;

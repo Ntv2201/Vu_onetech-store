@@ -61,4 +61,7 @@ phieuDoiTraSchema.pre('save', function(next) {
   next();
 });
 
+phieuDoiTraSchema.index({ ngayDoiTra: -1, trangThai: 1 });
+phieuDoiTraSchema.index({ imeiCu: 1, trangThai: 1 });
+
 module.exports = mongoose.model('PhieuDoiTra', phieuDoiTraSchema, 'PHIEUDOITRA');

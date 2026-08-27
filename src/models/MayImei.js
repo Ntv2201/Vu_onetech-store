@@ -18,4 +18,7 @@ const mayImeiSchema = new mongoose.Schema({
   timestamps: true
 });
 
+mayImeiSchema.index({ sanPham: 1, trangThai: 1 });
+mayImeiSchema.index({ imei: 1, trangThai: 1 });
+
 module.exports = mongoose.model('MayImei', mayImeiSchema, 'MAY_IMEI');

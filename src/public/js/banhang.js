@@ -262,7 +262,7 @@ async function initPosPage() {
   const searchInput = document.getElementById('searchImeiInput');
   const filterSp = document.getElementById('filterPosSanPham');
   if (searchInput) {
-    searchInput.addEventListener('input', () => filterImeiDisplay());
+    searchInput.addEventListener('input', debounce(() => filterImeiDisplay(), 200));
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();

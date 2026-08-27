@@ -72,7 +72,8 @@ class BaoHanhService extends BaseService {
         .populate('nhanVien', 'hoTen vaiTro tenDangNhap')
         .sort({ ngayTiepNhan: -1, createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       PhieuBaoHanh.countDocuments(filter)
     ]);
 

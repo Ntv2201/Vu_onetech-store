@@ -17,4 +17,7 @@ const donDatHangTruocSchema = new mongoose.Schema({
   timestamps: true
 });
 
+donDatHangTruocSchema.index({ trangThai: 1, createdAt: -1 });
+donDatHangTruocSchema.index({ khachHang: 1, createdAt: -1 });
+
 module.exports = mongoose.model('DonDatHangTruoc', donDatHangTruocSchema, 'DONDATHANGTRUOC');

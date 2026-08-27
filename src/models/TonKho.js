@@ -8,4 +8,6 @@ const tonKhoSchema = new mongoose.Schema({
   timestamps: true
 });
 
+tonKhoSchema.index({ kho: 1, sanPham: 1 }, { unique: true });
+
 module.exports = mongoose.model('TonKho', tonKhoSchema, 'TONKHO');

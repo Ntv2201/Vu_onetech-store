@@ -25,4 +25,7 @@ phieuBaoHanhSchema.pre('save', function(next) {
   next();
 });
 
+phieuBaoHanhSchema.index({ imei: 1, trangThai: 1 });
+phieuBaoHanhSchema.index({ ngayTiepNhan: -1, trangThai: 1 });
+
 module.exports = mongoose.model('PhieuBaoHanh', phieuBaoHanhSchema, 'PHIEUBAOHANH');

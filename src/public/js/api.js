@@ -171,3 +171,20 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+/**
+ * Debounce helper giúp hạn chế tần suất gọi hàm (tìm kiếm, gõ phím)
+ * @param {Function} fn Hàm cần thực thi
+ * @param {number} delay Thời gian chờ (mili-giây), mặc định 300ms
+ */
+function debounce(fn, delay = 300) {
+  let timer = null;
+  return function(...args) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+}
+
+window.debounce = debounce;
