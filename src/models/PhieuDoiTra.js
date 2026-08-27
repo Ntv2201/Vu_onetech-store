@@ -15,7 +15,13 @@ const phieuDoiTraSchema = new mongoose.Schema({
   },
   giaMayCu: { type: Number, default: 0, min: 0 },
   giaMayMoi: { type: Number, default: 0, min: 0 },
-  tienChenhLech: { type: Number, default: 0 }, // giaMayMoi - giaMayCu
+  danhSachPhuKien: [{
+    phuKien: { type: mongoose.Schema.Types.ObjectId, ref: 'PhuKien', required: true },
+    soLuong: { type: Number, required: true, min: 1, default: 1 },
+    donGia: { type: Number, required: true, min: 0, default: 0 }
+  }],
+  tongTienPhuKien: { type: Number, default: 0, min: 0 },
+  tienChenhLech: { type: Number, default: 0 }, // (giaMayMoi + tongTienPhuKien) - giaMayCu
   phieuThu: { type: mongoose.Schema.Types.ObjectId, ref: 'PhieuThu', default: null },
   phieuChi: { type: mongoose.Schema.Types.ObjectId, ref: 'PhieuChi', default: null },
   hinhThuc: {
@@ -28,10 +34,16 @@ const phieuDoiTraSchema = new mongoose.Schema({
   trangThai: {
     type: String,
     required: true,
-    enum: ['Cho xu ly', 'Da doi may', 'Da tra tien', 'Hoan tat', 'Tu choi'],
+    enum: ['Cho xu ly', 'Da doi may', 'Da tra tien', 'Hoan tat', 'Da huy', 'Tu choi'],
     default: 'Hoan tat'
   },
-  ghiChu: { type: String, default: '' }
+  ghiChu: { type: String, default: '' },
+  // Thông tin hủy / hoàn tác phiếu đổi trả (dành cho Quản lý)
+  lyDoHuy: { type: String, default: '' },
+  ngayHuy: { type: Date, default: null },
+  nguoiHuy: { type: mongoose.Schema.Types.ObjectId, ref: 'NhanVien', default: null },
+  phieuThuDaoNguoc: { type: mongoose.Schema.Types.ObjectId, ref: 'PhieuThu', default: null },
+  phieuChiDaoNguoc: { type: mongoose.Schema.Types.ObjectId, ref: 'PhieuChi', default: null }
 }, {
   timestamps: true
 });

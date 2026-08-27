@@ -272,7 +272,7 @@
 - [x] `PUT /api/dat-truoc/:id/huy` — Khách hủy đơn $\rightarrow$ tự động gọi `taoPhieuChi` hoàn cọc.
 - [x] Viết bộ kiểm thử tự động 32/32 test cases PASS (`tests/test_viet_module.js`).
 
-#### Tuần 4 [HIỆN TẠI]: Chuyển đổi Hóa đơn & Phân hệ Đổi trả máy (Trọng tâm) [ĐÃ HOÀN THÀNH 100%]
+#### Tuần 4: Chuyển đổi Hóa đơn & Phân hệ Đổi trả máy (Trọng tâm) [ĐÃ HOÀN THÀNH 100%]
 - [x] `PUT /api/dat-truoc/:id/chuyen-hoa-don` — Khách đến nhận máy $\rightarrow$ gọi `HoaDonService.taoHoaDonBanHang` cấn trừ cọc và xuất hóa đơn.
 - [x] Xây dựng `DoiTraService` kế thừa `BaseService`, `DoiTraController`, route `/api/doi-tra`.
 - [x] `POST /api/doi-tra` — Đổi máy (máy cũ $\rightarrow$ `Loi`, máy mới $\rightarrow$ `Da ban`, tính chênh lệch tiền thu/chi qua `ThanhToanService`) và Trả hàng hoàn tiền 100%.
@@ -280,9 +280,13 @@
 - [x] Xây dựng giao diện Đổi trả `src/public/pages/doi-tra/index.html` và `src/public/js/doitra.js`.
 - [x] Viết bộ kiểm thử tự động 39/39 test cases PASS (`tests/test_viet_tuan4.js`).
 
-#### Tuần 5: Hoàn thiện Tình huống Biên & Phân quyền
-- [ ] Gắn middleware `requireRole(['QuanLy', 'BanHang', 'ThuNgan'])` cho các route Đổi trả & Đặt trước.
-- [ ] Xử lý các tình huống biên: Đổi máy kèm phụ kiện phát sinh, hủy đổi trả nếu có sai sót.
+#### Tuần 5 [HIỆN TẠI]: Hoàn thiện Tình huống Biên & Phân quyền [ĐÃ HOÀN THÀNH 100%]
+- [x] Gắn middleware `requireRole(['QuanLy', 'BanHang', 'ThuNgan'])` cho các route Đổi trả & Đặt trước; Cấp quyền riêng cho `Quản lý` đối với route hủy phiếu (`PUT /api/doi-tra/:id/huy`), chặn 403 Forbidden các vai trò khác.
+- [x] Xử lý các tình huống biên:
+  1. Đổi máy kèm phụ kiện phát sinh (tự động cộng tiền phụ kiện vào chênh lệch và trừ tồn kho `PhuKien`).
+  2. Hủy / thu hồi phiếu đổi trả (`huyPhieuDoiTra`): Hoàn tác trạng thái 2 máy IMEI, hoàn lại tồn kho phụ kiện và tự động sinh phiếu thu/chi đảo ngược trong Sổ Quỹ.
+  3. Xử lý phụ kiện vượt tồn kho (400) & Boundary test ngày 30 vs ngày 31 (400).
+- [x] Viết bộ kiểm thử tự động 26/26 test cases PASS (`tests/test_viet_tuan5.js`).
 
 #### Tuần 6-8: Nối UI, Kiểm thử Tự động & Demo
 - [ ] Nối API với giao diện Đặt trước và Đổi trả của Vũ, nghiệm thu cùng Việt Anh (QA).
