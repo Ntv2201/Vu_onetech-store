@@ -77,7 +77,7 @@ class TraGopService extends BaseService {
       HopDongTraGop.find(filter)
         .populate({
           path: 'hoaDon',
-          select: 'soHD meNgayLap tongTien khachHang nhanVien',
+          select: 'soHD ngayLap tongTien khachHang nhanVien',
           populate: { path: 'khachHang', select: 'hoTen sdt' }
         })
         .sort({ createdAt: -1 })
