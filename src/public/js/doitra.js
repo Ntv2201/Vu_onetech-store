@@ -1,6 +1,6 @@
 /**
  * Module Xử lý Logic Giao diện Đổi Trả Máy (Exchange & Return)
- * Thành viên 6: Tô Quốc Việt (Tuần 4 - 5)
+ * Thành viên 6: Tô Quốc Việt (Tuần 4 - 6)
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -71,10 +71,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnLookupImei = document.getElementById('btnLookupImei');
   const lookupResultContainer = document.getElementById('lookupResultContainer');
 
-  // Modal & Nút Hủy
+  // Modal & Nút Hủy & In Phiếu
   let modalDetail = null;
   const modalDetailEl = document.getElementById('modalDoiTraDetail');
   const btnCancelDoiTraModal = document.getElementById('btnCancelDoiTraModal');
+  const btnPrintDoiTra = document.getElementById('btnPrintDoiTra');
   if (modalDetailEl && window.bootstrap) {
     modalDetail = new bootstrap.Modal(modalDetailEl);
   }
@@ -738,6 +739,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
 
+      // Xử lý nút In Phiếu Đổi Trả
+      if (btnPrintDoiTra) {
+        btnPrintDoiTra.onclick = () => {
+          printDoiTraReceipt(data);
+        };
+      }
+
       const kh = phieuDoiTra.khachHang || (hoaDon ? hoaDon.khachHang : {}) || {};
       const nv = phieuDoiTra.nhanVien || {};
       const spCu = mayCu && mayCu.sanPham ? mayCu.sanPham : {};
@@ -874,6 +882,144 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       if (content) content.innerHTML = `<div class="alert alert-danger">Lỗi tải chi tiết: ${err.message}</div>`;
     }
+  }
+
+  function printDoiTraReceipt(data) {
+    const { phieuDoiTra, mayCu, mayMoi, hoaDon, phieuThu, phieuChi, danhSachPhuKien = [] } = data;
+    if (!phieuDoiTra) return;
+
+    const kh = phieuDoiTra.khachHang || (hoaDon ? hoaDon.khachHang : {}) || {};
+    const nv = phieuDoiTra.nhanVien || {};
+    const spCu = mayCu && mayCu.sanPham ? mayCu.sanPham : {};
+    const spMoi = mayMoi && mayMoi.sanPham ? mayMoi.sanPham : {};
+
+    let diffText = '';
+    if (phieuDoiTra.tienChenhLech > 0) {
+      diffText = `Thu thêm từ khách: +${phieuDoiTra.tienChenhLech.toLocaleString('vi-VN')} đ`;
+    } else if (phieuDoiTra.tienChenhLech < 0) {
+      diffText = `Hoàn trả lại khách: -${Math.abs(phieuDoiTra.tienChenhLech).toLocaleString('vi-VN')} đ`;
+    } else {
+      diffText = 'Đổi ngang giá (0 đ)';
+    }
+
+    const printWindow = window.open('', '_blank', 'width=750,height=850');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Biên Bản Đổi Trả ${escapeHtml(phieuDoiTra.maDT || '')} - OneTech Store</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #222; font-size: 13px; line-height: 1.5; }
+          .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 12px; margin-bottom: 15px; }
+          .title { font-size: 18px; font-weight: bold; margin: 5px 0; text-transform: uppercase; }
+          .store-info { font-size: 12px; color: #555; }
+          .section-title { font-weight: bold; font-size: 14px; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+          th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+          th { background: #f5f5f5; }
+          .text-end { text-align: right; }
+          .fw-bold { font-weight: bold; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; }
+          .signature-box { width: 45%; }
+          .signature-space { height: 60px; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div style="font-weight: bold; font-size: 16px;">HỆ THỐNG BÁN LẺ ĐIỆN THOẠI ONETECH STORE</div>
+          <div class="store-info">Địa chỉ: 123 Đường Cầu Giấy, Hà Nội | Hotline: 1900 6868</div>
+          <div class="title">BIÊN BẢN TIẾP NHẬN ĐỔI TRẢ SẢN PHẨM</div>
+          <div>Mã phiếu: <strong>${escapeHtml(phieuDoiTra.maDT || phieuDoiTra._id)}</strong> | Ngày lập: ${new Date(phieuDoiTra.ngayDoiTra || phieuDoiTra.createdAt).toLocaleString('vi-VN')}</div>
+        </div>
+
+        <div class="section-title">1. THÔNG TIN KHÁCH HÀNG & HÓA ĐƠN GỐC</div>
+        <div>Khách hàng: <strong>${escapeHtml(kh.hoTen || 'Khách vãng lai')}</strong> - SĐT: <strong>${escapeHtml(kh.sdt || 'Chưa có')}</strong></div>
+        <div>Số hóa đơn mua ban đầu: <strong>${escapeHtml(hoaDon ? hoaDon.soHD : 'Chưa rõ')}</strong></div>
+        <div>Nhân viên xử lý: ${escapeHtml(nv.hoTen || 'OneTech Store')}</div>
+
+        <div class="section-title">2. CHI TIẾT THIẾT BỊ ĐỔI TRẢ</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Hạng mục</th>
+              <th>Tên sản phẩm</th>
+              <th>Số IMEI</th>
+              <th class="text-end">Định giá / Giá bán</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Máy cũ thu hồi</strong></td>
+              <td>${escapeHtml(spCu.tenMay || 'Điện thoại')}</td>
+              <td style="font-family: monospace;">${escapeHtml(phieuDoiTra.imeiCu)}</td>
+              <td class="text-end">${(phieuDoiTra.giaMayCu || 0).toLocaleString('vi-VN')} đ</td>
+            </tr>
+            ${phieuDoiTra.imeiMoi ? `
+              <tr>
+                <td><strong>Máy mới bàn giao</strong></td>
+                <td>${escapeHtml(spMoi.tenMay || 'Điện thoại')}</td>
+                <td style="font-family: monospace;">${escapeHtml(phieuDoiTra.imeiMoi)}</td>
+                <td class="text-end">${(phieuDoiTra.giaMayMoi || 0).toLocaleString('vi-VN')} đ</td>
+              </tr>
+            ` : `
+              <tr>
+                <td colspan="4" style="font-style: italic; color: #555;">Khách hàng hoàn trả sản phẩm nhận lại 100% tiền (Không lấy máy mới)</td>
+              </tr>
+            `}
+          </tbody>
+        </table>
+
+        ${danhSachPhuKien && danhSachPhuKien.length > 0 ? `
+          <div class="section-title">3. PHỤ KIỆN KÈM THEO</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Tên phụ kiện</th>
+                <th class="text-center">Số lượng</th>
+                <th class="text-end">Đơn giá</th>
+                <th class="text-end">Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${danhSachPhuKien.map(pk => `
+                <tr>
+                  <td>${escapeHtml(pk.phuKien ? pk.phuKien.tenPK : 'Phụ kiện')}</td>
+                  <td class="text-center">${pk.soLuong}</td>
+                  <td class="text-end">${(pk.donGia || 0).toLocaleString('vi-VN')} đ</td>
+                  <td class="text-end fw-bold">${((pk.donGia || 0) * (pk.soLuong || 1)).toLocaleString('vi-VN')} đ</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        ` : ''}
+
+        <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border: 1px solid #eee;">
+          <div><strong>Hình thức:</strong> ${escapeHtml(phieuDoiTra.loaiDoiTra)} (${escapeHtml(phieuDoiTra.hinhThuc || 'Tiền mặt')})</div>
+          <div><strong>Kết quả tài chính:</strong> <span class="fw-bold" style="font-size: 14px;">${diffText}</span></div>
+          <div><strong>Lý do:</strong> ${escapeHtml(phieuDoiTra.lyDo || '')}</div>
+        </div>
+
+        <div class="signatures">
+          <div class="signature-box">
+            <strong>KHÁCH HÀNG</strong><br><small>(Ký và ghi rõ họ tên)</small>
+            <div class="signature-space"></div>
+            <div>${escapeHtml(kh.hoTen || '')}</div>
+          </div>
+          <div class="signature-box">
+            <strong>ĐẠI DIỆN CỬA HÀNG</strong><br><small>(Ký và ghi rõ họ tên)</small>
+            <div class="signature-space"></div>
+            <div>OneTech Store</div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   }
 
   function renderLookupResult(data) {

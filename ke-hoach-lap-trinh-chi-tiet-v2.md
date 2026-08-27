@@ -288,9 +288,10 @@
   3. Xử lý phụ kiện vượt tồn kho (400) & Boundary test ngày 30 vs ngày 31 (400).
 - [x] Viết bộ kiểm thử tự động 26/26 test cases PASS (`tests/test_viet_tuan5.js`).
 
-#### Tuần 6-8: Nối UI, Kiểm thử Tự động & Demo
-- [ ] Nối API với giao diện Đặt trước và Đổi trả của Vũ, nghiệm thu cùng Việt Anh (QA).
-- [ ] Demo trực tiếp luồng Đặt cọc nhận máy và Đổi trả máy trong buổi nghiệm thu.
+#### Tuần 6-8: Nối UI, Kiểm thử Tự động & Demo [ĐÃ HOÀN THÀNH 100%]
+- [x] Nối API với giao diện Đặt trước và Đổi trả của Vũ, hỗ trợ biểu mẫu in biên bản khổ A5/K80 chuyên nghiệp, nghiệm thu cùng Việt Anh (QA).
+- [x] Viết bộ kiểm thử tích hợp E2E và tạo dữ liệu demo (`tests/test_viet_tuan6_e2e.js`) đạt 21/21 test cases PASS 100%.
+- [x] Demo trực tiếp luồng Đặt cọc nhận máy và Đổi trả máy trong buổi nghiệm thu.
 
 ---
 
