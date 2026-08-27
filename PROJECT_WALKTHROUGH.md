@@ -91,6 +91,7 @@ onetech/
 ├── PROJECT_WALKTHROUGH.md               # Bản Walkthrough kỹ thuật (File này)
 ├── tests/                               # Bộ kiểm thử tự động
 │   ├── test_tuan_module.js              # Kiểm thử 44 test cases luồng Bán hàng POS, IMEI, Bảo hành
+│   ├── test_tuan_tuan5_6_e2e.js         # Kiểm thử 33 test cases Luồng E2E tích hợp Bán hàng POS, Cọc, Bảo hành, KPI (Tuần 5-6)
 │   ├── test_viet_module.js              # Kiểm thử 32 test cases Đặt hàng trước, Cọc & Hoàn cọc (Tuần 3)
 │   ├── test_viet_tuan4.js               # Kiểm thử 39 test cases Đổi trả máy & Cấn trừ cọc (Tuần 4)
 │   ├── test_viet_tuan5.js               # Kiểm thử 26 test cases Tình huống biên đổi kèm PK, Hủy phiếu RBAC (Tuần 5)
@@ -491,6 +492,7 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm 
 3. **Chạy kiểm thử tự động toàn bộ module:**
    ```bash
    node tests/test_tuan_module.js       # 44 tests Bán hàng POS, IMEI, Bảo hành
+   node tests/test_tuan_tuan5_6_e2e.js  # 33 tests E2E tích hợp Bán hàng POS, Cọc, Bảo hành, KPI (Tuần 5-6)
    node tests/test_viet_module.js       # 32 tests Đặt hàng trước (Tuần 3)
    node tests/test_viet_tuan4.js        # 39 tests Đổi trả máy & Cấn trừ cọc (Tuần 4)
    node tests/test_viet_tuan5.js        # 26 tests Tình huống biên & Hủy phiếu RBAC (Tuần 5)

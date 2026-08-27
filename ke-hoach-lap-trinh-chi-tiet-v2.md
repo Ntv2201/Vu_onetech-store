@@ -106,9 +106,10 @@
 - [x] `GET /api/hoa-don/thong-ke-nhanh` — Thống kê nhanh doanh thu và số lượng đơn hôm nay.
 - [x] Đã kiểm thử 44/44 test cases PASS ([`tests/test_tuan_module.js`](tests/test_tuan_module.js)).
 
-#### Tuần 5-6: Hỗ trợ tích hợp E2E & Tối ưu Luồng Bán hàng POS
-- [ ] Phối hợp với Vũ hoàn thiện trải nghiệm POS bán hàng (phím tắt quét barcode IMEI, in nhanh hóa đơn).
-- [ ] Phối hợp với Việt Anh (QA) kiểm thử luồng tích hợp: Đặt trước $\rightarrow$ Bán hàng $\rightarrow$ Bảo hành $\rightarrow$ Đổi trả.
+#### Tuần 5-6: Hỗ trợ tích hợp E2E & Tối ưu Luồng Bán hàng POS [ĐÃ HOÀN THÀNH 100%]
+- [x] Phối hợp với Vũ hoàn thiện trải nghiệm POS bán hàng (phím tắt quét barcode F1-F9 / Alt+1-9, hiệu ứng âm thanh beep, in nhanh hóa đơn K80/A5 chuyên nghiệp qua `printInvoiceReceipt`).
+- [x] Thống kê KPI doanh số bán hàng theo từng nhân viên (`GET /api/hoa-don/bao-cao/doanh-so-nhan-vien`) và Top sản phẩm bán chạy (`GET /api/hoa-don/bao-cao/top-san-pham`).
+- [x] Phối hợp với Việt Anh (QA) kiểm thử luồng tích hợp toàn trình E2E: Đặt trước $\rightarrow$ Bán hàng POS $\rightarrow$ Bảo hành dòng đời $\rightarrow$ Đổi trả trong 30 ngày ([`tests/test_tuan_tuan5_6_e2e.js`](tests/test_tuan_tuan5_6_e2e.js) đạt 33/33 test cases PASS 100%).
 
 #### Tuần 7-8: Stress Test, Diễn tập Demo & Đóng gói
 - [ ] Chạy stress test bán hàng đồng thời nhiều IMEI cùng QA.
