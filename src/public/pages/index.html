@@ -24,24 +24,40 @@
 
     <!-- Page Body -->
     <main class="page-container">
-      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <div>
-          <h4 class="fw-bold mb-1">Bảng điều khiển Tổng quan</h4>
-          <p class="text-muted small mb-0">Quản lý kho hàng, truy vết IMEI và theo dõi kinh doanh</p>
+      <!-- Welcome Hero Banner -->
+      <div class="card-custom p-4 mb-4" style="background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(240,244,255,0.95) 100%); border: 1.5px solid rgba(199, 210, 254, 0.7);">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge px-2.5 py-1 rounded-pill" style="background: linear-gradient(135deg, #4f46e5, #06b6d4); font-size: 0.72rem; font-weight: 600;">
+                <i class="bi bi-shield-check me-1"></i> Quản Trị Hệ Thống
+              </span>
+              <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5 rounded-pill small">
+                <i class="bi bi-circle-fill me-1" style="font-size: 0.45rem;"></i> Trực tuyến
+              </span>
+            </div>
+            <h4 class="fw-bold mb-1 text-dark" style="letter-spacing: -0.01em;">Bảng Điều Khiển Tổng Quan</h4>
+            <p class="text-muted small mb-0">Theo dõi thời gian thực kho hàng máy IMEI, doanh số và dịch vụ bảo hành OneTech Store</p>
+          </div>
+
+          <!-- Dynamic Role-based Quick Action Buttons -->
+          <div class="d-flex flex-wrap gap-2" id="dashboardQuickActions"></div>
         </div>
-        <div class="d-flex gap-2" id="dashboardQuickActions"></div>
       </div>
 
-      <!-- Stats Row -->
+      <!-- Primary Stats Row -->
       <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-xl-3">
           <div class="card-custom card-stat">
-            <div>
-              <div class="text-muted small fw-semibold">TỔNG MÁY (THEO IMEI)</div>
-              <div class="fs-3 fw-bold mt-1" id="statTotalMayImei">...</div>
-              <div class="small text-muted mt-1"><span id="statTotalSanPham">...</span> Model sản phẩm</div>
+            <div class="overflow-hidden">
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">Tổng máy (Theo IMEI)</div>
+              <div class="fs-2 fw-bold text-dark my-1" id="statTotalMayImei">0</div>
+              <div class="d-flex align-items-center gap-1.5 text-muted small">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5 font-monospace fw-semibold" id="statTotalSanPham">0</span>
+                <span style="font-size: 0.75rem;">Model sản phẩm</span>
+              </div>
             </div>
-            <div class="stat-icon primary">
+            <div class="stat-icon primary ms-2">
               <i class="bi bi-upc-scan"></i>
             </div>
           </div>
@@ -49,58 +65,72 @@
 
         <div class="col-12 col-sm-6 col-xl-3">
           <div class="card-custom card-stat">
-            <div>
-              <div class="text-muted small fw-semibold">MÁY CÒN TRONG KHO</div>
-              <div class="fs-3 fw-bold mt-1 text-success" id="statImeiConHang">...</div>
-              <div class="small text-success mt-1">Sẵn sàng xuất bán</div>
+            <div class="overflow-hidden">
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">Máy còn trong kho</div>
+              <div class="fs-2 fw-bold text-success my-1" id="statImeiConHang">0</div>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5 font-monospace fw-semibold" style="font-size: 0.72rem;">
+                  <i class="bi bi-check-circle me-1"></i>Sẵn sàng xuất bán
+                </span>
+              </div>
             </div>
-            <div class="stat-icon success">
-              <i class="bi bi-box-seam"></i>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-sm-6 col-xl-3">
-          <div class="card-custom card-stat">
-            <div>
-              <div class="text-muted small fw-semibold">MÁY ĐÃ BÁN</div>
-              <div class="fs-3 fw-bold mt-1 text-primary" id="statImeiDaBan">...</div>
-              <div class="small text-muted mt-1">Đã xuất theo hóa đơn</div>
-            </div>
-            <div class="stat-icon purple">
-              <i class="bi bi-receipt"></i>
+            <div class="stat-icon success ms-2">
+              <i class="bi bi-box-seam-fill"></i>
             </div>
           </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
           <div class="card-custom card-stat">
-            <div>
-              <div class="text-muted small fw-semibold">ĐANG BẢO HÀNH</div>
-              <div class="fs-3 fw-bold mt-1 text-warning" id="statImeiBaoHanh">...</div>
-              <div class="small text-warning mt-1">Đang tiếp nhận xử lý</div>
+            <div class="overflow-hidden">
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">Máy đã bán ra</div>
+              <div class="fs-2 fw-bold text-primary my-1" id="statImeiDaBan">0</div>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-0.5 font-monospace fw-semibold" style="font-size: 0.72rem;">
+                  <i class="bi bi-receipt me-1"></i>Đã xuất hóa đơn
+                </span>
+              </div>
             </div>
-            <div class="stat-icon warning">
-              <i class="bi bi-tools"></i>
+            <div class="stat-icon purple ms-2">
+              <i class="bi bi-receipt-cutoff"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card-custom card-stat">
+            <div class="overflow-hidden">
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">Đang tiếp nhận BH</div>
+              <div class="fs-2 fw-bold text-warning my-1" id="statImeiBaoHanh">0</div>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-0.5 font-monospace fw-semibold" style="font-size: 0.72rem;">
+                  <i class="bi bi-clock-history me-1"></i>Đang xử lý kỹ thuật
+                </span>
+              </div>
+            </div>
+            <div class="stat-icon warning ms-2">
+              <i class="bi bi-wrench-adjustable"></i>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Secondary Stats Row -->
+      <!-- Secondary Metrics Row -->
       <div class="row g-3 mb-4">
         <div class="col-12 col-md-4">
           <div class="card-custom p-3 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
               <div class="stat-icon info" style="width: 44px; height: 44px; font-size: 1.25rem;">
-                <i class="bi bi-people"></i>
+                <i class="bi bi-people-fill"></i>
               </div>
               <div>
-                <div class="text-muted small">Khách hàng</div>
-                <div class="fw-bold fs-5" id="statTotalKhachHang">...</div>
+                <div class="text-muted small fw-medium">Khách hàng thành viên</div>
+                <div class="fw-bold fs-5 text-dark" id="statTotalKhachHang">0</div>
               </div>
             </div>
-            <a href="/khach-hang/index.html" class="btn btn-sm btn-light" id="linkKhachHang"><i class="bi bi-arrow-right"></i></a>
+            <a href="/khach-hang/index.html" class="btn btn-sm btn-light border rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;" id="linkKhachHang" title="Xem danh sách khách hàng">
+              <i class="bi bi-arrow-right"></i>
+            </a>
           </div>
         </div>
 
@@ -111,11 +141,13 @@
                 <i class="bi bi-truck"></i>
               </div>
               <div>
-                <div class="text-muted small">Nhà cung cấp</div>
-                <div class="fw-bold fs-5" id="statTotalNhaCungCap">...</div>
+                <div class="text-muted small fw-medium">Nhà cung cấp đối tác</div>
+                <div class="fw-bold fs-5 text-dark" id="statTotalNhaCungCap">0</div>
               </div>
             </div>
-            <a href="/nha-cung-cap/index.html" class="btn btn-sm btn-light" id="linkNhaCungCap"><i class="bi bi-arrow-right"></i></a>
+            <a href="/nha-cung-cap/index.html" class="btn btn-sm btn-light border rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;" id="linkNhaCungCap" title="Xem nhà cung cấp">
+              <i class="bi bi-arrow-right"></i>
+            </a>
           </div>
         </div>
 
@@ -123,39 +155,48 @@
           <div class="card-custom p-3 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
               <div class="stat-icon success" style="width: 44px; height: 44px; font-size: 1.25rem;">
-                <i class="bi bi-person-badge"></i>
+                <i class="bi bi-person-badge-fill"></i>
               </div>
               <div>
-                <div class="text-muted small">Nhân viên</div>
-                <div class="fw-bold fs-5" id="statTotalNhanVien">...</div>
+                <div class="text-muted small fw-medium">Nhân viên hệ thống</div>
+                <div class="fw-bold fs-5 text-dark" id="statTotalNhanVien">0</div>
               </div>
             </div>
-            <a href="/nhan-vien/index.html" class="btn btn-sm btn-light" id="linkNhanVien"><i class="bi bi-arrow-right"></i></a>
+            <a href="/nhan-vien/index.html" class="btn btn-sm btn-light border rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;" id="linkNhanVien" title="Xem danh sách nhân viên">
+              <i class="bi bi-arrow-right"></i>
+            </a>
           </div>
         </div>
       </div>
 
-      <!-- Main Tables Row -->
+      <!-- Main Activity Tables Row -->
       <div class="row g-4">
         <!-- Recent IMEIs -->
-        <div class="col-12 col-lg-7">
-          <div class="card-custom">
-            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-              <h6 class="fw-bold mb-0"><i class="bi bi-upc-scan me-2 text-primary"></i>Máy IMEI Mới Nhập</h6>
-              <a href="/may-imei/index.html" class="btn btn-sm btn-link text-decoration-none">Xem tất cả</a>
+        <div class="col-12 col-xl-7 col-lg-6">
+          <div class="card-custom p-0 overflow-hidden">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white bg-opacity-50">
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                  <i class="bi bi-upc-scan"></i>
+                </div>
+                <h6 class="fw-bold mb-0 text-dark">Máy IMEI Mới Nhập Kho</h6>
+              </div>
+              <a href="/may-imei/index.html" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-primary" style="font-size: 0.78rem;">
+                Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
+              </a>
             </div>
             <div class="table-responsive">
-              <table class="table table-custom table-hover">
+              <table class="table table-custom table-hover align-middle mb-0">
                 <thead>
                   <tr>
                     <th>Số IMEI</th>
-                    <th>Sản phẩm</th>
+                    <th>Model Sản phẩm</th>
                     <th>Giá nhập</th>
                     <th>Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody id="tableRecentImei">
-                  <tr><td colspan="4" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+                  <tr><td colspan="4" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
                 </tbody>
               </table>
             </div>
@@ -163,23 +204,30 @@
         </div>
 
         <!-- Recent SanPham -->
-        <div class="col-12 col-lg-5">
-          <div class="card-custom">
-            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-              <h6 class="fw-bold mb-0"><i class="bi bi-phone me-2 text-primary"></i>Danh Mục Model SP</h6>
-              <a href="/san-pham/index.html" class="btn btn-sm btn-link text-decoration-none">Xem tất cả</a>
+        <div class="col-12 col-xl-5 col-lg-6">
+          <div class="card-custom p-0 overflow-hidden">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white bg-opacity-50">
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                  <i class="bi bi-phone"></i>
+                </div>
+                <h6 class="fw-bold mb-0 text-dark">Cơ Cấu Model Sản Phẩm</h6>
+              </div>
+              <a href="/san-pham/index.html" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-primary" style="font-size: 0.78rem;">
+                Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
+              </a>
             </div>
             <div class="table-responsive">
-              <table class="table table-custom table-hover">
+              <table class="table table-custom table-hover align-middle mb-0">
                 <thead>
                   <tr>
                     <th>Tên máy</th>
                     <th>Hãng</th>
-                    <th>Giá bán</th>
+                    <th>Giá niêm yết</th>
                   </tr>
                 </thead>
                 <tbody id="tableRecentSanPham">
-                  <tr><td colspan="3" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+                  <tr><td colspan="3" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
                 </tbody>
               </table>
             </div>

@@ -24,28 +24,90 @@
 
     <!-- Page Body -->
     <main class="page-container">
+      <!-- Header -->
       <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
-          <h4 class="fw-bold mb-1">Quản lý Danh mục</h4>
-          <p class="text-muted small mb-0">Phân loại sản phẩm (Điện thoại, iPad, Smartwatch, Phụ kiện, v.v.)</p>
+          <h4 class="fw-bold mb-1"><i class="bi bi-tags-fill text-primary me-2"></i>Quản lý Danh mục Sản phẩm</h4>
+          <p class="text-muted small mb-0">Phân loại &amp; quản lý cơ cấu danh mục hàng hóa (Điện thoại, Tablet, Phụ kiện, Linh kiện)</p>
         </div>
         <div id="btnCreateContainer">
-          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDanhMucModal">
-            <i class="bi bi-plus-lg me-1"></i> Thêm Danh mục
+          <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addDanhMucModal">
+            <i class="bi bi-plus-lg me-1"></i> Thêm Danh mục Mới
           </button>
         </div>
       </div>
 
+      <!-- Overview Stats Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="card-custom p-3 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-medium">Tổng danh mục</div>
+              <div class="fs-4 fw-bold text-dark mt-1" id="statTotalDanhMuc">0</div>
+            </div>
+            <div class="stat-icon primary">
+              <i class="bi bi-folder2-open"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card-custom p-3 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-medium">Model Điện thoại</div>
+              <div class="fs-4 fw-bold text-primary mt-1" id="statTotalPhones">0</div>
+            </div>
+            <div class="stat-icon info">
+              <i class="bi bi-phone"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card-custom p-3 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-medium">Máy tính bảng</div>
+              <div class="fs-4 fw-bold text-success mt-1" id="statTotalTablets">0</div>
+            </div>
+            <div class="stat-icon success">
+              <i class="bi bi-tablet"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card-custom p-3 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-medium">Phụ kiện &amp; Linh kiện</div>
+              <div class="fs-4 fw-bold text-warning mt-1" id="statTotalAccessories">0</div>
+            </div>
+            <div class="stat-icon purple">
+              <i class="bi bi-headphones"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main 2-Column Balanced Content -->
       <div class="row g-4">
-        <div class="col-12 col-lg-8">
-          <div class="card-custom">
+        <!-- Cột trái: Bảng danh sách danh mục -->
+        <div class="col-12 col-xl-8 col-lg-7">
+          <div class="card-custom p-0 overflow-hidden">
+            <div class="p-3 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 bg-white bg-opacity-50">
+              <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="bi bi-list-stars text-primary"></i>
+                <span>Danh sách phân loại hàng hóa</span>
+              </div>
+              <div class="position-relative" style="max-width: 240px; width: 100%;">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted small"></i>
+                <input type="text" id="searchDanhMucInput" class="form-control form-control-sm ps-4" placeholder="Tìm nhanh danh mục...">
+              </div>
+            </div>
+
             <div class="table-responsive">
-              <table class="table table-custom table-hover">
+              <table class="table table-custom table-hover align-middle mb-0">
                 <thead>
                   <tr>
-                    <th>Tên danh mục</th>
-                    <th>Số lượng model SP</th>
-                    <th>Số lượng phụ kiện</th>
+                    <th>Danh mục</th>
+                    <th class="text-center">Số Model Máy</th>
+                    <th class="text-center">Số Phụ kiện</th>
                     <th class="text-end">Hành động</th>
                   </tr>
                 </thead>
@@ -58,6 +120,52 @@
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        <!-- Cột phải: Form thêm nhanh & Hướng dẫn phân loại -->
+        <div class="col-12 col-xl-4 col-lg-5">
+          <!-- Card Thêm nhanh -->
+          <div class="card-custom p-3 mb-4">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                <i class="bi bi-plus-circle-fill"></i>
+              </div>
+              <h6 class="fw-bold mb-0 text-dark">Thêm Nhanh Danh Mục</h6>
+            </div>
+            <form id="formQuickAddDanhMuc">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Tên danh mục <span class="text-danger">*</span></label>
+                <input type="text" id="inputQuickTenDM" class="form-control" placeholder="VD: Smartwatch, Tai nghe, Điện thoại..." required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                <i class="bi bi-check2-circle me-1"></i> Tạo Danh Mục Ngay
+              </button>
+            </form>
+          </div>
+
+          <!-- Card Hướng dẫn quy chuẩn -->
+          <div class="card-custom p-3 bg-gradient" style="background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(240,244,255,0.9));">
+            <h6 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+              <i class="bi bi-info-circle-fill text-info"></i> Quy chuẩn phân loại OneTech
+            </h6>
+            <p class="text-muted small mb-2">
+              Các danh mục được dùng để phân luồng quản lý IMEI (đối với Điện thoại/Tablet) và số lượng tồn kho (đối với Phụ kiện/Linh kiện).
+            </p>
+            <ul class="list-unstyled small text-secondary mb-0">
+              <li class="mb-2 d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                <span><strong>Điện thoại / iPad</strong>: Quản lý theo số IMEI riêng lẻ.</span>
+              </li>
+              <li class="mb-2 d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                <span><strong>Phụ kiện</strong>: Quản lý theo số lượng tồn kho.</span>
+              </li>
+              <li class="d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                <span><strong>Linh kiện</strong>: Dùng trong xuất sửa chữa bảo hành.</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
