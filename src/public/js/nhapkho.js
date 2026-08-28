@@ -35,7 +35,7 @@ function renderNccOptions() {
   const filterSelect = document.getElementById('filterNCC');
   const inputSelect = document.getElementById('inputNCC');
 
-  const options = dsNhaCungCap.map(ncc => `<option value="${ncc._id}">${ncc.tenNCC} (${ncc.dienThoai || 'N/A'})</option>`).join('');
+  const options = dsNhaCungCap.map(ncc => `<option value="${ncc._id}">${ncc.tenNCC} (${ncc.sdt || 'N/A'})</option>`).join('');
 
   if (filterSelect) {
     filterSelect.innerHTML = '<option value="">-- Tất cả Nhà Cung Cấp --</option>' + options;
@@ -86,7 +86,7 @@ async function loadDanhSachPhieuNhap() {
       </td>
       <td>
         <div class="fw-semibold">${pn.nhaCungCap ? pn.nhaCungCap.tenNCC : 'NCC Không xác định'}</div>
-        <small class="text-muted">${pn.nhaCungCap?.dienThoai || ''}</small>
+        <small class="text-muted">${pn.nhaCungCap?.sdt || ''}</small>
       </td>
       <td>
         <div>${pn.nhanVien ? pn.nhanVien.hoTen : 'Hệ thống'}</div>

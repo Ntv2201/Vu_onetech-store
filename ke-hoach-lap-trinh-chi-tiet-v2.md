@@ -132,14 +132,16 @@
 - [x] Xây dựng giao diện Nhập kho `src/public/pages/nhap-kho/index.html` và `src/public/js/nhapkho.js`.
 - [x] Viết bộ kiểm thử tự động 25/25 test cases PASS ([`tests/test_tuan_nhap_kho.js`](tests/test_tuan_nhap_kho.js)).
 
-#### Tuần 4 [HIỆN TẠI]: Quản lý Nhà cung cấp nâng cao & Nhập hàng loạt
-- [ ] `GET /api/nha-cung-cap/:id/lich-su-nhap` — Xem lịch sử các đợt nhập hàng theo NCC, tổng tiền, dư nợ.
-- [ ] `POST /api/phieu-nhap/import-hang-loat` — Hỗ trợ nhập danh sách nhiều IMEI cùng lúc từ chuỗi text/danh sách dán nhanh.
-- [ ] Bổ sung test tự động: Nhập lô nhiều máy $\rightarrow$ IMEI hiển thị đúng `Con hang`, chặn trùng IMEI 409.
+#### Tuần 4: Quản lý Nhà cung cấp nâng cao & Nhập hàng loạt [ĐÃ HOÀN THÀNH 100%]
+- [x] `GET /api/nha-cung-cap/:id/lich-su-nhap` — Xem lịch sử các đợt nhập hàng theo NCC, tính tổng dư nợ cộng dồn từ `CongNo`, phân trang chuẩn.
+- [x] `POST /api/phieu-nhap/import-hang-loat` — Hỗ trợ nhập danh sách nhiều IMEI từ chuỗi text (hỗ trợ dấu phẩy, xuống dòng, khoảng trắng). Tái sử dụng `taoPhieuNhap`.
+- [x] Bổ sung test tự động 13/13 PASS ([tests/test_tuan_tuan4.js](tests/test_tuan_tuan4.js)): Import lô 5 máy, chặn trùng IMEI 409, lịch sử NCC, RBAC.
+- [x] **Đã sửa lỗi nhỏ (Code Review):** `nhapkho.js` dùng sai trường `dienThoai` → đã sửa thành `sdt` (đúng schema NhaCungCap). `PhieuNhapService` đã bổ sung `sdt diaChi` vào populate.
+- [x] Tinh chỉnh phân quyền: Chỉ `'Quản lý'`, `'Thủ kho'` được nhập kho và import hàng loạt (403 Forbidden cho vai trò khác).
 
-#### Tuần 5: Xử lý Tình huống Biên & Trả hàng NCC
-- [ ] `POST /api/phieu-nhap/tra-hang-ncc` — Trả lại máy lỗi cho NCC (đổi trạng thái IMEI, giảm công nợ NCC).
-- [ ] Tinh chỉnh phân quyền: Chỉ `ThuKho`, `QuanLy` được nhập kho.
+#### Tuần 5: Xử lý Tình huống Biên & Trả hàng NCC [ĐANG THỰC HIỆN]
+- [ ] `POST /api/phieu-nhap/tra-hang-ncc` — Trả lại máy lỗi cho NCC: đổi trạng thái IMEI `Con hang` → `Tra NCC`, giảm dư nợ `CongNo`, sinh `PhieuThu` hoàn tiền (nếu đã thanh toán).
+- [ ] Bổ sung test tự động cho luồng trả hàng NCC.
 
 #### Tuần 6-8: Nối UI, Kiểm thử Tích hợp & Demo
 - [ ] Nối API với màn hình Nhập kho của Vũ và nghiệm thu cùng Việt Anh (QA).

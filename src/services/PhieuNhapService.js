@@ -158,7 +158,7 @@ class PhieuNhapService extends BaseService {
     const { page, limit, skip } = this.getPaginationOptions(query);
     const [list, total] = await Promise.all([
       PhieuNhap.find(filter)
-        .populate('nhaCungCap', 'tenNCC dienThoai')
+        .populate('nhaCungCap', 'tenNCC sdt diaChi')
         .populate('nhanVien', 'hoTen tenDangNhap vaiTro')
         .sort({ ngayNhap: -1, createdAt: -1 })
         .skip(skip)
