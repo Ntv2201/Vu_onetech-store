@@ -9,6 +9,7 @@ class NhaCungCapController extends BaseController {
     this.postCreate = this.postCreate.bind(this);
     this.postEdit = this.postEdit.bind(this);
     this.delete = this.delete.bind(this);
+    this.getLichSuNhap = this.getLichSuNhap.bind(this);
   }
 
   // GET /api/nha-cung-cap
@@ -58,6 +59,16 @@ class NhaCungCapController extends BaseController {
       return this.sendSuccess(res, result, 'Xóa nhà cung cấp thành công');
     } catch (error) {
       return this.handleError(res, error, 'Lỗi khi xóa nhà cung cấp');
+    }
+  }
+
+  // GET /api/nha-cung-cap/:id/lich-su-nhap
+  async getLichSuNhap(req, res) {
+    try {
+      const result = await NhaCungCapService.getLichSuNhap(req.params.id, req.query);
+      return this.sendSuccess(res, result, 'Lấy lịch sử nhập hàng thành công');
+    } catch (error) {
+      return this.handleError(res, error, 'Không thể tải lịch sử nhập hàng');
     }
   }
 }

@@ -12,6 +12,9 @@ router.get('/', requireRole('Quản lý', 'Thủ kho', 'Kế toán'), phieuNhapC
 // GET /api/phieu-nhap/:id - Lấy chi tiết phiếu nhập
 router.get('/:id', requireRole('Quản lý', 'Thủ kho', 'Kế toán'), phieuNhapController.getChiTiet);
 
+// POST /api/phieu-nhap/import-hang-loat - Nhập hàng loạt nhiều IMEI
+router.post('/import-hang-loat', requireRole('Quản lý', 'Thủ kho'), phieuNhapController.postImportHangLoat);
+
 // POST /api/phieu-nhap - Tạo phiếu nhập kho mới
 router.post('/', requireRole('Quản lý', 'Thủ kho'), phieuNhapController.taoPhieuNhap);
 

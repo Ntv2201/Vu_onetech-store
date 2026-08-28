@@ -17,6 +17,7 @@ const TEST_SUITES = [
   { name: 'Đối Soát Công Nợ & Cảnh Báo Quá Hạn (An - Tuần 4)', file: 'test_an_tuan4.js' },
   { name: 'Hợp Đồng Trả Góp & Lịch Thu Kỳ Hạn (An - Tuần 5)', file: 'test_an_tuan5.js' },
   { name: 'Nhập Kho Máy IMEI & Phụ Kiện (Tuân - Tuần 3)', file: 'test_tuan_nhap_kho.js' },
+  { name: 'Nhập Kho Hàng Loạt IMEI & Lịch Sử NCC (Tuân - Tuần 4)', file: 'test_tuan_tuan4.js' },
   { name: 'Thu - Chi & Báo Cáo Sổ Quỹ Dùng Chung (Vượng - Tuần 3)', file: 'test_vuong_module.js' },
   { name: 'Ma Trận Đăng Nhập 6 Vai Trò (QA)', file: 'verify_all_logins.js' },
   { name: 'Bảo Vệ HTTP API & RBAC 403 Forbidden (QA)', file: 'test_http_endpoints.js' },

@@ -7,6 +7,7 @@ class PhieuNhapController extends BaseController {
     this.taoPhieuNhap = this.taoPhieuNhap.bind(this);
     this.getDanhSach = this.getDanhSach.bind(this);
     this.getChiTiet = this.getChiTiet.bind(this);
+    this.postImportHangLoat = this.postImportHangLoat.bind(this);
   }
   
   /**
@@ -25,6 +26,24 @@ class PhieuNhapController extends BaseController {
       return this.sendSuccess(res, result, 'Tạo phiếu nhập thành công', 201);
     } catch (error) {
       return this.handleError(res, error, 'Lỗi khi tạo phiếu nhập');
+    }
+  }
+
+  /**
+   * [POST] /api/phieu-nhap/import-hang-loat - Nhập hàng loạt IMEI theo chuỗi
+   */
+  async postImportHangLoat(req, res) {
+    try {
+      const maNV = req.session && req.session.user ? req.session.user._id : (req.user ? req.user._id : req.body.maNV);
+      const payload = {
+        ...req.body,
+        maNV
+      };
+
+      const result = await PhieuNhapService.importHangLoat(payload);
+      return this.sendSuccess(res, result, 'Nhập hàng loạt thành công', 201);
+    } catch (error) {
+      return this.handleError(res, error, 'Lỗi khi nhập hàng loạt');
     }
   }
 

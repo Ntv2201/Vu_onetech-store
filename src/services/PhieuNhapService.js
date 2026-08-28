@@ -189,6 +189,58 @@ class PhieuNhapService extends BaseService {
 
     return { phieuNhap, chiTiet };
   }
+
+  /**
+   * Nhập hàng loạt nhiều IMEI từ chuỗi văn bản
+   */
+  async importHangLoat(payload = {}) {
+    const { 
+      maNCC, 
+      maNV, 
+      maSP, 
+      imeiListText = '', 
+      giaNhap,
+      mauSac = '',
+      dungLuong = '',
+      hinhThucThanhToan = 'Tien mat', 
+      ghiChu = ''
+    } = payload;
+
+    if (!imeiListText || typeof imeiListText !== 'string') {
+      throw this.createError('Vui lòng cung cấp danh sách IMEI', 400);
+    }
+
+    // Parse IMEI list (hỗ trợ dấu phẩy, khoảng trắng, xuống dòng)
+    const parsedImeis = imeiListText
+      .split(/[,\s\n]+/)
+      .map(i => i.trim())
+      .filter(i => i.length > 0);
+
+    if (parsedImeis.length === 0) {
+      throw this.createError('Không tìm thấy IMEI nào hợp lệ trong danh sách', 400);
+    }
+
+    // Map to danhSachMay
+    const danhSachMay = parsedImeis.map(imei => ({
+      maSP,
+      imei,
+      giaNhap: Number(giaNhap),
+      mauSac,
+      dungLuong
+    }));
+
+    // Tái sử dụng nghiệp vụ taoPhieuNhap
+    const phieuNhapPayload = {
+      maNCC,
+      maNV,
+      danhSachMay,
+      danhSachPhuKien: [],
+      hinhThucThanhToan,
+      ghiChu: ghiChu || `Nhập kho hàng loạt ${parsedImeis.length} máy`
+    };
+
+    return await this.taoPhieuNhap(phieuNhapPayload);
+  }
 }
 
 module.exports = new PhieuNhapService();
