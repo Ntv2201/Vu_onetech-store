@@ -282,7 +282,7 @@ async function runTests() {
     const tuanKpi = staffKpi.find(s => s.tenDangNhap === nvBanHang.tenDangNhap);
     assert(tuanKpi && tuanKpi.tongDoanhThu >= 52380000, `Bước 4.1: Ghi nhận doanh thu nhân viên bán hàng: ${tuanKpi.tongDoanhThu.toLocaleString('vi-VN')} đ`);
 
-    const topProducts = await HoaDonService.getTopSanPham();
+    const topProducts = await HoaDonService.getTopSanPham({ limit: 100 });
     assert(Array.isArray(topProducts) && topProducts.length > 0, 'Bước 4.2: Báo cáo Top sản phẩm bán chạy trả về mảng danh sách');
     const topIp = topProducts.find(p => p.tenMay === spIp15.tenMay);
     assert(topIp && topIp.soLuongBan >= 1, 'Bước 4.2: Top sản phẩm ghi nhận đúng số lượng máy đã xuất bán');
@@ -334,6 +334,15 @@ async function runTests() {
       })
     });
     assert(resPostByKyThuat.status === 403, 'Bước 5.3: RBAC chặn Kỹ thuật tạo hóa đơn bán hàng (Nhận 403 Forbidden)');
+
+    // Dọn dẹp dữ liệu test E2E để tránh để lại dữ liệu rác trong database
+    await Promise.all([
+      PhuKien.deleteMany({ _id: pkSac._id }),
+      LinhKien.deleteMany({ _id: lkManHinh._id }),
+      SanPham.deleteMany({ _id: { $in: [spIp15._id, spS24._id] } }),
+      TonKho.deleteMany({ sanPham: { $in: [spIp15._id, spS24._id] } }),
+      MayImei.deleteMany({ imei: { $regex: 'TEST|E2E', $options: 'i' } })
+    ]);
 
     server.close();
     await mongoose.connection.close();

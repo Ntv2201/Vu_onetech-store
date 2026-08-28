@@ -238,6 +238,9 @@ async function runTests() {
     assert(historyRes.soLanDoiTra === 1, `Bước 3.2: Tra cứu lịch sử IMEI ${imeiReturnDemo} tìm thấy đúng 1 bản ghi đổi trả`);
     assert(historyRes.lichSu[0].maDT === returnTicket.phieuDoiTra.maDT, 'Bước 3.2: Mã phiếu trong lịch sử khớp chính xác');
 
+    // Dọn dẹp dữ liệu test
+    await MayImei.deleteMany({ imei: { $regex: 'DEMO|RET', $options: 'i' } });
+
     await mongoose.connection.close();
 
     console.log('\n===============================================================');

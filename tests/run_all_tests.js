@@ -95,6 +95,9 @@ console.log(`🎯 Tổng số Test Assertions: ${totalPassCount + totalFailCount
 console.log(`✅ Thành công: ${totalPassCount} | ❌ Thất bại: ${totalFailCount}`);
 console.log('======================================================================');
 
+// Dọn dẹp dữ liệu test phát sinh để bảo toàn cơ sở dữ liệu thật
+spawnSync('node', [path.join(__dirname, 'cleanup_db.js')], { encoding: 'utf8', env: process.env });
+
 if (results.every(r => r.passed)) {
   console.log(`\n🎉 TUYỆT VỜI! TOÀN BỘ ${TEST_SUITES.length}/${TEST_SUITES.length} BỘ TEST SUITES ĐÃ PASS 100%!\n`);
   process.exit(0);
