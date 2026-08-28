@@ -17,7 +17,8 @@ const hoaDonSchema = new mongoose.Schema({
     default: 'Da thanh toan'
   },
   hanThanhToan: { type: Date },
-  ghiChu: { type: String, default: '' }
+  ghiChu: { type: String, default: '' },
+  status: { type: Boolean, default: true } // Trạng thái hiệu lực hóa đơn (Bit: 1 - Hiệu lực, 0 - Đã hủy)
 }, {
   timestamps: true,
   toJSON: { virtuals: true },

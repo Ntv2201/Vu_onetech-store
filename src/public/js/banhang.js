@@ -974,7 +974,7 @@ async function viewInvoiceDetail(id) {
 let currentViewingInvoice = null;
 
 /**
- * In Hóa đơn bán lẻ chuyên nghiệp (Khổ K80 / A5 - @media print)
+ * In Hóa đơn bán lẻ & Phiếu xuất kho chuẩn Thông tư 200/2014/TT-BTC & NĐ 123/2020/NĐ-CP
  */
 function printInvoiceReceipt(invoiceData = null) {
   const data = invoiceData || currentViewingInvoice;
@@ -990,136 +990,23 @@ function printInvoiceReceipt(invoiceData = null) {
   const soTienGiam = hoaDon.soTienGiam || 0;
   const soTienThanhToan = hoaDon.soTienThanhToan !== undefined ? hoaDon.soTienThanhToan : (hoaDon.tongTien - tienCocDaTru - soTienGiam);
 
-  const printWindow = window.open('', '_blank', 'width=750,height=850');
-  if (!printWindow) {
+  if (typeof inHoaDonBanHangChuan === 'function') {
+    inHoaDonBanHangChuan({
+      soHD: hoaDon.soHD || hoaDon._id,
+      ngayLap: hoaDon.ngayLap || hoaDon.createdAt,
+      khachHang: kh,
+      nhanVien: nv,
+      danhSachMay: danhSachMay,
+      danhSachPK: danhSachPhuKien,
+      tienCocDaTru,
+      soTienGiam,
+      soTienThanhToan,
+      tongTien: hoaDon.tongTien,
+      hinhThucThanhToan: hoaDon.trangThai || 'Tiền mặt'
+    });
+  } else {
     window.print();
-    return;
   }
-
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Hóa Đơn ${escapeHtml(hoaDon.soHD || '')} - OneTech Store</title>
-      <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #222; font-size: 13px; line-height: 1.5; }
-        .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 12px; margin-bottom: 15px; }
-        .title { font-size: 18px; font-weight: bold; margin: 5px 0; text-transform: uppercase; }
-        .store-info { font-size: 12px; color: #555; }
-        .section-title { font-weight: bold; font-size: 13px; margin-top: 15px; margin-bottom: 6px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-        th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
-        th { background: #f5f5f5; font-size: 12px; }
-        .text-end { text-align: right; }
-        .text-center { text-align: center; }
-        .fw-bold { font-weight: bold; }
-        .font-mono { font-family: 'Consolas', 'Courier New', monospace; }
-        .total-box { margin-top: 15px; padding: 10px 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; }
-        .signatures { display: flex; justify-content: space-between; margin-top: 35px; text-align: center; }
-        .signature-box { width: 45%; }
-        .signature-space { height: 50px; }
-        .policy { font-size: 11px; color: #666; font-style: italic; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 8px; }
-        @media print { body { padding: 0; } }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <div style="font-weight: bold; font-size: 16px;">HỆ THỐNG BÁN LẺ ĐIỆN THOẠI ONETECH STORE</div>
-        <div class="store-info">Địa chỉ: 123 Đường Cầu Giấy, Hà Nội | Hotline: 1900 6868 | Website: onetech.vn</div>
-        <div class="title">HÓA ĐƠN BÁN HÀNG & PHIẾU XUẤT KHO</div>
-        <div>Số HĐ: <strong class="font-mono">${escapeHtml(hoaDon.soHD || '')}</strong> | Ngày: ${new Date(hoaDon.ngayLap || hoaDon.createdAt).toLocaleString('vi-VN')}</div>
-      </div>
-
-      <div class="section-title">THÔNG TIN KHÁCH HÀNG & NHÂN VIÊN</div>
-      <div>Khách hàng: <strong>${escapeHtml(kh.hoTen || 'Khách vãng lai')}</strong> - SĐT: <strong>${escapeHtml(kh.sdt || 'Chưa có')}</strong></div>
-      <div>Địa chỉ: ${escapeHtml(kh.diaChi || 'Tại quầy')}</div>
-      <div>Thu ngân / Nhân viên bán: <strong>${escapeHtml(nv.hoTen || 'OneTech Store')}</strong></div>
-
-      <div class="section-title">CHI TIẾT ĐƠN HÀNG</div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 35px;" class="text-center">#</th>
-            <th>Tên sản phẩm / Model</th>
-            <th>Số IMEI / Mã SP</th>
-            <th class="text-center" style="width: 50px;">SL</th>
-            <th class="text-end">Đơn giá</th>
-            <th class="text-end">Thành tiền</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${danhSachMay.map((m, idx) => `
-            <tr>
-              <td class="text-center">${idx + 1}</td>
-              <td><strong>${escapeHtml(m.sanPham ? m.sanPham.tenMay : 'Điện thoại')}</strong> ${escapeHtml(m.mauSac ? `(${m.mauSac} - ${m.dungLuong || ''})` : '')}</td>
-              <td class="font-mono">${escapeHtml(m.imei)}</td>
-              <td class="text-center">1</td>
-              <td class="text-end">${(m.donGiaBan || 0).toLocaleString('vi-VN')} đ</td>
-              <td class="text-end fw-bold">${(m.donGiaBan || 0).toLocaleString('vi-VN')} đ</td>
-            </tr>
-          `).join('')}
-
-          ${danhSachPhuKien.map((pk, idx) => `
-            <tr>
-              <td class="text-center">${danhSachMay.length + idx + 1}</td>
-              <td>${escapeHtml(pk.phuKien ? pk.phuKien.tenPK : 'Phụ kiện')}</td>
-              <td class="font-mono text-muted">PHUKIEN</td>
-              <td class="text-center">${pk.soLuong}</td>
-              <td class="text-end">${(pk.donGiaBan || 0).toLocaleString('vi-VN')} đ</td>
-              <td class="text-end fw-bold">${((pk.donGiaBan || 0) * (pk.soLuong || 1)).toLocaleString('vi-VN')} đ</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-
-      <div class="total-box">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-          <span>Tổng tiền hàng:</span>
-          <strong>${(hoaDon.tongTien || 0).toLocaleString('vi-VN')} đ</strong>
-        </div>
-        ${soTienGiam > 0 ? `
-          <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #d97706;">
-            <span>Chiết khấu / Giảm giá:</span>
-            <strong>-${soTienGiam.toLocaleString('vi-VN')} đ</strong>
-          </div>
-        ` : ''}
-        ${tienCocDaTru > 0 ? `
-          <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #16a34a;">
-            <span>Cấn trừ tiền cọc (Đơn đặt trước):</span>
-            <strong>-${tienCocDaTru.toLocaleString('vi-VN')} đ</strong>
-          </div>
-        ` : ''}
-        <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: bold; color: #dc2626; border-top: 1px solid #ccc; padding-top: 6px;">
-          <span>TỔNG TIỀN THỰC THU:</span>
-          <span>${soTienThanhToan.toLocaleString('vi-VN')} đ</span>
-        </div>
-        <div style="margin-top: 4px; font-size: 12px; color: #555;">Hình thức: <strong>${escapeHtml(hoaDon.trangThai || 'Đã thanh toán')}</strong></div>
-      </div>
-
-      <div class="policy">
-        * Chính sách bảo hành: 1 đổi 1 trong vòng 30 ngày đối với lỗi phần cứng từ nhà sản xuất. Bảo hành chính hãng theo thời hạn quy định ghi nhận theo số IMEI trên hệ thống. Quý khách vui lòng giữ hóa đơn để đối soát khi cần thiết.
-      </div>
-
-      <div class="signatures">
-        <div class="signature-box">
-          <strong>KHÁCH HÀNG</strong><br><small>(Ký và ghi rõ họ tên)</small>
-          <div class="signature-space"></div>
-          <div>${escapeHtml(kh.hoTen || '')}</div>
-        </div>
-        <div class="signature-box">
-          <strong>NHÂN VIÊN BÁN HÀNG</strong><br><small>(Ký và ghi rõ họ tên)</small>
-          <div class="signature-space"></div>
-          <div>${escapeHtml(nv.hoTen || 'OneTech Store')}</div>
-        </div>
-      </div>
-    </body>
-    </html>
-  `);
-  printWindow.document.close();
-  printWindow.focus();
-  setTimeout(() => {
-    printWindow.print();
-  }, 250);
 }
 
 /* =========================================================================

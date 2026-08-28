@@ -341,6 +341,24 @@ async function viewDetailPhieuNhap(id) {
   `;
 
   document.getElementById('modalDetailContent').innerHTML = html;
+
+  // Gán sự kiện in chuẩn Thông tư 200
+  const btnPrintPN = document.querySelector('#modalDetailPhieuNhap .modal-footer button.btn-outline-primary') || document.querySelector('#modalDetailPhieuNhap button[onclick*="print"]');
+  if (btnPrintPN) {
+    btnPrintPN.onclick = () => {
+      inPhieuNhapKhoChuan({
+        maPN: phieuNhap.maPN || phieuNhap._id,
+        ngayNhap: phieuNhap.ngayNhap || phieuNhap.createdAt,
+        tenNCC: phieuNhap.nhaCungCap?.tenNCC || 'Nhà cung cấp',
+        diaChiNCC: phieuNhap.nhaCungCap?.diaChi || '',
+        nhanVien: phieuNhap.nhanVien?.hoTen || 'Thủ kho',
+        danhSachChiTiet: chiTiet || [],
+        tongTien: phieuNhap.tongTien || 0,
+        ghiChu: phieuNhap.ghiChu || ''
+      });
+    };
+  }
+
   const modal = new bootstrap.Modal(document.getElementById('modalDetailPhieuNhap'));
   modal.show();
 }

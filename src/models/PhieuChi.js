@@ -12,7 +12,8 @@ const phieuChiSchema = new mongoose.Schema({
     enum: ['Tien mat', 'Chuyen khoan', 'Quet the', 'Vi dien tu'],
     default: 'Tien mat'
   },
-  lyDo: { type: String, default: '' }
+  lyDo: { type: String, default: '' },
+  status: { type: Boolean, default: true } // Trạng thái hiệu lực phiếu (Bit: 1 - Hiệu lực, 0 - Đã hủy)
 }, {
   timestamps: true
 });

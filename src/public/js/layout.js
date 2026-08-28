@@ -4,6 +4,14 @@
 
 let currentUser = null;
 
+// Tự động nhúng thư viện in chứng từ chuẩn Thông tư Bộ Tài chính
+if (typeof window !== 'undefined' && !window.docSoTienBangChu) {
+  const printScript = document.createElement('script');
+  printScript.src = '/js/print-templates.js';
+  document.head.appendChild(printScript);
+}
+
+
 /**
  * Định nghĩa cấu trúc Menu và Ma trận Phân quyền 6 Vai trò
  * - Quản lý: Toàn quyền

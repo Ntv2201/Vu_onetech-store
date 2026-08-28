@@ -333,6 +333,32 @@ async function viewTransactionDetail(id, type) {
   `;
 
   document.getElementById('detailModalBody').innerHTML = html;
+  
+  // Gán sự kiện in chuẩn Thông tư vào nút in của modal
+  const btnPrintModal = document.querySelector('#modalDetail .modal-footer button.btn-outline-primary');
+  if (btnPrintModal) {
+    btnPrintModal.onclick = () => {
+      if (isThu) {
+        inPhieuThuChuan({
+          soPhieu: 'PT-' + item._id.slice(-6).toUpperCase(),
+          ngayThu: item.ngayThu || item.createdAt,
+          soTien: item.soTien,
+          lyDo: item.ghiChu || 'Thu tiền',
+          hoTenNguoiNop: item.hoaDon?.khachHang?.hoTen || 'Khách hàng',
+          diaChi: item.hoaDon?.khachHang?.diaChi || ''
+        });
+      } else {
+        inPhieuChiChuan({
+          soPhieu: 'PC-' + item._id.slice(-6).toUpperCase(),
+          ngayChi: item.ngayChi || item.createdAt,
+          soTien: item.soTien,
+          lyDo: item.lyDo || 'Chi tiền',
+          hoTenNguoiNhan: item.maDT || 'Đối tác / Nhà cung cấp'
+        });
+      }
+    };
+  }
+
   const modal = new bootstrap.Modal(document.getElementById('modalDetail'));
   modal.show();
 }
