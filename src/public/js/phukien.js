@@ -102,8 +102,9 @@ async function loadPhuKienList() {
     return;
   }
 
-  const { data: phuKiens, danhMucs } = res;
-  if (danhMucs) {
+  const phuKiens = Array.isArray(res.data) ? res.data : (res.phuKiens || res.data?.phuKiens || res.data?.data || []);
+  const danhMucs = res.danhMucs || res.data?.danhMucs || [];
+  if (danhMucs && danhMucs.length > 0) {
     cachedDanhMucs = danhMucs;
     populateDanhMucSelects(danhMucs);
   }

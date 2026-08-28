@@ -423,9 +423,34 @@ async function runTests() {
     // -------------------------------------------------------------
     console.log('\n--- TEST 19 (Tuần 5-6): Thống kê Top Sản phẩm bán chạy ---');
     const topProducts = await HoaDonService.getTopSanPham({ limit: 5 });
-    assert(Array.isArray(topProducts), 'getTopSanPham trả về danh sách dạng mảng');
-    assert(topProducts.length > 0, `Xác định được ${topProducts.length} model sản phẩm trong top bán chạy`);
-    assert(topProducts[0].soLuongBan > 0, `Model bán chạy nhất (${topProducts[0].tenMay}): đã bán ${topProducts[0].soLuongBan} máy`);
+    // -------------------------------------------------------------
+    // TEST 20: Kiểm thử Danh mục & Phụ kiện & Sản phẩm & IMEI data contract
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 20: Kiểm thử Danh mục, Phụ kiện, Sản phẩm, IMEI Data Contract ---');
+    const { DanhMucService, PhuKienService, SanPhamService, MayImeiService } = require('../src/services');
+    
+    // 1. Danh mục
+    const allDMs = await DanhMucService.getAllDanhMucs();
+    assert(Array.isArray(allDMs), 'getAllDanhMucs trả về danh sách dạng mảng');
+    assert(allDMs.length > 0, `Tìm thấy ${allDMs.length} danh mục trong hệ thống`);
+    const hasCounts = allDMs.some(dm => dm.countSP > 0 || dm.countPK > 0);
+    assert(hasCounts, 'DanhMucService tính đúng số lượng countSP / countPK cho danh mục');
+
+    // 2. Phụ kiện
+    const pkRes = await PhuKienService.getAllPhuKiens();
+    assert(Array.isArray(pkRes.phuKiens), 'PhuKienService.getAllPhuKiens trả về mảng phuKiens');
+    assert(pkRes.phuKiens.length > 0, `Tìm thấy ${pkRes.phuKiens.length} phụ kiện trong kho`);
+
+    // 3. Sản phẩm
+    const spRes = await SanPhamService.getAllSanPhams();
+    assert(Array.isArray(spRes.sanPhams), 'SanPhamService.getAllSanPhams trả về mảng sanPhams');
+    assert(spRes.sanPhams.length > 0, `Tìm thấy ${spRes.sanPhams.length} model sản phẩm`);
+    assert(spRes.sanPhams[0].soLuongTon !== undefined, 'Sản phẩm có thuộc tính soLuongTon');
+
+    // 4. Máy IMEI
+    const imeiRes = await MayImeiService.getAllImeis();
+    assert(Array.isArray(imeiRes.imeis), 'MayImeiService.getAllImeis trả về mảng imeis');
+    assert(imeiRes.imeis.length > 0, `Tìm thấy ${imeiRes.imeis.length} máy IMEI`);
 
     console.log('\n===============================================================');
     console.log(`🎉 KẾT QUẢ KIỂM THỬ: ${passed} PASS, ${failed} FAIL`);

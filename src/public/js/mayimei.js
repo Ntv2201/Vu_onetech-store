@@ -54,11 +54,12 @@ async function loadMayImeiList() {
     return;
   }
 
-  const { data: imeis, sanPhams } = res;
+  const imeis = Array.isArray(res.data) ? res.data : (res.imeis || res.data?.imeis || res.data?.data || []);
+  const sanPhams = res.sanPhams || res.data?.sanPhams || [];
 
   // 1. Cập nhật ô chọn sản phẩm trong bộ lọc
   const selectSanPham = document.getElementById('filterSanPham');
-  if (selectSanPham && selectSanPham.options.length <= 1 && sanPhams) {
+  if (selectSanPham && selectSanPham.options.length <= 1 && sanPhams && sanPhams.length > 0) {
     sanPhams.forEach(sp => {
       const opt = document.createElement('option');
       opt.value = sp._id;

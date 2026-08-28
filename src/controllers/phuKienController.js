@@ -15,7 +15,7 @@ class PhuKienController extends BaseController {
   async index(req, res) {
     try {
       const result = await PhuKienService.getAllPhuKiens(req.query);
-      return this.sendSuccess(res, { data: result.phuKiens, danhMucs: result.danhMucs }, 'Lấy danh sách phụ kiện thành công');
+      return this.sendSuccess(res, { phuKiens: result.phuKiens, danhMucs: result.danhMucs, data: result.phuKiens }, 'Lấy danh sách phụ kiện thành công');
     } catch (error) {
       return this.handleError(res, error, 'Không thể tải danh sách phụ kiện');
     }

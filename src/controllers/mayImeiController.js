@@ -15,7 +15,7 @@ class MayImeiController extends BaseController {
   async index(req, res) {
     try {
       const result = await MayImeiService.getAllImeis(req.query);
-      return this.sendSuccess(res, { data: result.imeis, sanPhams: result.sanPhams }, 'Lấy danh sách IMEI thành công');
+      return this.sendSuccess(res, { imeis: result.imeis, sanPhams: result.sanPhams, data: result.imeis }, 'Lấy danh sách IMEI thành công');
     } catch (error) {
       return this.handleError(res, error, 'Không thể tải danh sách máy IMEI');
     }
