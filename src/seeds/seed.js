@@ -130,15 +130,29 @@ const seedData = async () => {
     ]);
 
     // -------------------------------------------------------------
-    // 2. DANH MỤC SẢN PHẨM & PHỤ KIỆN
+    // 2. DANH MỤC SẢN PHẨM & PHÂN LOẠI (9 Danh mục phân bố đa dạng)
     // -------------------------------------------------------------
-    console.log('[Seed] 2. Khởi tạo 5 Danh mục Hàng hóa chuẩn...');
-    const [dmDienThoai, dmTablet, dmLaptop, dmPhuKien, dmLinhKien] = await DanhMuc.insertMany([
-      { tenDanhMuc: 'Điện thoại thông minh (Smartphones)', moTa: 'Điện thoại di động iPhone, Samsung, Xiaomi quản lý theo IMEI', status: true },
-      { tenDanhMuc: 'Máy tính bảng (iPad & Tablets)', moTa: 'Máy tính bảng iPad, Galaxy Tab quản lý theo IMEI', status: true },
-      { tenDanhMuc: 'Laptop & MacBook cao cấp', moTa: 'MacBook, Laptop mỏng nhẹ cao cấp quản lý theo Serial/IMEI', status: true },
-      { tenDanhMuc: 'Phụ kiện chính hãng Apple & Samsung', moTa: 'Củ sạc, cáp sạc, tai nghe, ốp lưng quản lý số lượng tồn', status: true },
-      { tenDanhMuc: 'Linh kiện sửa chữa & Thay thế', moTa: 'Màn hình, pin, cụm camera phục vụ trung tâm bảo hành', status: true }
+    console.log('[Seed] 2. Khởi tạo 9 Danh mục Hàng hóa phân bố phong phú...');
+    const [
+      dmDienThoai,
+      dmTablet,
+      dmLaptop,
+      dmSmartwatch,
+      dmAmThanh,
+      dmPhuKienSacCap,
+      dmLinhKien,
+      dmMayCuTradeIn,
+      dmGamingGear
+    ] = await DanhMuc.insertMany([
+      { tenDanhMuc: 'Điện thoại thông minh (Smartphones)', moTa: 'Điện thoại iPhone, Samsung, Xiaomi quản lý theo từng IMEI vật lý', status: true },
+      { tenDanhMuc: 'Máy tính bảng (iPad & Tablets)', moTa: 'iPad Pro, iPad Air, Galaxy Tab cao cấp quản lý theo số IMEI', status: true },
+      { tenDanhMuc: 'Laptop & MacBook cao cấp', moTa: 'MacBook M2, M3 và Laptop Ultrabook mỏng nhẹ quản lý theo Serial', status: true },
+      { tenDanhMuc: 'Đồng hồ thông minh (Smartwatches)', moTa: 'Apple Watch Series 9, Ultra 2, Galaxy Watch 6 quản lý theo Serial', status: true },
+      { tenDanhMuc: 'Thiết bị Âm thanh & Tai nghe', moTa: 'AirPods Pro, Galaxy Buds, Loa di động quản lý theo số lượng phụ kiện', status: true },
+      { tenDanhMuc: 'Phụ kiện Cáp, Sạc & Ốp lưng', moTa: 'Củ sạc nhanh 20W/45W, Cáp Type-C, Ốp lưng MagSafe, Kính cường lực', status: true },
+      { tenDanhMuc: 'Linh kiện sửa chữa & Thay thế', moTa: 'Màn hình OLED, Pin dung lượng cao, Camera bóc máy trung tâm bảo hành', status: true },
+      { tenDanhMuc: 'Máy cũ - Thu cũ đổi mới (Trade-in)', moTa: 'Điện thoại qua sử dụng, máy Likenew 99% tuyển chọn có bảo hành', status: true },
+      { tenDanhMuc: 'Đồ chơi Công nghệ & Gaming Gear', moTa: 'Phụ kiện Gaming, tay cầm chơi game (Danh mục mẫu chưa có hàng để đối chiếu)', status: true }
     ]);
 
     // -------------------------------------------------------------
@@ -157,7 +171,7 @@ const seedData = async () => {
         tenNCC: 'Samsung Vina Electronics',
         sdt: '02838223344',
         diaChi: 'Số 2 Hải Triều, P. Bến Nghé, Quận 1, TP.HCM',
-        ghiChu: 'Phân phối trực tiếp điện thoại & tablet Samsung',
+        ghiChu: 'Phân phối trực tiếp điện thoại, tablet & smartwatch Samsung',
         status: true
       },
       {
@@ -178,7 +192,7 @@ const seedData = async () => {
         tenNCC: 'Công ty CP Công Nghệ Viễn Sơn',
         sdt: '02838326085',
         diaChi: '162B Bùi Thị Xuân, Phường Phạm Ngũ Lão, Quận 1, TP.HCM',
-        ghiChu: 'Phân phối linh kiện chính hãng & sạc cáp Anker',
+        ghiChu: 'Phân phối linh kiện chính hãng & sạc cáp Anker, Marshall',
         status: true
       }
     ]);
@@ -205,9 +219,9 @@ const seedData = async () => {
     ]);
 
     // -------------------------------------------------------------
-    // 5. MODEL SẢN PHẨM (12 Model chuẩn)
+    // 5. MODEL SẢN PHẨM (16 Model trải rộng các danh mục)
     // -------------------------------------------------------------
-    console.log('[Seed] 5. Khởi tạo 12 Model Sản phẩm chuẩn...');
+    console.log('[Seed] 5. Khởi tạo 16 Model Sản phẩm đa phân khúc...');
     const [
       spIphone15PM,
       spIphone15Pro,
@@ -220,8 +234,13 @@ const seedData = async () => {
       spIpadPro,
       spIpadAir,
       spMacBookAir,
-      spMacBookPro
+      spMacBookPro,
+      spAppleWatch9,
+      spAppleWatchUltra,
+      spGalaxyWatch6,
+      spIphone13Old
     ] = await SanPham.insertMany([
+      // Smartphones
       {
         danhMuc: dmDienThoai._id,
         tenMay: 'iPhone 15 Pro Max 256GB',
@@ -294,6 +313,8 @@ const seedData = async () => {
         moTa: 'Hợp tác Leica, 4 cảm biến 50MP, Chip Snapdragon 8 Gen 3',
         status: true
       },
+
+      // Tablets
       {
         danhMuc: dmTablet._id,
         tenMay: 'iPad Pro M2 11 inch Wi-Fi 128GB',
@@ -312,6 +333,8 @@ const seedData = async () => {
         moTa: 'Chip M1 đột phá, Touch ID nút nguồn, màu sắc trẻ trung',
         status: true
       },
+
+      // Laptops
       {
         danhMuc: dmLaptop._id,
         tenMay: 'MacBook Air M2 13 inch 8GB/256GB',
@@ -329,22 +352,78 @@ const seedData = async () => {
         soThangBH: 12,
         moTa: 'Chip M3 thế hệ mới, màn hình Liquid Retina XDR 120Hz đỉnh cao',
         status: true
+      },
+
+      // Smartwatches
+      {
+        danhMuc: dmSmartwatch._id,
+        tenMay: 'Apple Watch Series 9 GPS 41mm Nhôm',
+        hang: 'Apple',
+        giaBan: 9890000,
+        soThangBH: 12,
+        moTa: 'Chip S9 SiP mạnh mẽ, thao tác chạm đúp Double Tap độc đáo',
+        status: true
+      },
+      {
+        danhMuc: dmSmartwatch._id,
+        tenMay: 'Apple Watch Ultra 2 GPS + Cellular 49mm Titan',
+        hang: 'Apple',
+        giaBan: 20990000,
+        soThangBH: 12,
+        moTa: 'Vỏ Titan siêu bền, GPS tần số kép chuẩn xác, pin đến 72 giờ',
+        status: true
+      },
+      {
+        danhMuc: dmSmartwatch._id,
+        tenMay: 'Samsung Galaxy Watch 6 Classic 43mm Bluetooth',
+        hang: 'Samsung',
+        giaBan: 7990000,
+        soThangBH: 12,
+        moTa: 'Viền xoay vật lý cổ điển, theo dõi sức khỏe và giấc ngủ chuyên sâu',
+        status: true
+      },
+
+      // Máy cũ Trade-in
+      {
+        danhMuc: dmMayCuTradeIn._id,
+        tenMay: 'iPhone 13 128GB Likenew 99%',
+        hang: 'Apple',
+        giaBan: 11990000,
+        soThangBH: 6,
+        moTa: 'Máy cũ nguyên bản đẹp như mới, pin 9x, bảo hành 6 tháng 1 đổi 1',
+        status: true
       }
     ]);
 
     // -------------------------------------------------------------
     // 6. PHỤ KIỆN & LINH KIỆN
     // -------------------------------------------------------------
-    console.log('[Seed] 6. Khởi tạo Phụ kiện & Linh kiện...');
-    const [pkSac20w, pkCapC, pkOpLung15, pkSac45w, pkAirPods2, pkCuongLuc, pkSacDuPhong, pkAirPodsPro] = await PhuKien.insertMany([
-      { danhMuc: dmPhuKien._id, tenPK: 'Củ sạc Apple 20W Type-C Chính hãng', giaBan: 520000, soLuongTon: 60, status: true },
-      { danhMuc: dmPhuKien._id, tenPK: 'Cáp sạc C to C Apple Braided 1m', giaBan: 490000, soLuongTon: 45, status: true },
-      { danhMuc: dmPhuKien._id, tenPK: 'Ốp lưng MagSafe iPhone 15 Pro Max Clear Case', giaBan: 890000, soLuongTon: 35, status: true },
-      { danhMuc: dmPhuKien._id, tenPK: 'Củ sạc Samsung 45W Type-C Super Fast', giaBan: 650000, soLuongTon: 30, status: true },
-      { danhMuc: dmPhuKien._id, tenPK: 'Tai nghe Apple AirPods 3 Lightning', giaBan: 3990000, soLuongTon: 15, status: true },
-      { danhMuc: dmPhuKien._id, tenPK: 'Kính cường lực KingKong 9D chống nhìn trộm', giaBan: 180000, soLuongTon: 100, status: true },
-      { danhMuc: dmPhuKien._id, tenPK: 'Sạc dự phòng Anker MagGo 10000mAh 15W', giaBan: 1290000, soLuongTon: 25, status: true },
-      { danhMuc: dmPhuKien._id, tenPK: 'Tai nghe Apple AirPods Pro 2 USB-C', giaBan: 5490000, soLuongTon: 20, status: true }
+    console.log('[Seed] 6. Khởi tạo Phụ kiện & Linh kiện phân theo danh mục...');
+    const [
+      pkSac20w,
+      pkCapC,
+      pkOpLung15,
+      pkSac45w,
+      pkAirPods2,
+      pkCuongLuc,
+      pkSacDuPhong,
+      pkAirPodsPro,
+      pkBuds2Pro,
+      pkMarshall
+    ] = await PhuKien.insertMany([
+      // Thuộc Phụ kiện Cáp Sạc & Ốp lưng
+      { danhMuc: dmPhuKienSacCap._id, tenPK: 'Củ sạc Apple 20W Type-C Chính hãng', giaBan: 520000, soLuongTon: 60, status: true },
+      { danhMuc: dmPhuKienSacCap._id, tenPK: 'Cáp sạc C to C Apple Braided 1m', giaBan: 490000, soLuongTon: 45, status: true },
+      { danhMuc: dmPhuKienSacCap._id, tenPK: 'Ốp lưng MagSafe iPhone 15 Pro Max Clear Case', giaBan: 890000, soLuongTon: 35, status: true },
+      { danhMuc: dmPhuKienSacCap._id, tenPK: 'Củ sạc Samsung 45W Type-C Super Fast', giaBan: 650000, soLuongTon: 30, status: true },
+      { danhMuc: dmPhuKienSacCap._id, tenPK: 'Kính cường lực KingKong 9D chống nhìn trộm', giaBan: 180000, soLuongTon: 100, status: true },
+      { danhMuc: dmPhuKienSacCap._id, tenPK: 'Sạc dự phòng Anker MagGo 10000mAh 15W', giaBan: 1290000, soLuongTon: 25, status: true },
+
+      // Thuộc Thiết bị Âm thanh & Tai nghe
+      { danhMuc: dmAmThanh._id, tenPK: 'Tai nghe Apple AirPods 3 Lightning', giaBan: 3990000, soLuongTon: 15, status: true },
+      { danhMuc: dmAmThanh._id, tenPK: 'Tai nghe Apple AirPods Pro 2 USB-C', giaBan: 5490000, soLuongTon: 20, status: true },
+      { danhMuc: dmAmThanh._id, tenPK: 'Tai nghe Samsung Galaxy Buds 2 Pro', giaBan: 3290000, soLuongTon: 18, status: true },
+      { danhMuc: dmAmThanh._id, tenPK: 'Loa Bluetooth Marshall Emberton II', giaBan: 3890000, soLuongTon: 12, status: true }
     ]);
 
     const [lkManHinh15, lkPin15, lkCamS24, lkChanSacC, lkManHinh14, lkPin14] = await LinhKien.insertMany([
@@ -357,9 +436,9 @@ const seedData = async () => {
     ]);
 
     // -------------------------------------------------------------
-    // 7. MÁY THEO SỐ IMEI VẬT LÝ (36 máy logic khép kín)
+    // 7. MÁY THEO SỐ IMEI VẬT LÝ (48 máy đầy đủ trạng thái)
     // -------------------------------------------------------------
-    console.log('[Seed] 7. Khởi tạo 36 Máy IMEI vật lý theo logic giao dịch...');
+    console.log('[Seed] 7. Khởi tạo 48 Máy IMEI vật lý theo logic chu trình...');
     await MayImei.insertMany([
       // iPhone 15 Pro Max (Con hang: 4, Da ban: 2, Bao hanh: 1)
       { imei: '356789012345001', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Con hang', mauSac: 'Titan Tự Nhiên', dungLuong: '256GB', status: true },
@@ -388,7 +467,7 @@ const seedData = async () => {
       // Samsung Galaxy S24 Ultra (Con hang: 2, Da ban: 1, Loi: 1, Tra NCC: 1)
       { imei: '356789012345201', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Con hang', mauSac: 'Xám Titan', dungLuong: '512GB', status: true }, // Gán Pre-order DDH2
       { imei: '356789012345202', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Con hang', mauSac: 'Đen Titan', dungLuong: '512GB', status: true },
-      { imei: '356789012345203', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Loi', mauSac: 'Tím Titan', dungLuong: '512GB', status: true }, // Lỗi camera chờ bảo hành
+      { imei: '356789012345203', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Loi', mauSac: 'Tím Titan', dungLuong: '512GB', status: true }, // Lỗi camera
       { imei: '356789012345204', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Da ban', mauSac: 'Vàng Titan', dungLuong: '512GB', status: true }, // Bán HD3 (Công nợ KH)
       { imei: '356789012345205', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Tra NCC', mauSac: 'Xám Titan', dungLuong: '512GB', status: false }, // Đã trả NCC Samsung
 
@@ -417,7 +496,23 @@ const seedData = async () => {
       { imei: '356789012345502', sanPham: spMacBookAir._id, giaNhap: 21500000, trangThai: 'Da ban', mauSac: 'Starlight', dungLuong: '256GB', status: true }, // Bán HD4 (Pre-order DDH3)
 
       // MacBook Pro 14 M3 (Con hang: 1)
-      { imei: '356789012345511', sanPham: spMacBookPro._id, giaNhap: 34500000, trangThai: 'Con hang', mauSac: 'Space Black', dungLuong: '512GB', status: true }
+      { imei: '356789012345511', sanPham: spMacBookPro._id, giaNhap: 34500000, trangThai: 'Con hang', mauSac: 'Space Black', dungLuong: '512GB', status: true },
+
+      // Apple Watch Series 9 (Con hang: 2)
+      { imei: '356789012345601', sanPham: spAppleWatch9._id, giaNhap: 8200000, trangThai: 'Con hang', mauSac: 'Midnight', dungLuong: '41mm', status: true },
+      { imei: '356789012345602', sanPham: spAppleWatch9._id, giaNhap: 8200000, trangThai: 'Con hang', mauSac: 'Starlight', dungLuong: '41mm', status: true },
+
+      // Apple Watch Ultra 2 (Con hang: 1, Da ban: 1)
+      { imei: '356789012345611', sanPham: spAppleWatchUltra._id, giaNhap: 17900000, trangThai: 'Con hang', mauSac: 'Titan Tự Nhiên', dungLuong: '49mm', status: true },
+      { imei: '356789012345612', sanPham: spAppleWatchUltra._id, giaNhap: 17900000, trangThai: 'Da ban', mauSac: 'Titan Tự Nhiên', dungLuong: '49mm', status: true }, // Bán HD6
+
+      // Galaxy Watch 6 (Con hang: 2)
+      { imei: '356789012345621', sanPham: spGalaxyWatch6._id, giaNhap: 6400000, trangThai: 'Con hang', mauSac: 'Đen Classic', dungLuong: '43mm', status: true },
+      { imei: '356789012345622', sanPham: spGalaxyWatch6._id, giaNhap: 6400000, trangThai: 'Con hang', mauSac: 'Bạc Classic', dungLuong: '43mm', status: true },
+
+      // iPhone 13 Likenew (Con hang: 2)
+      { imei: '356789012345701', sanPham: spIphone13Old._id, giaNhap: 9500000, trangThai: 'Con hang', mauSac: 'Midnight 99%', dungLuong: '128GB', status: true },
+      { imei: '356789012345702', sanPham: spIphone13Old._id, giaNhap: 9500000, trangThai: 'Con hang', mauSac: 'Pink 99%', dungLuong: '128GB', status: true }
     ]);
 
     // -------------------------------------------------------------
@@ -439,7 +534,11 @@ const seedData = async () => {
       { kho: khoCauGiay._id, sanPham: spIpadPro._id, soLuong: 2 },
       { kho: khoCauGiay._id, sanPham: spIpadAir._id, soLuong: 1 },
       { kho: khoCauGiay._id, sanPham: spMacBookAir._id, soLuong: 1 },
-      { kho: khoSaiGon._id, sanPham: spMacBookPro._id, soLuong: 1 }
+      { kho: khoSaiGon._id, sanPham: spMacBookPro._id, soLuong: 1 },
+      { kho: khoThaiHa._id, sanPham: spAppleWatch9._id, soLuong: 2 },
+      { kho: khoCauGiay._id, sanPham: spAppleWatchUltra._id, soLuong: 1 },
+      { kho: khoThaiHa._id, sanPham: spGalaxyWatch6._id, soLuong: 2 },
+      { kho: khoCauGiay._id, sanPham: spIphone13Old._id, soLuong: 2 }
     ]);
 
     // -------------------------------------------------------------
@@ -495,10 +594,26 @@ const seedData = async () => {
       status: true
     });
 
+    // PN4: Nhập Apple Watch Ultra & AirPods từ Digiworld (41.780.000 đ) - Thanh toán ngay
+    const pn4 = await PhieuNhap.create({
+      maPN: 'PN20260804',
+      nhaCungCap: nccDigiworld._id,
+      nhanVien: nvThuKho._id,
+      ngayNhap: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      tongTien: 41780000,
+      ghiChu: 'Nhập đồng hồ Apple Watch Ultra 2 & tai nghe AirPods',
+      status: true
+    });
+
+    await CT_PhieuNhap.insertMany([
+      { phieuNhap: pn4._id, imei: '356789012345611', sanPham: spAppleWatchUltra._id, donGiaNhap: 17900000 },
+      { phieuNhap: pn4._id, imei: '356789012345612', sanPham: spAppleWatchUltra._id, donGiaNhap: 17900000 }
+    ]);
+
     // -------------------------------------------------------------
     // 10. HÓA ĐƠN BÁN HÀNG & PHIẾU XUẤT KHO (Tuấn)
     // -------------------------------------------------------------
-    console.log('[Seed] 10. Khởi tạo Hóa đơn Bán hàng & Phiếu xuất kho...');
+    console.log('[Seed] 10. Khởi tạo 6 Hóa đơn Bán hàng & Phiếu xuất kho...');
     // HD1: Khách An mua iPhone 15 Pro Max + Củ sạc 20W (Tiền mặt: 30.510.000 đ)
     const hd1 = await HoaDon.create({
       soHD: 'HD20260801',
@@ -570,6 +685,20 @@ const seedData = async () => {
     await CT_HoaDon_May.create({ hoaDon: hd5._id, imei: '356789012345412', donGiaBan: 14990000 });
     await CT_HoaDon_PhuKien.create({ hoaDon: hd5._id, phuKien: pkCuongLuc._id, soLuong: 1, donGiaBan: 180000 });
     await PhieuXuatKho.create({ hoaDon: hd5._id, lyDoXuat: `Xuat ban hang theo hoa don ${hd5.soHD}`, ngayXuat: hd5.ngayLap });
+
+    // HD6: Khách Đức mua Apple Watch Ultra 2 (Chuyển khoản: 20.990.000 đ)
+    const hd6 = await HoaDon.create({
+      soHD: 'HD20260806',
+      khachHang: khDuc._id,
+      nhanVien: nvBanHang._id,
+      ngayLap: new Date(Date.now() - 12 * 60 * 60 * 1000),
+      tongTien: 20990000,
+      trangThai: 'Da thanh toan',
+      ghiChu: 'Khách mua Apple Watch Ultra 2 Titan thanh toán qua Pos quẹt thẻ',
+      status: true
+    });
+    await CT_HoaDon_May.create({ hoaDon: hd6._id, imei: '356789012345612', donGiaBan: 20990000 });
+    await PhieuXuatKho.create({ hoaDon: hd6._id, lyDoXuat: `Xuat ban hang theo hoa don ${hd6.soHD}`, ngayXuat: hd6.ngayLap });
 
     // -------------------------------------------------------------
     // 11. ĐƠN ĐẶT HÀNG TRƯỚC (PRE-ORDER) (Việt)
@@ -687,7 +816,7 @@ const seedData = async () => {
     // 14. HỒ SƠ CÔNG NỢ ĐA HÌNH (An)
     // -------------------------------------------------------------
     console.log('[Seed] 14. Khởi tạo Hồ sơ Công nợ Khách Hàng & NCC...');
-    // Nợ Khách Hàng (Anh Long nợ HĐ3: Tổng 31.99tr, đã trả 10tr, còn nợ 21.99tr)
+    // Nợ Khách Hàng (Anh Long nợ HD3: Tổng 31.99tr, đã trả 10tr, còn nợ 21.99tr)
     const cnKH = await CongNo.create({
       loaiDoiTuong: 'KhachHang',
       khachHang: khLong._id,
@@ -822,6 +951,16 @@ const seedData = async () => {
       status: true
     });
 
+    // Thu bán hàng HD6 (20.990.000 đ Quẹt thẻ)
+    await PhieuThu.create({
+      hoaDon: hd6._id,
+      soTien: hd6.tongTien,
+      hinhThuc: 'Quet the',
+      ngayThu: hd6.ngayLap,
+      ghiChu: `Thu tiền quẹt thẻ bán Apple Watch Ultra 2 theo hóa đơn ${hd6.soHD}`,
+      status: true
+    });
+
     // Thu nợ khách hàng đợt 1 từ anh Long (10.000.000 đ Chuyển khoản)
     await PhieuThu.create({
       congNo: cnKH._id,
@@ -865,6 +1004,17 @@ const seedData = async () => {
       status: true
     });
 
+    // Chi trả tiền nhập Apple Watch Digiworld PN4 (41.780.000 đ Chuyển khoản)
+    await PhieuChi.create({
+      phieuNhap: pn4._id,
+      maDT: nccDigiworld._id.toString(),
+      soTien: 41780000,
+      hinhThuc: 'Chuyen khoan',
+      ngayChi: pn4.ngayNhap,
+      lyDo: `Thanh toán tiền nhập Apple Watch Ultra theo phiếu ${pn4.maPN}`,
+      status: true
+    });
+
     // Chi hoàn tiền cọc cho khách Đỗ Hoàng Yến đơn DAT20260804 (1.000.000 đ Tiền mặt)
     await PhieuChi.create({
       donDatHang: ddh4._id,
@@ -887,26 +1037,26 @@ const seedData = async () => {
     });
 
     console.log('====================================================');
-    console.log('🎉 RESET VÀ SEED CSDL MỚI 100% HOÀN TOÀN THÀNH CÔNG!');
+    console.log('🎉 RESET VÀ SEED CSDL MỚI ĐA DẠNG 100% THÀNH CÔNG!');
     console.log('====================================================');
     console.log('📊 Thống kê các thực thể dữ liệu sạch & liên kết chặt chẽ:');
     console.log(' - 6 Tài khoản nhân viên (6 vai trò RBAC: admin, banhang, thukho, thungan, ketoan, kythuat)');
-    console.log(' - 5 Danh mục sản phẩm chuẩn hóa');
+    console.log(' - 9 Danh mục sản phẩm (có danh mục có máy, danh mục chỉ có phụ kiện, và danh mục trống để đối chiếu)');
     console.log(' - 5 Nhà cung cấp đối tác uy tín');
     console.log(' - 8 Khách hàng với đầy đủ thông tin liên hệ');
     console.log(' - 3 Kho hàng (Cầu Giấy, Thái Hà, Quận 1)');
-    console.log(' - 12 Model máy & thiết bị cao cấp (iPhone, Galaxy, Xiaomi, iPad, MacBook)');
-    console.log(' - 8 Phụ kiện & 6 Linh kiện sửa chữa chính hãng');
-    console.log(' - 36 Máy IMEI (15 số vật lý sạch, liên kết đầy đủ trạng thái)');
-    console.log(' - 15 Bản ghi Tồn kho (TonKho) khớp 100% số máy Còn hàng');
-    console.log(' - 3 Phiếu nhập kho (Apple, Samsung, FPT)');
-    console.log(' - 5 Hóa đơn bán hàng POS kèm Chi tiết máy, Phụ kiện & Phiếu xuất kho');
+    console.log(' - 16 Model máy & thiết bị (iPhone, Galaxy, Xiaomi, iPad, Mac, Apple Watch, Máy cũ)');
+    console.log(' - 10 Phụ kiện & 6 Linh kiện sửa chữa chính hãng');
+    console.log(' - 48 Máy IMEI (15 số vật lý sạch, liên kết đầy đủ trạng thái)');
+    console.log(' - 19 Bản ghi Tồn kho (TonKho) khớp 100% số máy Còn hàng');
+    console.log(' - 4 Phiếu nhập kho (Apple, Samsung, FPT, Digiworld)');
+    console.log(' - 6 Hóa đơn bán hàng POS kèm Chi tiết máy, Phụ kiện & Phiếu xuất kho');
     console.log(' - 4 Đơn đặt trước Pre-order (Đã cọc, Đã có hàng, Đã nhận máy, Đã hủy)');
     console.log(' - 2 Phiếu bảo hành (Đang xử lý & Đã sửa xong)');
     console.log(' - 1 Phiếu đổi trả máy trong 30 ngày');
     console.log(' - 3 Hồ sơ công nợ đa hình (Khách hàng & Nhà cung cấp)');
     console.log(' - 1 Hợp đồng trả góp 6 tháng lãi suất 0%');
-    console.log(' - 9 Phiếu thu & 5 Phiếu chi đồng bộ Sổ quỹ');
+    console.log(' - 10 Phiếu thu & 6 Phiếu chi đồng bộ Sổ quỹ');
     console.log('====================================================');
     process.exit(0);
   } catch (error) {
