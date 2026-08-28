@@ -8,6 +8,7 @@ class PhieuNhapController extends BaseController {
     this.getDanhSach = this.getDanhSach.bind(this);
     this.getChiTiet = this.getChiTiet.bind(this);
     this.postImportHangLoat = this.postImportHangLoat.bind(this);
+    this.postTraHangNCC = this.postTraHangNCC.bind(this);
   }
   
   /**
@@ -71,6 +72,20 @@ class PhieuNhapController extends BaseController {
       return this.handleError(res, error, 'Lỗi khi lấy chi tiết phiếu nhập');
     }
   }
+
+  /**
+   * [POST] /api/phieu-nhap/tra-hang-ncc - Trả hàng cho Nhà Cung Cấp
+   * Body: { imeiList: string[], maNCC: string, lyDo?: string }
+   */
+  async postTraHangNCC(req, res) {
+    try {
+      const result = await PhieuNhapService.traHangNhaCungCap(req.body);
+      return this.sendSuccess(res, result, `Trả hàng cho nhà cung cấp thành công (${result.soLuongTra} máy)`);
+    } catch (error) {
+      return this.handleError(res, error, 'Lỗi khi trả hàng cho nhà cung cấp');
+    }
+  }
 }
 
 module.exports = new PhieuNhapController();
+

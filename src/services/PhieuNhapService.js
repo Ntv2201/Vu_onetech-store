@@ -241,6 +241,100 @@ class PhieuNhapService extends BaseService {
 
     return await this.taoPhieuNhap(phieuNhapPayload);
   }
+
+  /**
+   * Trả hàng cho Nhà Cung Cấp (Tình huống biên)
+   * Điều kiện: IMEI phải ở trạng thái 'Con hang' hoặc 'Loi'
+   * Kết quả: IMEI -> 'Tra NCC', trừ tồn kho, cấn trừ/hoàn tất công nợ
+   */
+  async traHangNhaCungCap(payload = {}) {
+    const { imeiList = [], maNCC, lyDo = '' } = payload;
+
+    if (!maNCC) throw this.createError('Thiếu mã Nhà cung cấp', 400);
+    if (!imeiList || imeiList.length === 0) throw this.createError('Danh sách IMEI trả hàng không được trống', 400);
+
+    // 1. Tìm các bản ghi máy theo IMEI
+    const imeis = await MayImei.find({ imei: { $in: imeiList } }).lean();
+    if (imeis.length !== imeiList.length) {
+      throw this.createError('Một số IMEI không tồn tại trong hệ thống', 404);
+    }
+
+    // 2. Kiểm tra trạng thái — chỉ cho phép trả máy 'Con hang' hoặc 'Loi'
+    for (const m of imeis) {
+      if (m.trangThai !== 'Con hang' && m.trangThai !== 'Loi') {
+        throw this.createError(`IMEI ${m.imei} đang ở trạng thái '${m.trangThai}', không thể trả hàng`, 400);
+      }
+    }
+
+    // 3. Kiểm tra NCC và lấy giá nhập gốc từ CT_PhieuNhap
+    const ctPhieuNhaps = await CT_PhieuNhap.find({ imei: { $in: imeiList } })
+      .populate('phieuNhap', 'nhaCungCap')
+      .lean();
+
+    if (ctPhieuNhaps.length !== imeiList.length) {
+      throw this.createError('Không tìm thấy thông tin nhập kho gốc của một số IMEI', 404);
+    }
+
+    let tongTienTra = 0;
+    for (const ct of ctPhieuNhaps) {
+      if (!ct.phieuNhap || ct.phieuNhap.nhaCungCap.toString() !== maNCC.toString()) {
+        throw this.createError(`IMEI ${ct.imei} không thuộc Nhà cung cấp này`, 400);
+      }
+      tongTienTra += (ct.donGiaNhap || 0);
+    }
+
+    // 4. Atomic update: đổi trạng thái IMEI sang 'Tra NCC'
+    await MayImei.updateMany(
+      { imei: { $in: imeiList }, trangThai: { $in: ['Con hang', 'Loi'] } },
+      { $set: { trangThai: 'Tra NCC' } }
+    );
+
+    // 5. Trừ tồn kho cho từng máy
+    for (const m of imeis) {
+      await TonKhoService.capNhatTonKho(m.sanPham, null, -1);
+    }
+
+    // 6. Xử lý tài chính: cấn trừ công nợ hoặc lập phiếu thu hoàn tiền
+    const danhSachCongNo = await CongNo.find({ loaiDoiTuong: 'NhaCungCap', nhaCungCap: maNCC });
+    let tongDuNo = danhSachCongNo.reduce((sum, cn) => sum + Math.max(0, (cn.soTienNo || 0) - (cn.soTienDaTra || 0)), 0);
+
+    if (tongDuNo > 0) {
+      let conLaiCan = tongTienTra;
+      // Cấn trừ lần lượt qua từng khoản công nợ
+      for (const congNo of danhSachCongNo) {
+        if (conLaiCan <= 0) break;
+        const duNoKhoan = Math.max(0, (congNo.soTienNo || 0) - (congNo.soTienDaTra || 0));
+        if (duNoKhoan <= 0) continue;
+
+        const canTru = Math.min(conLaiCan, duNoKhoan);
+        congNo.soTienDaTra = (congNo.soTienDaTra || 0) + canTru;
+        if (congNo.soTienDaTra >= congNo.soTienNo) {
+          congNo.trangThai = 'Da tra het';
+        }
+        await congNo.save();
+        conLaiCan -= canTru;
+      }
+
+      // Nếu còn dư sau khi cấn trừ hết nợ, lập phiếu thu hoàn tiền
+      if (conLaiCan > 0) {
+        await ThanhToanService.taoPhieuThu({
+          soTien: conLaiCan,
+          hinhThuc: 'Tien mat',
+          ghiChu: lyDo || `Nhận hoàn tiền trả hàng NCC (phần dư sau cấn trừ nợ)`
+        });
+      }
+    } else {
+      // NCC không có nợ, hoàn tiền thẳng
+      await ThanhToanService.taoPhieuThu({
+        soTien: tongTienTra,
+        hinhThuc: 'Tien mat',
+        ghiChu: lyDo || `Nhận hoàn tiền trả hàng NCC`
+      });
+    }
+
+    return { success: true, tongTienTra, soLuongTra: imeiList.length };
+  }
 }
 
 module.exports = new PhieuNhapService();
+

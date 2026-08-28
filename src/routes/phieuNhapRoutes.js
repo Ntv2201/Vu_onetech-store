@@ -15,7 +15,11 @@ router.get('/:id', requireRole('Quản lý', 'Thủ kho', 'Kế toán'), phieuNh
 // POST /api/phieu-nhap/import-hang-loat - Nhập hàng loạt nhiều IMEI
 router.post('/import-hang-loat', requireRole('Quản lý', 'Thủ kho'), phieuNhapController.postImportHangLoat);
 
+// POST /api/phieu-nhap/tra-hang-ncc - Trả hàng cho Nhà cung cấp
+router.post('/tra-hang-ncc', requireRole('Quản lý', 'Thủ kho'), phieuNhapController.postTraHangNCC);
+
 // POST /api/phieu-nhap - Tạo phiếu nhập kho mới
 router.post('/', requireRole('Quản lý', 'Thủ kho'), phieuNhapController.taoPhieuNhap);
 
 module.exports = router;
+

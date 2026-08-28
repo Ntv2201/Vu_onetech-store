@@ -7,7 +7,7 @@ const mayImeiSchema = new mongoose.Schema({
   trangThai: {
     type: String,
     required: true,
-    enum: ['Con hang', 'Da ban', 'Bao hanh', 'Loi'],
+    enum: ['Con hang', 'Da ban', 'Bao hanh', 'Loi', 'Tra NCC'],
     default: 'Con hang',
     index: true
   },
