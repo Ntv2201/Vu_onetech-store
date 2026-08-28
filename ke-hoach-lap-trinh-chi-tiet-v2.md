@@ -56,17 +56,19 @@
    ├─ Báo cáo Doanh thu, Chi phí, Top SP, Tồn kho lâu ngày (Vượng)
    └─ Tích hợp Chart.js vẽ biểu đồ Dashboard (Vũ + Vượng)
 
- [Tuần 6] TÍCH HỢP E2E & HOÀN THIỆN MẪU IN (@media print) (ĐÃ HOÀN TẤT PHẦN ĐỔI TRẢ/ĐẶT TRƯỚC) ✅
-   ├─ Nối 100% API Backend vào Frontend cho toàn bộ các trang web (Vũ + 5 Devs)
-   ├─ Chuẩn hóa Bộ 5 Mẫu In: Hóa đơn, Phiếu nhập, Phiếu BH, Phiếu đổi trả [XONG], HĐ Trả góp (Vũ + Việt)
-   ├─ Kịch bản kiểm thử E2E liên module Đặt cọc -> POS -> Đổi trả -> Hủy phiếu [21/21 PASS] (Việt)
-   └─ Tối ưu UX/UI, Toast thông báo, Modal xác nhận an toàn (Vũ)
+ [Tuần 6] TÍCH HỢP E2E TOÀN TRÌNH & HOÀN THIỆN MẪU IN PHÁP QUY [ĐÃ HOÀN THÀNH 100%] ✅
+    ├─ Nối 100% API Backend vào Frontend cho toàn bộ các trang web (Vũ + 5 Devs)
+    ├─ Chuẩn hóa Bộ Mẫu In Chuẩn Thông Tư 200 & NĐ 123: Hóa đơn (02-VT), Phiếu nhập (01-VT), Phiếu thu (01-TT), Phiếu chi (02-TT), Phiếu BH, Phiếu đổi trả (Vũ + Cả nhóm)
+    ├─ Kịch bản kiểm thử E2E liên module Đặt cọc -> POS -> Đổi trả -> Hủy phiếu [21/21 PASS] (Việt)
+    ├─ Kịch bản kiểm thử E2E Bán hàng POS -> Cọc -> Bảo hành -> KPI [33/33 PASS] (Tuấn)
+    └─ Tối ưu UX/UI, Toast thông báo, Modal xác nhận an toàn (Vũ)
 
- [Tuần 7] Stress Test, Concurrency Lock & Tối ưu Bảo mật RBAC
-   ├─ Stress test dữ liệu lớn (1.000+ máy IMEI) (Việt Anh - QA + Cả nhóm)
-   ├─ Concurrency Race Condition Lock: Chặn bán đúp đồng thời 1 IMEI (Việt Anh - QA)
-   ├─ Rà soát ma trận bảo mật 6 Actor (RBAC Security Audit) & Fix bugs (Việt Anh - QA)
-   └─ Tối ưu tốc độ truy vấn Mongoose Indexing (Cả nhóm)
+ [Tuần 7] Stress Test, Concurrency Lock, Chuẩn Hóa CSDL & Tối ưu Bảo mật RBAC [ĐÃ HOÀN THÀNH 100%] ✅
+    ├─ Stress test dữ liệu lớn (1.000+ máy IMEI) (Việt Anh - QA + Cả nhóm)
+    ├─ Concurrency Race Condition Lock: Chặn bán đúp đồng thời 1 IMEI [5/5 PASS] (Việt Anh - QA)
+    ├─ Rà soát ma trận bảo mật 6 Actor (RBAC Security Audit) 403 Forbidden [PASS] (Việt Anh - QA)
+    ├─ Bổ sung trường status: Boolean (Bit) trên toàn bộ 10 Model CSDL (Cả nhóm)
+    └─ Tích hợp cơ chế cô lập và tự động dọn dẹp dữ liệu test cleanup_db.js (Việt Anh - QA)
 
  [Tuần 8] Báo cáo QA, Diễn tập Demo Phân Vai & Nghiệm thu Bảo vệ Đồ án 🏁
    ├─ Xuất Báo cáo Đánh giá Chất lượng Phần mềm (QA Test Report) 100% Pass (Việt Anh - QA)

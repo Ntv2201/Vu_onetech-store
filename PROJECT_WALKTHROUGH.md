@@ -489,9 +489,10 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm 
    ```bash
    npm run seed
    ```
-3. **Chạy kiểm thử tự động toàn bộ module:**
+3. **Chạy kiểm thử tự động toàn bộ 16 bộ test suites:**
    ```bash
-   node tests/test_tuan_module.js       # 44 tests Bán hàng POS, IMEI, Bảo hành
+   npm test                             # Master Test Runner (chạy toàn bộ 16 suites - 563 assertions)
+   node tests/test_tuan_module.js       # 60 tests Bán hàng POS, IMEI, Bảo hành, Data Contract
    node tests/test_tuan_tuan5_6_e2e.js  # 33 tests E2E tích hợp Bán hàng POS, Cọc, Bảo hành, KPI (Tuần 5-6)
    node tests/test_viet_module.js       # 32 tests Đặt hàng trước (Tuần 3)
    node tests/test_viet_tuan4.js        # 39 tests Đổi trả máy & Cấn trừ cọc (Tuần 4)
@@ -500,10 +501,13 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm 
    node tests/test_an_tuan3.js          # 28 tests Tồn kho dùng chung & Công nợ (Tuần 3)
    node tests/test_an_tuan4.js          # 24 tests Đối soát công nợ & Quá hạn (Tuần 4)
    node tests/test_an_tuan5.js          # 23 tests Hợp đồng Trả góp & Lịch thu kỳ (Tuần 5)
-   node tests/test_tuan_nhap_kho.js     # 25 tests Nhập kho máy IMEI (Tuần 3)
+   node tests/test_tuan_nhap_kho.js     # 25 tests Nhập kho máy IMEI & Phụ kiện (Tuần 3)
+   node tests/test_tuan_tuan4.js        # 13 tests Nhập hàng loạt IMEI & Lịch sử NCC (Tuần 4)
    node tests/test_vuong_module.js      # 37 tests Thu - Chi & Sổ quỹ (Tuần 3)
-   node tests/test_http_endpoints.js    # Kiểm thử HTTP API & Phân quyền RBAC
-   node tests/verify_all_logins.js      # Kiểm thử đăng nhập 6 vai trò
+   node tests/verify_all_logins.js      # 6 tests Ma trận đăng nhập 6 vai trò
+   node tests/test_http_endpoints.js    # Kiểm thử HTTP API & Phân quyền RBAC 403
+   node tests/test_concurrency_stress.js # 5 tests Concurrency Atomic Lock & Stress Test
+   node tests/test_ui_html_structure.js # 191 tests Kiểm thử cấu trúc HTML, Sidebar & Assets
    ```
 4. **Chạy server phát triển:**
    ```bash
@@ -518,3 +522,20 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm 
    - Thu - Chi & Sổ quỹ: `http://localhost:3000/so-quy/`
    - Nhập kho hàng hóa: `http://localhost:3000/nhap-kho/`
    - Quản lý Công nợ & Đối soát: `http://localhost:3000/cong-no/`
+
+---
+
+## 9. CHUẨN HÓA BIỂU MẪU IN ẤN PHÁP QUY & THIẾT KẾ CSDL NÂNG CAO
+
+### 9.1. Mẫu In Chứng Từ Chuẩn Thông Tư 200/2014/TT-BTC & Nghị Định 123/2020/NĐ-CP (`src/public/js/print-templates.js`)
+- **Phiếu Thu (Mẫu số 01 - TT)**: Tự động hạch toán Nợ 1111 / Có 131, 511; đọc số tiền bằng chữ tiếng Việt (`docSoTienBangChu`); 5 chữ ký chuẩn (*Thủ trưởng, Kế toán trưởng, Người lập, Người nộp, Thủ quỹ*).
+- **Phiếu Chi (Mẫu số 02 - TT)**: Tự động hạch toán Nợ 331, 642 / Có 1111; kèm chứng từ gốc; 5 chữ ký chuẩn.
+- **Phiếu Nhập Kho (Mẫu số 01 - VT)**: Danh mục sản phẩm đối chiếu theo chứng từ và thực nhập; Nợ 1561 / Có 331; 4 chữ ký (*Người lập, Người giao, Thủ kho, Kế toán trưởng*).
+- **Hóa Đơn Bán Hàng Kiêm Phiếu Xuất Kho (Mẫu số 02 - VT)**: Ký hiệu Serial, Mã số thuế, chi tiết danh sách IMEI và phụ kiện, cấn trừ cọc, chiết khấu, 3 chữ ký (*Người mua, Thu ngân, Thủ kho*).
+
+### 9.2. Chuẩn Hóa Trường Trạng Thái `status: Boolean` (Bit)
+- Toàn bộ 10 Model chính (`SanPham`, `NhaCungCap`, `KhachHang`, `PhuKien`, `DanhMuc`, `MayImei`, `PhieuThu`, `PhieuChi`, `PhieuNhap`, `HoaDon`) đều được bổ sung trường `status: { type: Boolean, default: true }` phục vụ soft-delete và tuân thủ chặt chẽ tiêu chuẩn thiết kế cơ sở dữ liệu.
+
+### 9.3. Cơ Chế Cô Lập & Tự Động Dọn Dẹp Dữ Liệu Test (`tests/cleanup_db.js`)
+- Tích hợp hook tự động dọn dẹp dữ liệu rác trước và sau khi chạy test suite trong `run_all_tests.js`, đảm bảo cơ sở dữ liệu thật luôn sạch sẽ và không bị nhân bản các bản ghi dummy khi thực thi kiểm thử liên tục.
+
