@@ -252,13 +252,20 @@
 - [x] Xây dựng giao diện Sổ Quỹ `src/public/pages/so-quy/index.html` và `src/public/js/soquy.js`.
 - [x] Viết bộ kiểm thử tự động 37/37 test cases PASS ([`tests/test_vuong_module.js`](tests/test_vuong_module.js)).
 
-#### Tuần 4 [HIỆN TẠI]: Phân hệ Kiểm kê kho & Xử lý Lệch IMEI
-- [ ] `POST /api/kiem-ke` — payload: `{ maKho, danhSachIMEIThucTe: [...] }`:
-  1. Lấy toàn bộ `MAY_IMEI` đang có `TrangThai = 'Con hang'` trong DB.
-  2. IMEI có trong DB nhưng không có thực tế $\rightarrow$ cảnh báo "Thiếu hàng".
-  3. IMEI quét được nhưng DB không có (hoặc đã bán) $\rightarrow$ cảnh báo "Thừa/Bất thường".
-  4. Tạo `BIENBANKIEMKE` + các dòng `DIEUCHINHKHO`.
-- [ ] `GET /api/kiem-ke`, `GET /api/kiem-ke/:id`.
+#### Tuần 4: Phân hệ Kiểm kê kho & Xử lý Lệch IMEI [ĐÃ HOÀN THÀNH 100%]
+- [x] Xây dựng `KiemKeService` kế thừa `BaseService`, `KiemKeController`, route `/api/kiem-ke`.
+- [x] `POST /api/kiem-ke` — payload: `{ khoId, danhSachImeiThucTe: [...], ghiChu }`:
+  1. Lấy toàn bộ `MAY_IMEI` đang có `TrangThai = 'Con hang'` trong DB tại kho.
+  2. IMEI có trong DB nhưng không có thực tế $\rightarrow$ Cảnh báo "Thiếu hàng" (`loaiLech: 'Thieu'`, `soLuongDC: -1`).
+  3. IMEI quét được nhưng DB không có $\rightarrow$ Cảnh báo "Thừa hàng" (`loaiLech: 'Thua'`, `soLuongDC: +1`).
+  4. IMEI quét được nhưng DB đang ở trạng thái `Da ban` / `Loi` / `Tra NCC` $\rightarrow$ Cảnh báo "Bất thường" (`loaiLech: 'Bat thuong'`).
+  5. Tự động sinh mã `BBKK-YYYYMMDD-XXXX`, tạo `BIENBANKIEMKE` và chèn các dòng chi tiết `DIEUCHINHKHO`.
+- [x] `GET /api/kiem-ke/imei-ly-thuyet/:khoId?` — Tra cứu danh sách IMEI lý thuyết theo kho.
+- [x] `GET /api/kiem-ke` (phân trang + lọc theo kho, trạng thái, ngày), `GET /api/kiem-ke/:id` (chi tiết biên bản + các dòng điều chỉnh).
+- [x] `PUT /api/kiem-ke/:id/ap-dung` — Áp dụng điều chỉnh kho: Tự động trừ tồn kho `TonKho` và chuyển trạng thái máy bị thiếu sang `Loi`/`status: false`.
+- [x] `PUT /api/kiem-ke/:id/huy` — Hủy biên bản kiểm kê nháp (phân quyền riêng cho Quản lý).
+- [x] Xây dựng giao diện Kiểm kê kho `src/public/pages/kiem-ke/index.html` và `src/public/js/kiemke.js` kèm mẫu in Mẫu số 05-VT Thông tư 200/2014/TT-BTC `inBienBanKiemKeChuan()`.
+- [x] Viết bộ kiểm thử tự động 23/23 test cases PASS ([`tests/test_vuong_tuan4_kiemke.js`](tests/test_vuong_tuan4_kiemke.js)).
 
 #### Tuần 5: Phân hệ Báo cáo Thống kê & API Dashboard
 - [ ] `GET /api/bao-cao/doanh-thu?tuNgay=&denNgay=&nhom=ngay|tuan|thang` — Doanh thu thuần, chi phí, lợi nhuận gộp.

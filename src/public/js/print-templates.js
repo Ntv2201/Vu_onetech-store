@@ -633,9 +633,158 @@ function inHoaDonBanHangChuan(data = {}) {
   inNoiDungHTML(html, `Hóa Đơn ${soHD}`);
 }
 
+/**
+ * In Biên Bản Kiểm Kê Vật Tư, Hàng Hóa Chuẩn Mẫu Số 05 - VT (Thông tư 200/2014/TT-BTC)
+ */
+function inBienBanKiemKeChuan(data) {
+  const {
+    maBienBan = 'BBKK-CHUA-LUU',
+    ngay = new Date(),
+    kho = {},
+    nhanVien = {},
+    tongLyThuyet = 0,
+    tongThucTe = 0,
+    tongKhop = 0,
+    tongLech = 0,
+    tongThieu = 0,
+    tongThua = 0,
+    ghiChu = '',
+    danhSachChiTiet = []
+  } = data;
+
+  const d = new Date(ngay);
+  const ngayStr = `Ngày ${d.getDate()} tháng ${d.getMonth() + 1} năm ${d.getFullYear()}`;
+  const gioStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+  let rowsHtml = '';
+  if (danhSachChiTiet.length === 0) {
+    rowsHtml = '<tr><td colspan="7" class="text-center text-muted">Toàn bộ hàng hóa khớp 100%, không phát sinh chênh lệch</td></tr>';
+  } else {
+    danhSachChiTiet.forEach((item, index) => {
+      let loaiBadge = '';
+      if (item.loaiLech === 'Thieu') {
+        loaiBadge = '<span class="text-danger fw-bold">Thiếu máy (-1)</span>';
+      } else if (item.loaiLech === 'Thua') {
+        loaiBadge = '<span class="text-warning fw-bold">Thừa máy (+1)</span>';
+      } else if (item.loaiLech === 'Bat thuong') {
+        loaiBadge = '<span class="text-info fw-bold">Bất thường</span>';
+      } else {
+        loaiBadge = '<span class="text-success fw-bold">Khớp</span>';
+      }
+
+      rowsHtml += `
+        <tr>
+          <td class="text-center">${index + 1}</td>
+          <td class="fw-bold font-monospace">${item.imei || 'N/A'}</td>
+          <td>${item.sanPham?.tenMay || item.tenMay || 'N/A'}</td>
+          <td class="text-center">${item.sanPham?.hang || item.hang || 'N/A'}</td>
+          <td class="text-center">${item.trangThaiMayDB || 'N/A'}</td>
+          <td class="text-center">${loaiBadge}</td>
+          <td>${item.lyDo || item.ghiChu || ''}</td>
+        </tr>
+      `;
+    });
+  }
+
+  const html = `
+    <div class="row">
+      <div class="col-7 header-left">
+        <div class="fw-bold text-uppercase">HỆ THỐNG CỬA HÀNG ĐIỆN THOẠI ONETECH STORE</div>
+        <div>Địa chỉ kho: ${kho.diaChi || 'Trụ sở chính OneTech Store'}</div>
+        <div>Kho kiểm kê: <strong>${kho.tenKho || 'Kho Tổng'}</strong></div>
+      </div>
+      <div class="col-5 text-end header-right">
+        <div class="fw-bold">Mẫu số 05 - VT</div>
+        <div>(Ban hành theo Thông tư số 200/2014/TT-BTC)</div>
+        <div>Mã BB: <strong>${maBienBan}</strong></div>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <div class="doc-title">BIÊN BẢN KIỂM KÊ VẬT TƯ, HÀNG HÓA</div>
+      <div class="doc-subtitle">Thời điểm kiểm kê: ${gioStr}, ${ngayStr}</div>
+    </div>
+
+    <div class="mb-2">
+      <div>- Ban kiểm kê gồm: Ông/Bà <strong>${nhanVien.hoTen || 'Thủ kho'}</strong> (${nhanVien.vaiTro || 'Thủ kho'}) - Trưởng ban.</div>
+      <div>- Địa điểm kiểm kê: <strong>${kho.tenKho || 'Kho hàng'}</strong> - ${kho.diaChi || ''}</div>
+      <div>- Ghi chú kiểm kê: ${ghiChu || 'Kiểm kê định kỳ thực tế theo số IMEI máy vật lý'}</div>
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-4">
+        <div class="p-2 border rounded text-center">
+          <div class="small text-muted">Tồn lý thuyết (DB)</div>
+          <div class="fs-5 fw-bold text-primary">${tongLyThuyet} máy</div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="p-2 border rounded text-center">
+          <div class="small text-muted">Thực tế kiểm đếm</div>
+          <div class="fs-5 fw-bold text-success">${tongThucTe} máy</div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="p-2 border rounded text-center">
+          <div class="small text-muted">Số lượng chênh lệch</div>
+          <div class="fs-5 fw-bold ${tongLech > 0 ? 'text-danger' : 'text-success'}">${tongLech > 0 ? `${tongLech} máy (Lệch)` : 'Khớp 100%'}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fw-bold mb-1">BẢNG TỔNG HỢP VÀ CHI TIẾT XỬ LÝ CHÊNH LỆCH:</div>
+    <table class="table-custom">
+      <thead>
+        <tr class="text-center bg-light">
+          <th style="width: 40px;">STT</th>
+          <th style="width: 150px;">Số IMEI</th>
+          <th>Tên thiết bị / Model</th>
+          <th style="width: 80px;">Hãng</th>
+          <th style="width: 110px;">Trạng thái DB</th>
+          <th style="width: 130px;">Kết quả đối soát</th>
+          <th>Nguyên nhân / Ghi chú</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+
+    <div class="mb-4">
+      <div class="fw-bold">Ý KIẾN VÀ KẾT LUẬN CỦA BAN KIỂM KÊ:</div>
+      <div>- Tổng số máy khớp đúng thực tế: <strong>${tongKhop}</strong> / ${tongLyThuyet} máy.</div>
+      <div>- Số lượng thiếu cần lập biên bản giải trình: <strong>${tongThieu}</strong> máy.</div>
+      <div>- Số lượng thừa / bất thường cần xác minh nguồn gốc: <strong>${tongThua}</strong> máy.</div>
+    </div>
+
+    <div class="row text-center signature-box">
+      <div class="col">
+        <div class="sig-title">Thủ kho</div>
+        <div class="sig-desc">(Ký, ghi rõ họ tên)</div>
+        <div class="sig-space"></div>
+        <div class="fw-bold">${nhanVien.hoTen || ''}</div>
+      </div>
+      <div class="col">
+        <div class="sig-title">Kế toán kho / Giám sát</div>
+        <div class="sig-desc">(Ký, ghi rõ họ tên)</div>
+        <div class="sig-space"></div>
+      </div>
+      <div class="col">
+        <div class="sig-title">Giám đốc / Quản lý duyệt</div>
+        <div class="sig-desc">(Ký, đóng dấu)</div>
+        <div class="sig-space"></div>
+      </div>
+    </div>
+  `;
+
+  inNoiDungHTML(html, `Biên Bản Kiểm Kê ${maBienBan}`);
+}
+
 // Export cho window để gọi từ bất kỳ trang JS nào
 window.docSoTienBangChu = docSoTienBangChu;
 window.inPhieuThuChuan = inPhieuThuChuan;
 window.inPhieuChiChuan = inPhieuChiChuan;
 window.inPhieuNhapKhoChuan = inPhieuNhapKhoChuan;
 window.inHoaDonBanHangChuan = inHoaDonBanHangChuan;
+window.inBienBanKiemKeChuan = inBienBanKiemKeChuan;
+

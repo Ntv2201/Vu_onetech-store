@@ -140,6 +140,14 @@ const MENU_SCHEMA = [
         shortLabel: 'Phụ kiện',
         icon: 'bi-headphones',
         roles: ['Quản lý', 'Thủ kho', 'Kế toán']
+      },
+      {
+        path: '/kiem-ke/index.html',
+        dataPath: '/kiem-ke/',
+        label: 'Kiểm kê kho & Đối soát IMEI',
+        shortLabel: 'Kiểm kê kho',
+        icon: 'bi-clipboard-check',
+        roles: ['Quản lý', 'Thủ kho', 'Kế toán']
       }
     ]
   },

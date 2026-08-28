@@ -19,6 +19,7 @@ const phieuNhapRoutes = require('./phieuNhapRoutes');
 const khoRoutes = require('./khoRoutes');
 const congNoRoutes = require('./congNoRoutes');
 const traGopRoutes = require('./traGopRoutes');
+const kiemKeRoutes = require('./kiemKeRoutes');
 
 // Mount toàn bộ REST API endpoints
 router.use('/auth', authRoutes);
@@ -39,5 +40,6 @@ router.use('/phieu-nhap', phieuNhapRoutes);
 router.use('/kho', khoRoutes);
 router.use('/cong-no', congNoRoutes);
 router.use('/tra-gop', traGopRoutes);
+router.use('/kiem-ke', kiemKeRoutes);
 
 module.exports = router;

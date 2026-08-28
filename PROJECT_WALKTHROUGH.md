@@ -474,11 +474,37 @@ Tất cả API trả về định dạng JSON thống nhất theo quy ước d�
   - `POST /api/cong-no/kiem-tra-qua-han`: Quét và cập nhật trạng thái nợ quá hạn (RBAC: `Quản lý`, `Kế toán`).
 * **Kiểm thử tự động:** Bộ test `tests/test_an_tuan4.js` với 24/24 test cases PASS 100%.
 
+### 6.14. Phân hệ Kiểm kê kho & Xử lý Lệch IMEI (`KiemKeService`, `kiemKeController`) — *Module Đinh Đức Vương*
+* `KiemKeService.layDanhSachImeiLyThuyet(khoId)`:
+  - Tra cứu toàn bộ danh sách máy `MayImei` đang có trạng thái `Con hang` tại kho để làm cơ sở đối chiếu lý thuyết.
+* `KiemKeService.thucHienKiemKe({ khoId, danhSachImeiThucTe, ghiChu, sessionUser })`:
+  - Tiếp nhận danh sách IMEI quét thực tế từ máy quét barcode hoặc Excel.
+  - Tự động phân loại 4 trạng thái đối soát:
+    - **Khớp 100% (`Khop`)**: Có trong DB `Con hang` và thực tế quét thấy.
+    - **Thiếu hàng (`Thieu`)**: Có trong DB `Con hang` nhưng thực tế không quét thấy $\rightarrow$ Tạo dòng `DieuChinhKho` (`soLuongDC: -1`).
+    - **Thừa hàng (`Thua`)**: Quét thực tế có IMEI nhưng hệ thống chưa có dữ liệu $\rightarrow$ Tạo dòng `DieuChinhKho` (`soLuongDC: +1`).
+    - **Bất thường (`Bat thuong`)**: Quét thực tế có IMEI nhưng DB đang ở trạng thái `Da ban` / `Loi` / `Tra NCC` $\rightarrow$ Tạo dòng `DieuChinhKho` (`soLuongDC: 0`).
+  - Tự động sinh mã biên bản `BBKK-YYYYMMDD-XXXX`, lưu `BienBanKiemKe` và chèn các dòng chi tiết `DieuChinhKho`.
+* `KiemKeService.apDungDieuChinh(id, sessionUser)`:
+  - Tự động cập nhật tồn kho `TonKho` (trừ tồn) và đánh dấu trạng thái máy bị thiếu `MayImei` sang `Loi`/`status: false`.
+  - Chuyển trạng thái biên bản sang `Da dieu chinh` (chặn áp dụng lần 2).
+* `KiemKeService.huyBienBan(id, sessionUser)`: Hủy biên bản kiểm kê nháp (phân quyền độc quyền cho Quản lý).
+* **RESTful API Endpoints (`/api/kiem-ke`):**
+  - `GET /api/kiem-ke/imei-ly-thuyet/:khoId?`: Tra cứu IMEI lý thuyết (RBAC: `Quản lý`, `Thủ kho`).
+  - `POST /api/kiem-ke`: Lập biên bản kiểm kê kho (RBAC: `Quản lý`, `Thủ kho`).
+  - `GET /api/kiem-ke`, `GET /api/kiem-ke/:id`: Danh sách và chi tiết biên bản kiểm kê (RBAC: `Quản lý`, `Thủ kho`, `Kế toán`).
+  - `PUT /api/kiem-ke/:id/ap-dung`: Áp dụng điều chỉnh kho (RBAC: `Quản lý`, `Thủ kho`).
+  - `PUT /api/kiem-ke/:id/huy`: Hủy biên bản kiểm kê (RBAC: `Quản lý`).
+* **Giao diện & Biểu mẫu In (`src/public/pages/kiem-ke/index.html` & `src/public/js/kiemke.js`):**
+  - Giao diện quét IMEI thực tế tốc độ cao, hiển thị bảng màu sắc đối soát trực quan, modal chi tiết và nút 1-click Áp dụng điều chỉnh kho.
+  - Biểu mẫu in Biên bản kiểm kê vật tư, hàng hóa Mẫu số 05-VT theo Thông tư 200/2014/TT-BTC (`inBienBanKiemKeChuan()`).
+* **Kiểm thử tự động:** Bộ test `tests/test_vuong_tuan4_kiemke.js` với 23/23 test cases PASS 100%.
+
 ---
 
 ## 7. HƯỚNG DẪN DÀNH CHO CÁC THÀNH VIÊN KHI CODE MODULE MỚI
 
-Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm kê/báo cáo của Vượng, stress test của QA), hãy tuân thủ kiến trúc OOP phân tầng như sau:
+Khi các thành viên tiếp tục triển khai các module tiếp theo (báo cáo doanh thu/dashboard của Vượng, stress test của QA), hãy tuân thủ kiến trúc OOP phân tầng như sau:
 
 ### Bước 1: Tạo Service Class (`src/services/`)
 * Kế thừa `BaseService`, đóng gói toàn bộ business rules.
@@ -502,9 +528,9 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm 
    ```bash
    npm run seed
    ```
-3. **Chạy kiểm thử tự động toàn bộ 18 bộ test suites:**
+3. **Chạy kiểm thử tự động toàn bộ 19 bộ test suites:**
    ```bash
-   npm test                             # Master Test Runner (chạy toàn bộ 18 suites - 682 assertions)
+   npm test                             # Master Test Runner (chạy toàn bộ 19 suites - 718 assertions)
    node tests/test_tuan_module.js       # 60 tests Bán hàng POS, IMEI, Bảo hành, Data Contract
    node tests/test_tuan_tuan5_6_e2e.js  # 33 tests E2E tích hợp Bán hàng POS, Cọc, Bảo hành, KPI (Tuần 5-6)
    node tests/test_viet_module.js       # 32 tests Đặt hàng trước (Tuần 3)
@@ -518,11 +544,12 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm 
    node tests/test_tuan_tuan4.js        # 13 tests Nhập hàng loạt IMEI & Lịch sử NCC (Tuần 4)
    node tests/test_tuan_tuan5.js        # 8 tests Trả hàng NCC & Cấn trừ công nợ (Tuần 5)
    node tests/test_vuong_module.js      # 37 tests Thu - Chi & Sổ quỹ (Tuần 3)
+   node tests/test_vuong_tuan4_kiemke.js # 23 tests Kiểm kê kho & Xử lý lệch IMEI (Tuần 4)
    node tests/verify_all_logins.js      # 6 tests Ma trận đăng nhập 6 vai trò
-   node tests/test_http_endpoints.js    # 46 tests REST API 24 Endpoints & Data Contracts (QA & Backend)
+   node tests/test_http_endpoints.js    # 49 tests REST API 25 Endpoints & Data Contracts (QA & Backend)
    node tests/test_frontend_dom_contract.js # 65 tests DOM ID Bindings & Data Extractors (QA & UI)
    node tests/test_concurrency_stress.js # 5 tests Concurrency Atomic Lock & Stress Test
-   node tests/test_ui_html_structure.js # 191 tests Kiểm thử cấu trúc HTML, Sidebar & Assets
+   node tests/test_ui_html_structure.js # 201 tests Kiểm thử cấu trúc HTML, Sidebar & Assets
    ```
 4. **Chạy server phát triển:**
    ```bash
@@ -537,6 +564,7 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm 
    - Thu - Chi & Sổ quỹ: `http://localhost:3000/so-quy/`
    - Nhập kho hàng hóa: `http://localhost:3000/nhap-kho/`
    - Quản lý Công nợ & Đối soát: `http://localhost:3000/cong-no/`
+   - Kiểm kê kho & Đối soát IMEI: `http://localhost:3000/kiem-ke/`
 
 ---
 
@@ -547,10 +575,12 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm 
 - **Phiếu Chi (Mẫu số 02 - TT)**: Tự động hạch toán Nợ 331, 642 / Có 1111; kèm chứng từ gốc; 5 chữ ký chuẩn.
 - **Phiếu Nhập Kho (Mẫu số 01 - VT)**: Danh mục sản phẩm đối chiếu theo chứng từ và thực nhập; Nợ 1561 / Có 331; 4 chữ ký (*Người lập, Người giao, Thủ kho, Kế toán trưởng*).
 - **Hóa Đơn Bán Hàng Kiêm Phiếu Xuất Kho (Mẫu số 02 - VT)**: Ký hiệu Serial, Mã số thuế, chi tiết danh sách IMEI và phụ kiện, cấn trừ cọc, chiết khấu, 3 chữ ký (*Người mua, Thu ngân, Thủ kho*).
+- **Biên Bản Kiểm Kê Hàng Hóa (Mẫu số 05 - VT)**: Bảng đối soát thực tế vs lý thuyết, thống kê số lượng khớp/thừa/thiếu/bất thường, ý kiến kết luận ban kiểm kê, 3 chữ ký (*Thủ kho, Kế toán kho, Giám đốc duyệt*).
 
 ### 9.2. Chuẩn Hóa Trường Trạng Thái `status: Boolean` (Bit)
-- Toàn bộ 10 Model chính (`SanPham`, `NhaCungCap`, `KhachHang`, `PhuKien`, `DanhMuc`, `MayImei`, `PhieuThu`, `PhieuChi`, `PhieuNhap`, `HoaDon`) đều được bổ sung trường `status: { type: Boolean, default: true }` phục vụ soft-delete và tuân thủ chặt chẽ tiêu chuẩn thiết kế cơ sở dữ liệu.
+- Toàn bộ 10 Model chính (`SanPham`, `NhaCungCap`, `KhachHang`, `PhuKien`, `DanhMuc`, `MayImei`, `PhieuThu`, `PhieuChi`, `PhieuNhap`, `HoaDon`, `BienBanKiemKe`, `DieuChinhKho`) đều được bổ sung trường `status: { type: Boolean, default: true }` phục vụ soft-delete và tuân thủ chặt chẽ tiêu chuẩn thiết kế cơ sở dữ liệu.
 
 ### 9.3. Cơ Chế Cô Lập & Tự Động Dọn Dẹp Dữ Liệu Test (`tests/cleanup_db.js`)
 - Tích hợp hook tự động dọn dẹp dữ liệu rác trước và sau khi chạy test suite trong `run_all_tests.js`, đảm bảo cơ sở dữ liệu thật luôn sạch sẽ và không bị nhân bản các bản ghi dummy khi thực thi kiểm thử liên tục.
+
 

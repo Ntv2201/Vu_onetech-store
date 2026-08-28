@@ -198,6 +198,12 @@ async function runHttpContractTests() {
   const sqData = resSQ.data?.data;
   assert(sqData && sqData.tongThu !== undefined && sqData.tongChi !== undefined, 'Sổ quỹ trả về đầy đủ tổngThu, tongChi, soDu');
 
+  // 3.8 GET /api/kiem-ke
+  const resKK = await requestApi('/api/kiem-ke', {}, thuKhoCookie);
+  assert(resKK.status === 200 && resKK.data?.success === true, 'GET /api/kiem-ke trả về 200 OK');
+  const kkData = resKK.data?.data;
+  assert(kkData && Array.isArray(kkData.items || kkData), 'Danh sách biên bản kiểm kê trả về đúng mảng items');
+
   // -------------------------------------------------------------
   // 4. KIỂM THỬ MA TRẬN PHÂN QUYỀN RBAC 403 FORBIDDEN
   // -------------------------------------------------------------
@@ -229,6 +235,13 @@ async function runHttpContractTests() {
     body: JSON.stringify({ nhaCungCap: '600000000000000000000000' })
   }, roleCookies['thungan']);
   assert(rbac4.status === 403, 'Thu ngân không có quyền lập phiếu nhập kho (Nhận 403 Forbidden)');
+
+  // 4.5 Kỹ thuật lập Biên bản kiểm kê kho -> Phải nhận 403
+  const rbac5 = await requestApi('/api/kiem-ke', {
+    method: 'POST',
+    body: JSON.stringify({ danhSachImeiThucTe: [] })
+  }, kyThuatCookie);
+  assert(rbac5.status === 403, 'Kỹ thuật không có quyền lập biên bản kiểm kê kho (Nhận 403 Forbidden)');
 
   // -------------------------------------------------------------
   // TỔNG KẾT
