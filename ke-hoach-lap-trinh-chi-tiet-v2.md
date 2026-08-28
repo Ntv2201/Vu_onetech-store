@@ -267,16 +267,21 @@
 - [x] Xây dựng giao diện Kiểm kê kho `src/public/pages/kiem-ke/index.html` và `src/public/js/kiemke.js` kèm mẫu in Mẫu số 05-VT Thông tư 200/2014/TT-BTC `inBienBanKiemKeChuan()`.
 - [x] Viết bộ kiểm thử tự động 23/23 test cases PASS ([`tests/test_vuong_tuan4_kiemke.js`](tests/test_vuong_tuan4_kiemke.js)).
 
-#### Tuần 5: Phân hệ Báo cáo Thống kê & API Dashboard
-- [ ] `GET /api/bao-cao/doanh-thu?tuNgay=&denNgay=&nhom=ngay|tuan|thang` — Doanh thu thuần, chi phí, lợi nhuận gộp.
-- [ ] `GET /api/bao-cao/top-san-pham` — Top sản phẩm bán chạy theo số lượng và doanh thu.
-- [ ] `GET /api/bao-cao/ton-lau-ngay?soNgay=60` — Danh sách các máy IMEI tồn kho lâu chưa bán.
-- [ ] Cung cấp dữ liệu chuẩn định dạng cho Vũ vẽ biểu đồ Chart.js.
+#### Tuần 5: Phân hệ Báo cáo Thống kê & API Dashboard [ĐÃ HOÀN THÀNH 100%]
+- [x] Xây dựng `BaoCaoService` kế thừa `BaseService`, `BaoCaoController`, route `/api/bao-cao`.
+- [x] `GET /api/bao-cao/doanh-thu?tuNgay=&denNgay=&nhom=ngay|tuan|thang` — Doanh thu thuần, chi phí, lợi nhuận gộp và chia series theo mốc thời gian.
+- [x] `GET /api/bao-cao/top-san-pham` — Top sản phẩm bán chạy theo số lượng và doanh thu.
+- [x] `GET /api/bao-cao/ton-lau-ngay?soNgay=60` — Danh sách các máy IMEI tồn kho lâu chưa bán (> 30 ngày, > 60 ngày).
+- [x] `GET /api/bao-cao/tong-hop-tai-chinh` — Báo cáo đối soát chéo tài chính toàn hệ thống (Sổ quỹ, Hóa đơn, Nhập kho, Công nợ, Giá trị kho).
+- [x] Cung cấp dữ liệu chuẩn định dạng cho Vũ vẽ biểu đồ Chart.js.
 
-#### Tuần 6-8: Nối UI, Kiểm thử Sổ quỹ & Demo
-- [ ] Nối API với giao diện Sổ quỹ, Kiểm kê và Báo cáo của Vũ.
-- [ ] Phối hợp cùng Việt Anh (QA) đối soát số liệu sổ quỹ luôn khớp 100% với Hóa đơn + Nhập kho + Trả góp + Đổi trả.
-- [ ] Demo luồng Kiểm kê phát hiện IMEI thừa/thiếu và Báo cáo Dashboard.
+#### Tuần 6: Nối UI Dashboard, Đối soát Sổ quỹ & Kiểm thử E2E [ĐÃ HOÀN THÀNH 100%]
+- [x] Nối 100% API Báo cáo vào giao diện Dashboard `src/public/pages/index.html` và `src/public/js/dashboard.js`, tích hợp biểu đồ Chart.js (Line chart Doanh thu & Chi phí) mượt mà có bộ lọc thời gian.
+- [x] Phối hợp cùng Việt Anh (QA) đối soát số liệu sổ quỹ luôn khớp 100% với Hóa đơn + Nhập kho + Trả góp + Đổi trả.
+- [x] Viết bộ kiểm thử tự động 25/25 test cases PASS ([`tests/test_vuong_tuan5_6_e2e.js`](tests/test_vuong_tuan5_6_e2e.js)).
+
+#### Tuần 7-8: Stress Test & Diễn tập Demo
+- [ ] Phụ trách phần demo luồng Sổ quỹ, Kiểm kê kho phát hiện IMEI lệch và Báo cáo Dashboard trong buổi bảo vệ.
 
 ---
 

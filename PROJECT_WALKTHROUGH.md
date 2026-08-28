@@ -500,11 +500,30 @@ Tất cả API trả về định dạng JSON thống nhất theo quy ước d�
   - Biểu mẫu in Biên bản kiểm kê vật tư, hàng hóa Mẫu số 05-VT theo Thông tư 200/2014/TT-BTC (`inBienBanKiemKeChuan()`).
 * **Kiểm thử tự động:** Bộ test `tests/test_vuong_tuan4_kiemke.js` với 23/23 test cases PASS 100%.
 
+### 6.15. Phân hệ Báo cáo Thống kê & API Dashboard (`BaoCaoService`, `baoCaoController`) — *Module Đinh Đức Vương*
+* `BaoCaoService.getBaoCaoDoanhThu({ tuNgay, denNgay, nhom })`:
+  - Phân tích Doanh thu thuần (từ `HoaDon`), Chi phí (từ `PhieuNhap` và `PhieuChi`), Lợi nhuận gộp theo mốc thời gian (ngày / tuần / tháng).
+  - Tự động định dạng series và labels sẵn sàng cho biểu đồ Line Chart của Chart.js.
+* `BaoCaoService.getTopSanPham({ limit, tuNgay, denNgay })`:
+  - Thống kê xếp hạng các model sản phẩm bán chạy nhất theo số lượng và doanh thu mang lại.
+* `BaoCaoService.getHangTonLauNgay({ soNgay, limit })`:
+  - Lọc và cảnh báo danh sách máy `MayImei` tồn kho lâu ngày chưa bán được (> 30 ngày, > 60 ngày), tính số ngày tồn kho thực tế và tổng vốn đọng.
+* `BaoCaoService.getBaoCaoTaiChinhTongHop()`:
+  - Báo cáo đối soát chéo tài chính toàn hệ thống: Khớp nối 100% giữa Sổ quỹ (Tiền mặt/Ngân hàng), Công nợ phải thu KH, Công nợ phải trả NCC và Giá trị tồn kho thực tế.
+* **RESTful API Endpoints (`/api/bao-cao`):**
+  - `GET /api/bao-cao/doanh-thu`: Báo cáo doanh thu & chi phí (RBAC: `Quản lý`, `Kế toán`).
+  - `GET /api/bao-cao/top-san-pham`: Top sản phẩm bán chạy (RBAC: `Quản lý`, `Kế toán`, `NV bán hàng`, `Thủ kho`).
+  - `GET /api/bao-cao/ton-lau-ngay`: Cảnh báo hàng tồn lâu (RBAC: `Quản lý`, `Thủ kho`, `Kế toán`).
+  - `GET /api/bao-cao/tong-hop-tai-chinh`: Báo cáo tổng hợp tài chính (RBAC: `Quản lý`, `Kế toán`).
+* **Giao diện Dashboard (`src/public/pages/index.html` & `src/public/js/dashboard.js`):**
+  - Tích hợp biểu đồ động Chart.js, bộ lọc chuyển đổi nhóm Ngày / Tuần / Tháng, hiển thị Top 5 sản phẩm và cảnh báo máy tồn lâu ngày.
+* **Kiểm thử tự động:** Bộ test `tests/test_vuong_tuan5_6_e2e.js` với 25/25 test cases PASS 100%.
+
 ---
 
 ## 7. HƯỚNG DẪN DÀNH CHO CÁC THÀNH VIÊN KHI CODE MODULE MỚI
 
-Khi các thành viên tiếp tục triển khai các module tiếp theo (báo cáo doanh thu/dashboard của Vượng, stress test của QA), hãy tuân thủ kiến trúc OOP phân tầng như sau:
+Khi các thành viên tiếp tục triển khai các module tiếp theo (stress test của QA), hãy tuân thủ kiến trúc OOP phân tầng như sau:
 
 ### Bước 1: Tạo Service Class (`src/services/`)
 * Kế thừa `BaseService`, đóng gói toàn bộ business rules.
@@ -528,9 +547,9 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (báo c�
    ```bash
    npm run seed
    ```
-3. **Chạy kiểm thử tự động toàn bộ 19 bộ test suites:**
+3. **Chạy kiểm thử tự động toàn bộ 20 bộ test suites:**
    ```bash
-   npm test                             # Master Test Runner (chạy toàn bộ 19 suites - 718 assertions)
+   npm test                             # Master Test Runner (chạy toàn bộ 20 suites - 745 assertions)
    node tests/test_tuan_module.js       # 60 tests Bán hàng POS, IMEI, Bảo hành, Data Contract
    node tests/test_tuan_tuan5_6_e2e.js  # 33 tests E2E tích hợp Bán hàng POS, Cọc, Bảo hành, KPI (Tuần 5-6)
    node tests/test_viet_module.js       # 32 tests Đặt hàng trước (Tuần 3)
@@ -545,8 +564,9 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (báo c�
    node tests/test_tuan_tuan5.js        # 8 tests Trả hàng NCC & Cấn trừ công nợ (Tuần 5)
    node tests/test_vuong_module.js      # 37 tests Thu - Chi & Sổ quỹ (Tuần 3)
    node tests/test_vuong_tuan4_kiemke.js # 23 tests Kiểm kê kho & Xử lý lệch IMEI (Tuần 4)
+   node tests/test_vuong_tuan5_6_e2e.js # 25 tests Báo cáo Doanh thu, Top SP & Đối soát Sổ quỹ E2E (Tuần 5-6)
    node tests/verify_all_logins.js      # 6 tests Ma trận đăng nhập 6 vai trò
-   node tests/test_http_endpoints.js    # 49 tests REST API 25 Endpoints & Data Contracts (QA & Backend)
+   node tests/test_http_endpoints.js    # 51 tests REST API 26 Endpoints & Data Contracts (QA & Backend)
    node tests/test_frontend_dom_contract.js # 65 tests DOM ID Bindings & Data Extractors (QA & UI)
    node tests/test_concurrency_stress.js # 5 tests Concurrency Atomic Lock & Stress Test
    node tests/test_ui_html_structure.js # 201 tests Kiểm thử cấu trúc HTML, Sidebar & Assets
@@ -582,5 +602,6 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (báo c�
 
 ### 9.3. Cơ Chế Cô Lập & Tự Động Dọn Dẹp Dữ Liệu Test (`tests/cleanup_db.js`)
 - Tích hợp hook tự động dọn dẹp dữ liệu rác trước và sau khi chạy test suite trong `run_all_tests.js`, đảm bảo cơ sở dữ liệu thật luôn sạch sẽ và không bị nhân bản các bản ghi dummy khi thực thi kiểm thử liên tục.
+
 
 

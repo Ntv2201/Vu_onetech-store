@@ -204,6 +204,12 @@ async function runHttpContractTests() {
   const kkData = resKK.data?.data;
   assert(kkData && Array.isArray(kkData.items || kkData), 'Danh sách biên bản kiểm kê trả về đúng mảng items');
 
+  // 3.9 GET /api/bao-cao/doanh-thu
+  const resBC = await requestApi('/api/bao-cao/doanh-thu', {}, keToanCookie);
+  assert(resBC.status === 200 && resBC.data?.success === true, 'GET /api/bao-cao/doanh-thu trả về 200 OK');
+  const bcData = resBC.data?.data;
+  assert(bcData && bcData.tongQuan && typeof bcData.tongQuan.tongDoanhThu === 'number', 'Báo cáo doanh thu trả về đầy đủ tổngQuan');
+
   // -------------------------------------------------------------
   // 4. KIỂM THỬ MA TRẬN PHÂN QUYỀN RBAC 403 FORBIDDEN
   // -------------------------------------------------------------

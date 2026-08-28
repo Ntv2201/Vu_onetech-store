@@ -18,6 +18,7 @@ const PhieuNhapService = require('./PhieuNhapService');
 const CongNoService = require('./CongNoService');
 const TraGopService = require('./TraGopService');
 const KiemKeService = require('./KiemKeService');
+const BaoCaoService = require('./BaoCaoService');
 
 module.exports = {
   BaseService,
@@ -39,5 +40,6 @@ module.exports = {
   PhieuNhapService,
   CongNoService,
   TraGopService,
-  KiemKeService
+  KiemKeService,
+  BaoCaoService
 };

@@ -20,6 +20,7 @@ const khoRoutes = require('./khoRoutes');
 const congNoRoutes = require('./congNoRoutes');
 const traGopRoutes = require('./traGopRoutes');
 const kiemKeRoutes = require('./kiemKeRoutes');
+const baoCaoRoutes = require('./baoCaoRoutes');
 
 // Mount toàn bộ REST API endpoints
 router.use('/auth', authRoutes);
@@ -41,5 +42,6 @@ router.use('/kho', khoRoutes);
 router.use('/cong-no', congNoRoutes);
 router.use('/tra-gop', traGopRoutes);
 router.use('/kiem-ke', kiemKeRoutes);
+router.use('/bao-cao', baoCaoRoutes);
 
 module.exports = router;
