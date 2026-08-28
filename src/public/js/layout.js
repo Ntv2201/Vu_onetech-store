@@ -134,23 +134,58 @@ function renderSidebarAndNavbar(user) {
   // Render Navbar
   const navbarContainer = document.getElementById('appNavbar');
   if (navbarContainer) {
+    const initials = user.hoTen ? user.hoTen.split(' ').map(n => n[0]).slice(-2).join('').toUpperCase() : 'U';
     navbarContainer.innerHTML = `
       <header class="app-navbar">
         <div class="d-flex align-items-center gap-3">
-          <button class="btn btn-light d-lg-none" type="button" id="btnToggleSidebar">
+          <button class="btn btn-light d-lg-none shadow-sm rounded-3" type="button" id="btnToggleSidebar">
             <i class="bi bi-list fs-5"></i>
           </button>
-          <span class="text-muted small fw-medium">Hệ thống Quản lý Bán hàng theo từng IMEI/Serial</span>
+          <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center justify-content-center rounded-3 text-white" style="width: 32px; height: 32px; background: linear-gradient(135deg, #4f46e5, #06b6d4); box-shadow: 0 2px 8px rgba(79,70,229,0.3);">
+              <i class="bi bi-phone-vibrate-fill" style="font-size: 0.95rem;"></i>
+            </div>
+            <div class="d-none d-md-block">
+              <div class="fw-bold text-dark" style="font-size: 0.92rem; letter-spacing: -0.01em;">Hệ thống Quản lý Bán hàng OneTech Store</div>
+              <div class="text-muted" style="font-size: 0.72rem;">Theo dõi &amp; Quản lý chi tiết từng máy theo số IMEI</div>
+            </div>
+          </div>
         </div>
 
         <div class="d-flex align-items-center gap-3">
-          <div class="text-end d-none d-sm-block">
-            <div class="fw-semibold small">${escapeHtml(user.hoTen)}</div>
-            <div class="text-muted" style="font-size: 0.75rem;">@${escapeHtml(user.tenDangNhap)}</div>
+          <!-- Đồng hồ thời gian thực -->
+          <div class="d-none d-lg-flex align-items-center gap-2 px-3 py-1 rounded-pill" style="background: rgba(238, 242, 255, 0.9); border: 1px solid #c7d2fe; font-size: 0.8rem; color: #4338ca; font-weight: 500;">
+            <i class="bi bi-clock-history"></i>
+            <span id="liveClockDisplay">--:--:--</span>
+          </div>
+
+          <!-- Thông tin tài khoản -->
+          <div class="d-flex align-items-center gap-2 ps-2">
+            <div class="text-end d-none d-sm-block">
+              <div class="fw-bold small text-dark" style="line-height: 1.2;">${escapeHtml(user.hoTen)}</div>
+              <div class="d-flex align-items-center justify-content-end gap-1 mt-0.5">
+                <span class="badge" style="background: linear-gradient(135deg, #4f46e5, #6366f1); font-size: 0.68rem; font-weight: 600; padding: 2px 6px;">${escapeHtml(user.vaiTro)}</span>
+                <span class="text-muted" style="font-size: 0.72rem;">@${escapeHtml(user.tenDangNhap)}</span>
+              </div>
+            </div>
+            <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px; background: linear-gradient(135deg, #6366f1, #a855f7); font-size: 0.85rem; border: 2px solid #ffffff;">
+              ${initials}
+            </div>
           </div>
         </div>
       </header>
     `;
+
+    // Khởi động đồng hồ live ticking
+    const clockEl = document.getElementById('liveClockDisplay');
+    if (clockEl) {
+      const updateClock = () => {
+        const now = new Date();
+        clockEl.textContent = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' - ' + now.toLocaleDateString('vi-VN');
+      };
+      updateClock();
+      setInterval(updateClock, 1000);
+    }
   }
 
   // ── Sự kiện đăng xuất ──────────────────────────────────
@@ -239,4 +274,215 @@ function highlightCurrentMenu() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', initLayout);
+// =========================================
+// UNIVERSAL CUSTOM DROPDOWN ENGINE
+// =========================================
+function getDropdownIconForSelect(select) {
+  const id = (select.id || '').toLowerCase();
+  const name = (select.name || '').toLowerCase();
+  if (id.includes('danhmuc') || name.includes('danhmuc')) return 'bi-tags';
+  if (id.includes('hang') || name.includes('hang')) return 'bi-building';
+  if (id.includes('sanpham') || name.includes('sanpham') || id.includes('may') || name.includes('may')) return 'bi-phone';
+  if (id.includes('vaitro') || name.includes('vaitro') || id.includes('role')) return 'bi-person-badge';
+  if (id.includes('trangthai') || name.includes('trangthai') || id.includes('status')) return 'bi-activity';
+  if (id.includes('kho') || name.includes('kho')) return 'bi-archive';
+  if (id.includes('ncc') || name.includes('nhacungcap')) return 'bi-truck';
+  if (id.includes('khachhang') || name.includes('khachhang')) return 'bi-person-heart';
+  if (id.includes('linhkien') || name.includes('linhkien')) return 'bi-cpu';
+  if (id.includes('phukien') || name.includes('phukien')) return 'bi-headphones';
+  if (id.includes('baohanh')) return 'bi-shield-check';
+  return 'bi-chevron-expand';
+}
+
+function enhanceSelect(select) {
+  if (!select || select.dataset.enhanced === 'true' || select.classList.contains('d-none')) return;
+
+  // Mark as enhanced
+  select.dataset.enhanced = 'true';
+  select.style.display = 'none';
+
+  // Create wrapper container
+  const container = document.createElement('div');
+  container.className = 'custom-dropdown-container';
+  if (select.classList.contains('form-select-sm')) {
+    container.classList.add('custom-dropdown-sm');
+  }
+
+  // Insert container after select
+  select.parentNode.insertBefore(container, select.nextSibling);
+
+  function getSelectedOption() {
+    return select.options[select.selectedIndex] || select.options[0];
+  }
+
+  function updateTriggerUI() {
+    const triggerEl = container.querySelector('.custom-dropdown-trigger');
+    if (!triggerEl) return;
+    const defaultIcon = getDropdownIconForSelect(select);
+    const selectedOption = getSelectedOption();
+    const isDefaultSelected = !select.value;
+    const currentText = selectedOption ? selectedOption.text : '-- Chọn --';
+
+    triggerEl.innerHTML = `
+      <div class="custom-dropdown-value">
+        <div class="custom-dropdown-avatar" style="background: ${isDefaultSelected ? 'linear-gradient(135deg, #e0e7ff, #c7d2fe)' : 'linear-gradient(135deg, #4f46e5, #06b6d4)'}; color: ${isDefaultSelected ? '#4338ca' : '#ffffff'}; width: 28px; height: 28px; font-size: 0.8rem;">
+          <i class="bi ${defaultIcon}"></i>
+        </div>
+        <div class="overflow-hidden">
+          <div class="custom-dropdown-name" style="font-size: 0.84rem;">${escapeHtml(currentText)}</div>
+        </div>
+      </div>
+      <i class="bi bi-chevron-down custom-dropdown-chevron"></i>
+    `;
+  }
+
+  function renderOptionsList(keyword = '') {
+    const listEl = container.querySelector('.custom-dropdown-options-list');
+    if (!listEl) return;
+
+    const kw = (keyword || '').trim().toLowerCase();
+    const defaultIcon = getDropdownIconForSelect(select);
+    const optionsArray = Array.from(select.options);
+
+    const filtered = optionsArray.filter(opt => {
+      if (!kw) return true;
+      return opt.text.toLowerCase().includes(kw) || opt.value.toLowerCase().includes(kw);
+    });
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `<div class="p-3 text-center text-muted small"><i class="bi bi-search me-1"></i>Không có mục phù hợp</div>`;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(opt => {
+      const isSelected = opt.value === select.value;
+      const isDefault = !opt.value;
+      return `
+        <div class="custom-dropdown-option ${isSelected ? 'active' : ''}" data-value="${escapeHtml(opt.value)}">
+          <div class="d-flex align-items-center gap-2 overflow-hidden">
+            <div class="custom-dropdown-avatar" style="background: ${isDefault ? 'linear-gradient(135deg, #e0e7ff, #c7d2fe)' : 'linear-gradient(135deg, #eef2ff, #e0e7ff)'}; color: #4f46e5; width: 26px; height: 26px; font-size: 0.75rem;">
+              <i class="bi ${isDefault ? 'bi-grid' : defaultIcon}"></i>
+            </div>
+            <div class="fw-semibold text-truncate small">${escapeHtml(opt.text)}</div>
+          </div>
+          <i class="bi bi-check2-circle check-icon"></i>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function buildDropdownDOM() {
+    const totalOptions = select.options.length;
+    const showSearch = totalOptions > 5;
+
+    container.innerHTML = `
+      <div class="custom-dropdown-trigger"></div>
+      <div class="custom-dropdown-menu">
+        ${showSearch ? `
+          <div class="custom-dropdown-search-wrapper">
+            <i class="bi bi-search"></i>
+            <input type="text" class="custom-dropdown-search-input" placeholder="Tìm kiếm..." autocomplete="off">
+          </div>
+        ` : ''}
+        <div class="custom-dropdown-options-list"></div>
+      </div>
+    `;
+
+    updateTriggerUI();
+    renderOptionsList('');
+
+    const searchInput = container.querySelector('.custom-dropdown-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        renderOptionsList(e.target.value);
+      });
+    }
+  }
+
+  buildDropdownDOM();
+
+  // Delegated click handler on container
+  container.addEventListener('click', (e) => {
+    const searchWrapper = e.target.closest('.custom-dropdown-search-wrapper');
+    if (searchWrapper) {
+      e.stopPropagation();
+      return;
+    }
+
+    const trigger = e.target.closest('.custom-dropdown-trigger');
+    if (trigger) {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = container.classList.contains('open');
+      closeAllDropdowns(container);
+      if (!isOpen) {
+        container.classList.add('open');
+        container.closest('.card-custom')?.classList.add('has-open-dropdown');
+        const searchInput = container.querySelector('.custom-dropdown-search-input');
+        if (searchInput) {
+          searchInput.value = '';
+          renderOptionsList('');
+          setTimeout(() => searchInput.focus(), 50);
+        }
+      } else {
+        container.classList.remove('open');
+        container.closest('.card-custom')?.classList.remove('has-open-dropdown');
+      }
+      return;
+    }
+
+    const option = e.target.closest('.custom-dropdown-option');
+    if (option) {
+      e.preventDefault();
+      e.stopPropagation();
+      const val = option.dataset.value;
+      select.value = val;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      select.dispatchEvent(new Event('input', { bubbles: true }));
+      container.classList.remove('open');
+      container.closest('.card-custom')?.classList.remove('has-open-dropdown');
+      updateTriggerUI();
+      renderOptionsList('');
+      return;
+    }
+  });
+
+  // Watch for external changes
+  select.addEventListener('change', () => {
+    updateTriggerUI();
+    renderOptionsList('');
+  });
+
+  // Watch for dynamic DOM option additions / removals
+  const observer = new MutationObserver(() => {
+    buildDropdownDOM();
+  });
+  observer.observe(select, { childList: true, subtree: true });
+}
+
+function enhanceAllSelects() {
+  document.querySelectorAll('select.form-select:not([data-no-enhance])').forEach(sel => {
+    enhanceSelect(sel);
+  });
+}
+
+function closeAllDropdowns(exceptContainer = null) {
+  document.querySelectorAll('.custom-dropdown-container').forEach(c => {
+    if (c !== exceptContainer) {
+      c.classList.remove('open');
+      c.closest('.card-custom')?.classList.remove('has-open-dropdown');
+    }
+  });
+}
+
+document.addEventListener('click', () => closeAllDropdowns());
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeAllDropdowns();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  initLayout();
+  enhanceAllSelects();
+  setTimeout(enhanceAllSelects, 300);
+  setTimeout(enhanceAllSelects, 1000);
+});

@@ -14,13 +14,16 @@ class DanhMucService extends BaseService {
       PhuKien.aggregate([{ $group: { _id: '$danhMuc', count: { $sum: 1 } } }])
     ]);
 
-    const countMap = {};
-    spCounts.forEach(c => { countMap[c._id.toString()] = (countMap[c._id.toString()] || 0) + c.count; });
-    pkCounts.forEach(c => { countMap[c._id.toString()] = (countMap[c._id.toString()] || 0) + c.count; });
+    const spMap = {};
+    spCounts.forEach(c => { if (c._id) spMap[c._id.toString()] = c.count; });
+    const pkMap = {};
+    pkCounts.forEach(c => { if (c._id) pkMap[c._id.toString()] = c.count; });
 
     return danhMucs.map(dm => {
       const dmObj = dm.toObject();
-      dmObj.totalProducts = countMap[dm._id.toString()] || 0;
+      dmObj.countSP = spMap[dm._id.toString()] || 0;
+      dmObj.countPK = pkMap[dm._id.toString()] || 0;
+      dmObj.totalProducts = (dmObj.countSP + dmObj.countPK);
       return dmObj;
     });
   }
