@@ -20,14 +20,14 @@ async function loadInitialData() {
   ]);
 
   if (resNCC.success) {
-    dsNhaCungCap = resNCC.data?.list || [];
+    dsNhaCungCap = Array.isArray(resNCC.data) ? resNCC.data : (resNCC.data?.list || resNCC.data?.nhaCungCaps || []);
     renderNccOptions();
   }
   if (resSP.success) {
-    dsSanPham = resSP.data?.list || [];
+    dsSanPham = Array.isArray(resSP.data) ? resSP.data : (resSP.data?.sanPhams || resSP.data?.list || []);
   }
   if (resPK.success) {
-    dsPhuKien = resPK.data?.list || [];
+    dsPhuKien = Array.isArray(resPK.data) ? resPK.data : (resPK.data?.phuKiens || resPK.data?.list || []);
   }
 }
 
@@ -35,7 +35,7 @@ function renderNccOptions() {
   const filterSelect = document.getElementById('filterNCC');
   const inputSelect = document.getElementById('inputNCC');
 
-  const options = dsNhaCungCap.map(ncc => `<option value="${ncc._id}">${ncc.tenNCC} (${ncc.sdt || 'N/A'})</option>`).join('');
+  const options = dsNhaCungCap.map(ncc => `<option value="${ncc._id}">${escapeHtml(ncc.tenNCC)} (${ncc.sdt || 'N/A'})</option>`).join('');
 
   if (filterSelect) {
     filterSelect.innerHTML = '<option value="">-- Tất cả Nhà Cung Cấp --</option>' + options;
@@ -120,10 +120,13 @@ function resetFilters() {
 /**
  * Modal lập phiếu nhập
  */
-function openCreateNhapKhoModal() {
+async function openCreateNhapKhoModal() {
   document.getElementById('formCreateNhapKho').reset();
   document.getElementById('mayRowsContainer').innerHTML = '';
   document.getElementById('phuKienRowsContainer').innerHTML = '';
+  if (dsSanPham.length === 0 || dsNhaCungCap.length === 0 || dsPhuKien.length === 0) {
+    await loadInitialData();
+  }
   addMayRow(); // Thêm sẵn 1 dòng máy
   recalcTotalPreview();
   const modal = new bootstrap.Modal(document.getElementById('modalCreateNhapKho'));
@@ -134,7 +137,7 @@ let rowMayCounter = 0;
 function addMayRow() {
   rowMayCounter++;
   const container = document.getElementById('mayRowsContainer');
-  const spOptions = dsSanPham.map(sp => `<option value="${sp._id}">${sp.tenMay} (${sp.hang || 'Apple'})</option>`).join('');
+  const spOptions = dsSanPham.map(sp => `<option value="${sp._id}">${escapeHtml(sp.tenMay)} (${escapeHtml(sp.hang || 'Apple')})</option>`).join('');
 
   const rowHtml = `
     <div class="row g-2 align-items-end p-2 bg-light rounded border" id="mayRow_${rowMayCounter}">
@@ -175,7 +178,7 @@ let rowPkCounter = 0;
 function addPhuKienRow() {
   rowPkCounter++;
   const container = document.getElementById('phuKienRowsContainer');
-  const pkOptions = dsPhuKien.map(pk => `<option value="${pk._id}">${pk.tenPK || pk.tenPhuKien} (Tồn hiện tại: ${pk.soLuongTon})</option>`).join('');
+  const pkOptions = dsPhuKien.map(pk => `<option value="${pk._id}">${escapeHtml(pk.tenPK || pk.tenPhuKien)} (Tồn: ${pk.soLuongTon})</option>`).join('');
 
   const rowHtml = `
     <div class="row g-2 align-items-end p-2 bg-light rounded border" id="pkRow_${rowPkCounter}">

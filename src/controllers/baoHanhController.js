@@ -10,6 +10,19 @@ class BaoHanhController extends BaseController {
     this.create = this.create.bind(this);
     this.xuatLinhKien = this.xuatLinhKien.bind(this);
     this.hoanTat = this.hoanTat.bind(this);
+    this.getDanhSachLinhKien = this.getDanhSachLinhKien.bind(this);
+  }
+
+  /**
+   * GET /api/bao-hanh/linh-kien - Danh sách linh kiện sửa chữa
+   */
+  async getDanhSachLinhKien(req, res) {
+    try {
+      const result = await BaoHanhService.getAllLinhKien();
+      return this.sendSuccess(res, result, 'Lấy danh sách linh kiện thành công');
+    } catch (error) {
+      return this.handleError(res, error, 'Không thể tải danh sách linh kiện');
+    }
   }
 
   /**

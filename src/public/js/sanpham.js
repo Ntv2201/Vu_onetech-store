@@ -161,8 +161,10 @@ async function initSanPhamForm() {
   // 1. Tải danh mục
   const resDM = await api.get('/danh-muc');
   const selectDanhMuc = document.getElementById('selectDanhMuc');
-  if (resDM.success && resDM.data && selectDanhMuc) {
-    resDM.data.forEach(dm => {
+  const dmList = Array.isArray(resDM.data) ? resDM.data : (resDM.data?.danhMucs || resDM.data?.list || []);
+  if (resDM.success && dmList && selectDanhMuc) {
+    selectDanhMuc.innerHTML = '<option value="">-- Chọn danh mục --</option>';
+    dmList.forEach(dm => {
       const opt = document.createElement('option');
       opt.value = dm._id;
       opt.textContent = dm.tenDanhMuc;

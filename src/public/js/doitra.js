@@ -557,9 +557,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         api.get('/phu-kien')
       ]);
 
-      allSanPhams = resSp.data && Array.isArray(resSp.data.data) ? resSp.data.data : (Array.isArray(resSp.data) ? resSp.data : (resSp.sanPhams || []));
-      allAvailableImeis = resMay.data && Array.isArray(resMay.data.data) ? resMay.data.data : (Array.isArray(resMay.data) ? resMay.data : (resMay.mayImeis || []));
-      allPhuKiens = resPk.data && Array.isArray(resPk.data.data) ? resPk.data.data : (Array.isArray(resPk.data) ? resPk.data : (resPk.phuKiens || []));
+      allSanPhams = Array.isArray(resSp.data) ? resSp.data : (resSp.data?.sanPhams || resSp.sanPhams || []);
+      allAvailableImeis = Array.isArray(resMay.data) ? resMay.data : (resMay.data?.imeis || resMay.data?.data || resMay.mayImeis || []);
+      allPhuKiens = Array.isArray(resPk.data) ? resPk.data : (resPk.data?.phuKiens || resPk.phuKiens || []);
 
       if (selectSanPhamMoi) {
         selectSanPhamMoi.innerHTML = '<option value="">-- Tất cả Model máy mới --</option>' +

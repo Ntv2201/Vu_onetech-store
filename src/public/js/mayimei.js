@@ -162,11 +162,13 @@ async function initMayImeiForm() {
   // 1. Tải danh sách Model sản phẩm
   const resSP = await api.get('/san-pham');
   const selectSanPham = document.getElementById('selectSanPham');
-  if (resSP.success && resSP.data && selectSanPham) {
-    resSP.data.forEach(sp => {
+  const spList = Array.isArray(resSP.data) ? resSP.data : (resSP.data?.sanPhams || resSP.data?.list || []);
+  if (resSP.success && spList && selectSanPham) {
+    selectSanPham.innerHTML = '<option value="">-- Chọn model sản phẩm --</option>';
+    spList.forEach(sp => {
       const opt = document.createElement('option');
       opt.value = sp._id;
-      opt.textContent = `${sp.tenMay} (${sp.hang}) - Niêm yết: ${formatCurrency(sp.giaBan)}`;
+      opt.textContent = `${sp.tenMay} (${sp.hang || 'Khác'}) - Niêm yết: ${formatCurrency(sp.giaBan || 0)}`;
       selectSanPham.appendChild(opt);
     });
 

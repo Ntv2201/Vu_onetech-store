@@ -12,6 +12,9 @@ router.get('/tra-cuu/:imei', baoHanhController.traCuu);
 // GET /api/bao-hanh - Danh sách phiếu bảo hành
 router.get('/', requireRole('Quản lý', 'Kỹ thuật', 'NV bán hàng'), baoHanhController.index);
 
+// GET /api/bao-hanh/linh-kien - Danh sách linh kiện sửa chữa
+router.get('/linh-kien', requireRole('Quản lý', 'Kỹ thuật', 'NV bán hàng'), baoHanhController.getDanhSachLinhKien);
+
 // GET /api/bao-hanh/:id - Chi tiết phiếu bảo hành
 router.get('/:id', requireRole('Quản lý', 'Kỹ thuật', 'NV bán hàng'), baoHanhController.getDetail);
 

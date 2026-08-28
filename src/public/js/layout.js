@@ -703,6 +703,9 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeAllDropdowns();
 });
 
+window.enhanceAllSelects = enhanceAllSelects;
+window.enhanceSelect = enhanceSelect;
+
 document.addEventListener('DOMContentLoaded', () => {
   initLayout();
   enhanceAllSelects();

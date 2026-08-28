@@ -397,6 +397,13 @@ class BaoHanhService extends BaseService {
 
     return await this.getPhieuBaoHanhDetail(pbh._id);
   }
+
+  /**
+   * Lấy danh sách toàn bộ Linh kiện sửa chữa
+   */
+  async getAllLinhKien() {
+    return await LinhKien.find().sort({ tenLK: 1 });
+  }
 }
 
 module.exports = new BaoHanhService();

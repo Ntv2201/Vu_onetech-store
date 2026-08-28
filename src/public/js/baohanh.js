@@ -363,19 +363,14 @@ async function openModalXuatLinhKien(pbhId) {
   document.getElementById('xuatLkPbhId').value = pbhId;
   const select = document.getElementById('selectLinhKien');
 
-  // Tải danh sách linh kiện từ DB
   select.innerHTML = '<option value="">-- Đang tải linh kiện... --</option>';
 
-  const res = await api.get('/phu-kien'); // Hoặc endpoint linh kiện nếu có
-  // Cung cấp các linh kiện mẫu
-  const lkRes = await api.get('/san-pham'); // query linh kiện
+  const res = await api.get('/bao-hanh/linh-kien');
+  const list = Array.isArray(res.data) ? res.data : (res.linhKiens || res.data?.linhKiens || []);
 
-  // Cho phép chọn các linh kiện có sẵn trong CSDL
-  select.innerHTML = `
-    <option value="">-- Chọn linh kiện cần thay --</option>
-  `;
+  select.innerHTML = '<option value="">-- Chọn linh kiện cần thay --</option>' +
+    list.map(lk => `<option value="${lk._id}">${escapeHtml(lk.tenLK)} (Tồn: ${lk.soLuongTon}, Giá: ${(lk.donGia || 0).toLocaleString('vi-VN')} đ)</option>`).join('');
 
-  // Mở modal xuất linh kiện
   const modal = new bootstrap.Modal(document.getElementById('modalXuatLinhKien'));
   modal.show();
 }

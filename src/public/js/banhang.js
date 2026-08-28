@@ -301,17 +301,17 @@ async function loadPosData() {
   ]);
 
   if (resImei.success) {
-    allAvailableImeis = (resImei.data && Array.isArray(resImei.data.data)) ? resImei.data.data : (Array.isArray(resImei.data) ? resImei.data : []);
+    allAvailableImeis = Array.isArray(resImei.data) ? resImei.data : (resImei.data?.imeis || resImei.data?.data || []);
   }
   if (resPk.success) {
-    allPhuKiens = (resPk.data && Array.isArray(resPk.data.data)) ? resPk.data.data : (Array.isArray(resPk.data) ? resPk.data : []);
+    allPhuKiens = Array.isArray(resPk.data) ? resPk.data : (resPk.data?.phuKiens || resPk.data?.data || []);
   }
   if (resKh.success) {
-    allKhachHangs = (resKh.data && Array.isArray(resKh.data.data)) ? resKh.data.data : (Array.isArray(resKh.data) ? resKh.data : []);
+    allKhachHangs = Array.isArray(resKh.data) ? resKh.data : (resKh.data?.khachHangs || resKh.data?.data || []);
     renderKhachHangOptions();
   }
   if (resSp.success) {
-    allSanPhams = (resSp.data && Array.isArray(resSp.data.data)) ? resSp.data.data : (Array.isArray(resSp.data) ? resSp.data : []);
+    allSanPhams = Array.isArray(resSp.data) ? resSp.data : (resSp.data?.sanPhams || resSp.data?.data || []);
     renderSanPhamOptions();
   }
 
