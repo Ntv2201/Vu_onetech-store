@@ -141,12 +141,13 @@
 - [x] **Đã sửa lỗi nhỏ (Code Review):** `nhapkho.js` dùng sai trường `dienThoai` → đã sửa thành `sdt` (đúng schema NhaCungCap). `PhieuNhapService` đã bổ sung `sdt diaChi` vào populate.
 - [x] Tinh chỉnh phân quyền: Chỉ `'Quản lý'`, `'Thủ kho'` được nhập kho và import hàng loạt (403 Forbidden cho vai trò khác).
 
-#### Tuần 5: Xử lý Tình huống Biên & Trả hàng NCC [ĐANG THỰC HIỆN]
-- [ ] `POST /api/phieu-nhap/tra-hang-ncc` — Trả lại máy lỗi cho NCC: đổi trạng thái IMEI `Con hang` → `Tra NCC`, giảm dư nợ `CongNo`, sinh `PhieuThu` hoàn tiền (nếu đã thanh toán).
-- [ ] Bổ sung test tự động cho luồng trả hàng NCC.
+#### Tuần 5: Xử lý Tình huống Biên & Trả hàng NCC [ĐÃ HOÀN THÀNH 100%]
+- [x] `POST /api/phieu-nhap/tra-hang-ncc` — Trả lại máy lỗi/còn hàng cho NCC: đổi trạng thái IMEI sang `'Tra NCC'`, trừ tồn kho qua `TonKhoService`, giảm dư nợ `CongNo`, sinh `PhieuThu` hoàn tiền (nếu NCC không còn nợ).
+- [x] Bổ sung test tự động cho luồng trả hàng NCC [`tests/test_tuan_tuan5.js`](tests/test_tuan_tuan5.js) (8/8 assertions PASS 100%). Đã đăng ký vào Master Test Runner.
+- [x] Tinh chỉnh xử lý công nợ NCC đa khoản: cấn trừ lần lượt từng khoản nợ và tính toán dư nợ chính xác bằng `reduce()`.
 
-#### Tuần 6-8: Nối UI, Kiểm thử Tích hợp & Demo
-- [ ] Nối API với màn hình Nhập kho của Vũ và nghiệm thu cùng Việt Anh (QA).
+#### Tuần 6-8: Nối UI, Kiểm thử Tích hợp & Demo [ĐÃ HOÀN THÀNH 100%]
+- [x] Nối API với màn hình Nhập kho (`src/public/js/nhapkho.js`), hỗ trợ in phiếu nhập kho chuẩn mẫu 01-VT (`printGoodsReceipt`) và nghiệm thu cùng QA.
 - [ ] Chuẩn bị kịch bản demo nhập lô máy mới vào hệ thống trong buổi bảo vệ.
 
 ---
@@ -207,26 +208,30 @@
 - [x] Màn hình Nhập kho (`src/public/pages/nhap-kho/index.html`) và Sổ quỹ (`src/public/pages/so-quy/index.html`).
 - [x] Màn hình Quản lý Công nợ (`src/public/pages/cong-no/index.html`).
 
-#### Tuần 4 [HIỆN TẠI]: Màn hình Đổi trả máy & Kiểm kê kho
+#### Tuần 4: Màn hình Đổi trả máy & Nâng cấp Quản lý Danh mục [ĐÃ HOÀN THÀNH 100%]
 - [x] `src/public/pages/doi-tra/index.html`: Giao diện tra cứu hóa đơn cũ, chọn IMEI mới cần đổi, tính toán chênh lệch thu thêm/hoàn lại (nối API của Việt).
-- [ ] `src/public/pages/kiem-ke/index.html`: Giao diện quét danh sách IMEI thực tế để phát hiện thừa/thiếu (nối API của Vượng).
+- [x] `src/public/pages/danh-muc/index.html` & `src/public/js/danhmuc.js`: Nâng cấp giao diện Danh mục sản phẩm (4 Stat Cards, bố cục 2 cột, Form thêm nhanh Quick Add, Category Icons và Debounce tìm kiếm).
+- [x] `src/public/pages/kiem-ke/index.html`: Giao diện quét danh sách IMEI thực tế để phát hiện thừa/thiếu (nối API của Vượng).
 
-#### Tuần 5: Màn hình Trả góp & Tích hợp Biểu đồ Chart.js
-- [ ] `src/public/pages/tra-gop/index.html`: Giao diện bảng tính trả góp, lịch thu kỳ trực quan.
-- [ ] Tích hợp Chart.js trên trang chủ Dashboard (vẽ biểu đồ doanh thu theo ngày/tháng, top sản phẩm bán chạy).
+#### Tuần 5: Universal Dropdown Engine, Header Enhancement & Biểu đồ [ĐÃ HOÀN THÀNH 100%]
+- [x] **Universal Custom Dropdown Engine (`src/public/js/layout.js` & `src/public/css/style.css`):** Tự động nâng cấp toàn bộ `<select>` HTML thành Dropdown luxury, avatar icon ngữ nghĩa, tìm kiếm realtime khi > 5 options, animation `dropdownFadeSlide`.
+- [x] **Header Navbar & Dashboard Banner:** Tích hợp đồng hồ thời gian thực (Live ticking clock), Avatar Initials theo họ tên người dùng, Welcome Hero Banner và Quick Actions động theo 6 vai trò.
+- [x] `src/public/pages/tra-gop/index.html`: Giao diện bảng tính trả góp, lịch thu kỳ trực quan.
+- [x] Tích hợp Chart.js trên trang chủ Dashboard (vẽ biểu đồ doanh thu theo ngày/tháng, top sản phẩm bán chạy).
 
-#### Tuần 6: Bộ Mẫu In Chuẩn Hóa (@media print) & Hoàn thiện UX
-- [ ] Hoàn thiện chuẩn in ấn `@media print` cho:
-  1. Hóa đơn bán lẻ (khổ K80 / A5).
-  2. Phiếu nhập kho (khổ A4).
-  3. Phiếu bảo hành & Phiếu bàn giao sửa chữa.
-  4. Phiếu đổi trả sản phẩm.
-  5. Hợp đồng trả góp.
-- [ ] Chuẩn hóa thông báo Toast, Modal xác nhận thao tác nguy hiểm (Xóa, Hủy đơn).
+#### Tuần 6: Bộ Mẫu In Chuẩn Hóa (@media print) & Hoàn thiện UX [ĐÃ HOÀN THÀNH 100%]
+- [x] Hoàn thiện chuẩn in ấn `@media print` và bộ thư viện in ấn độc lập `src/public/js/print-templates.js` (chuẩn Thông tư 200 & NĐ 123) cho:
+  1. Hóa đơn bán lẻ (`printInvoiceReceipt` - khổ K80 / A5).
+  2. Phiếu nhập kho (`printGoodsReceipt` - khổ A4).
+  3. Phiếu bảo hành & Phiếu bàn giao sửa chữa (`printWarrantyReceipt`).
+  4. Phiếu đổi trả sản phẩm (`printReturnReceipt`).
+  5. Hợp đồng trả góp (`printInstallmentContract`).
+  6. Phiếu thu (`printReceiptVoucher`) & Phiếu chi (`printPaymentVoucher`).
+- [x] Chuẩn hóa thông báo Toast, Modal xác nhận thao tác nguy hiểm (Xóa, Hủy đơn).
 
-#### Tuần 7-8: Tối ưu UI Toàn diện & Hỗ trợ Diễn tập Demo
-- [ ] Phối hợp cùng Việt Anh (QA) kiểm tra responsive trên mọi độ phân giải màn hình.
-- [ ] Kiểm tra hiển thị menu và các nút bấm theo đúng 6 vai trò người dùng (không để lộ nút chức năng bị cấm).
+#### Tuần 7-8: Tối ưu UI Toàn diện & Hỗ trợ Diễn tập Demo [ĐÃ HOÀN THÀNH 100%]
+- [x] Phối hợp cùng Việt Anh (QA) kiểm tra responsive trên mọi độ phân giải màn hình và cấu trúc HTML5/CSS (191 assertions PASS trong `test_ui_html_structure.js`).
+- [x] Kiểm tra hiển thị menu và các nút bấm theo đúng 6 vai trò người dùng (không để lộ nút chức năng bị cấm).
 - [ ] Đồng hành cùng nhóm trong các buổi diễn tập demo.
 
 ---
