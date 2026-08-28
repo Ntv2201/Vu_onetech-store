@@ -96,8 +96,8 @@ onetech/
 ├── one_tech_store_erd.dbml              # Sơ đồ quan hệ thực thể ERD
 ├── README.md                            # Hướng dẫn cài đặt & tài khoản demo
 ├── PROJECT_WALKTHROUGH.md               # Bản Walkthrough kỹ thuật (File này)
-├── tests/                               # Bộ kiểm thử tự động (17 Test Suites, 571 Assertions)
-│   ├── run_all_tests.js                 # Master Test Runner chạy toàn bộ 17 suites
+├── tests/                               # Bộ kiểm thử tự động (18 Test Suites, 682 Assertions)
+│   ├── run_all_tests.js                 # Master Test Runner chạy toàn bộ 18 suites
 │   ├── test_tuan_module.js              # Kiểm thử 60 test cases luồng Bán hàng POS, IMEI, Bảo hành
 │   ├── test_tuan_tuan5_6_e2e.js         # Kiểm thử 33 test cases Luồng E2E tích hợp Bán hàng POS, Cọc, Bảo hành, KPI (Tuần 5-6)
 │   ├── test_viet_module.js              # Kiểm thử 32 test cases Đặt hàng trước, Cọc & Hoàn cọc (Tuần 3)
@@ -112,7 +112,8 @@ onetech/
 │   ├── test_tuan_tuan5.js               # Kiểm thử 8 test cases Trả hàng NCC & Cấn trừ công nợ (Tuần 5)
 │   ├── test_vuong_module.js             # Kiểm thử 37 test cases Thu - Chi & Báo cáo Sổ quỹ dùng chung (Tuần 3)
 │   ├── verify_all_logins.js             # Kiểm thử ma trận đăng nhập 6 vai trò
-│   ├── test_http_endpoints.js           # Kiểm thử tích hợp HTTP API & RBAC 403 Forbidden
+│   ├── test_http_endpoints.js           # Kiểm thử 24 REST Endpoints & API Data Contracts (46 assertions)
+│   ├── test_frontend_dom_contract.js    # Kiểm thử DOM ID Bindings & Frontend Data Extractors (65 assertions)
 │   ├── test_concurrency_stress.js       # Kiểm thử tranh chấp đồng thời & Atomic Lock máy IMEI
 │   └── test_ui_html_structure.js        # Kiểm thử cấu trúc HTML5, Bootstrap 5 & Assets (191 assertions)
 └── src/
@@ -501,9 +502,9 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm 
    ```bash
    npm run seed
    ```
-3. **Chạy kiểm thử tự động toàn bộ 16 bộ test suites:**
+3. **Chạy kiểm thử tự động toàn bộ 18 bộ test suites:**
    ```bash
-   npm test                             # Master Test Runner (chạy toàn bộ 16 suites - 563 assertions)
+   npm test                             # Master Test Runner (chạy toàn bộ 18 suites - 682 assertions)
    node tests/test_tuan_module.js       # 60 tests Bán hàng POS, IMEI, Bảo hành, Data Contract
    node tests/test_tuan_tuan5_6_e2e.js  # 33 tests E2E tích hợp Bán hàng POS, Cọc, Bảo hành, KPI (Tuần 5-6)
    node tests/test_viet_module.js       # 32 tests Đặt hàng trước (Tuần 3)
@@ -515,9 +516,11 @@ Khi các thành viên tiếp tục triển khai các module tiếp theo (kiểm 
    node tests/test_an_tuan5.js          # 23 tests Hợp đồng Trả góp & Lịch thu kỳ (Tuần 5)
    node tests/test_tuan_nhap_kho.js     # 25 tests Nhập kho máy IMEI & Phụ kiện (Tuần 3)
    node tests/test_tuan_tuan4.js        # 13 tests Nhập hàng loạt IMEI & Lịch sử NCC (Tuần 4)
+   node tests/test_tuan_tuan5.js        # 8 tests Trả hàng NCC & Cấn trừ công nợ (Tuần 5)
    node tests/test_vuong_module.js      # 37 tests Thu - Chi & Sổ quỹ (Tuần 3)
    node tests/verify_all_logins.js      # 6 tests Ma trận đăng nhập 6 vai trò
-   node tests/test_http_endpoints.js    # Kiểm thử HTTP API & Phân quyền RBAC 403
+   node tests/test_http_endpoints.js    # 46 tests REST API 24 Endpoints & Data Contracts (QA & Backend)
+   node tests/test_frontend_dom_contract.js # 65 tests DOM ID Bindings & Data Extractors (QA & UI)
    node tests/test_concurrency_stress.js # 5 tests Concurrency Atomic Lock & Stress Test
    node tests/test_ui_html_structure.js # 191 tests Kiểm thử cấu trúc HTML, Sidebar & Assets
    ```

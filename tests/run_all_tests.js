@@ -21,7 +21,8 @@ const TEST_SUITES = [
   { name: 'Trả Hàng Nhà Cung Cấp & Cấn Trừ Công Nợ (Tuân - Tuần 5)', file: 'test_tuan_tuan5.js' },
   { name: 'Thu - Chi & Báo Cáo Sổ Quỹ Dùng Chung (Vượng - Tuần 3)', file: 'test_vuong_module.js' },
   { name: 'Ma Trận Đăng Nhập 6 Vai Trò (QA)', file: 'verify_all_logins.js' },
-  { name: 'Bảo Vệ HTTP API & RBAC 403 Forbidden (QA)', file: 'test_http_endpoints.js' },
+  { name: 'Bảo Vệ HTTP API & REST Contracts 24 Endpoints (QA & Backend)', file: 'test_http_endpoints.js' },
+  { name: 'Ràng Buộc DOM Element ID & Data Extractors Frontend (QA & UI)', file: 'test_frontend_dom_contract.js' },
   { name: 'Stress Test & Concurrency Atomic Lock (QA & Tối Ưu)', file: 'test_concurrency_stress.js' },
   { name: 'Kiểm Thử Cấu Trúc Giao Diện HTML, Sidebar & Assets (QA & UI)', file: 'test_ui_html_structure.js' }
 ];

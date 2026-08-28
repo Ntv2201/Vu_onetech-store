@@ -337,12 +337,15 @@
   3. Phiếu tiếp nhận bảo hành & sửa chữa.
   4. Phiếu đổi trả sản phẩm.
   5. Hợp đồng mua hàng trả góp.
-- [ ] Kiểm tra tính hoàn thiện của thông báo Toast và Modal xác nhận hành động nguy hiểm (Xóa, Hủy đơn).
+#### Tuần 6: Kiểm thử Tích hợp Giao diện Frontend, Ràng buộc DOM & Tương thích API Contract
+- [x] Kiểm thử tự động cấu trúc HTML5, Sidebar, Navbar và chặn triệt để link 404 (`test_ui_html_structure.js` - 191 assertions).
+- [x] Kiểm thử ràng buộc DOM Element ID và giả lập toàn bộ bộ giải nén dữ liệu dropdown Frontend (`test_frontend_dom_contract.js` - 65 assertions).
+- [x] Kiểm thử toàn bộ 24 REST Endpoints thực tế và cấu trúc Payload JSON tương thích Frontend (`test_http_endpoints.js` - 46 assertions).
 
 #### Tuần 7: Stress Test (1.000+ IMEI), Concurrency Test & Ma trận Bảo mật RBAC
-- [ ] Viết script **Stress Test** nạp 1.000+ máy IMEI vật lý và mô phỏng tải xử lý liên tục.
-- [ ] Kiểm thử **Concurrency Race Condition**: Mô phỏng 20 phiên gửi request bán hàng đồng thời trên cùng 1 chiếc IMEI $\rightarrow$ xác nhận atomic lock chỉ cho phép 1 phiên thành công (19 phiên còn lại nhận 409 Conflict).
-- [ ] Kiểm thử **Quét lỗ hổng phân quyền (RBAC Security Audit)**: Gọi chéo tất cả các API từ 6 tài khoản người dùng khác nhau $\rightarrow$ đảm bảo 100% các thao tác trái quyền đều bị chặn `403 Forbidden`.
+- [x] Viết script **Stress Test** nạp 1.000+ máy IMEI vật lý và mô phỏng tải xử lý liên tục (`test_concurrency_stress.js`).
+- [x] Kiểm thử **Concurrency Race Condition**: Mô phỏng 20 phiên gửi request bán hàng đồng thời trên cùng 1 chiếc IMEI $\rightarrow$ xác nhận atomic lock chỉ cho phép 1 phiên thành công (19 phiên còn lại nhận 409 Conflict).
+- [x] Kiểm thử **Quét lỗ hổng phân quyền (RBAC Security Audit)**: Gọi chéo tất cả các API từ 6 tài khoản người dùng khác nhau $\rightarrow$ đảm bảo 100% các thao tác trái quyền đều bị chặn `403 Forbidden`.
 
 #### Tuần 8: Báo cáo Đánh giá Chất lượng (QA Report) & Điều phối Demo
 - [ ] Biên soạn tài liệu **Báo cáo Đánh giá Chất lượng Phần mềm (QA Test Report)** với biểu đồ tỷ lệ Test Coverage và danh sách 100% Test Cases PASS.
@@ -371,5 +374,5 @@
 - [x] **Cuối Tuần 4:** Đổi trả 1 máy chuyển đúng trạng thái 2 IMEI và tính chênh lệch tiền; cấn trừ cọc vào hóa đơn chuẩn; đối soát công nợ & cảnh báo quá hạn; QA thiết lập Master Test Matrix và Test E2E liên module (211+ tests PASS).
 - [x] **Cuối Tuần 5:** Hợp đồng trả góp sinh đúng lịch thu từng kỳ, tính năng đổi máy kèm phụ kiện & RBAC Quản lý hủy phiếu hoàn tác kho/sổ quỹ, bộ test Trả góp (23 tests) & Tình huống biên Đổi trả (26 tests) đạt 100% PASS.
 - [x] **Cuối Tuần 6:** Hoàn thiện giao diện Đổi trả & Đặt trước kết nối API thật; tích hợp in ấn biên bản đổi trả chuyên nghiệp; Bộ kịch bản Test E2E luồng khép kín Đặt cọc -> POS -> Đổi trả -> Hủy phiếu đạt 21/21 PASS 100%.
-- [ ] **Cuối Tuần 7:** Bộ kiểm thử tự động toàn dự án PASS 100%; kiểm tra phân quyền 6 vai trò không có lỗ hổng 403; Stress test 1.000+ IMEI và Concurrency Lock hoạt động hoàn hảo.
+- [x] **Cuối Tuần 7:** Bộ kiểm thử tự động toàn dự án đạt 18 Test Suites (682 assertions) PASS 100%; kiểm tra phân quyền 6 vai trò không có lỗ hổng 403; Stress test 1.000+ IMEI và Concurrency Lock hoạt động hoàn hảo.
 - [ ] **Cuối Tuần 8:** Báo cáo QA Test Report đầy đủ; Kịch bản demo 5-7 phút trơn tru không lỗi; dữ liệu seed trực quan; sẵn sàng 100% bảo vệ đồ án xuất sắc.
