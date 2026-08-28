@@ -35,8 +35,10 @@ const seedData = async () => {
     await mongoose.connect(mongoUri);
     console.log(`[Seed] Đã kết nối tới MongoDB: ${mongoUri}`);
 
-    // Xóa sạch toàn bộ các collection
-    console.log('[Seed] Đang dọn dẹp và reset trắng toàn bộ cơ sở dữ liệu...');
+    // -------------------------------------------------------------
+    // 0. RESET TOÀN BỘ CƠ SỞ DỮ LIỆU (26 Collections)
+    // -------------------------------------------------------------
+    console.log('[Seed] 🧹 Đang dọn dẹp và reset trắng 100% cơ sở dữ liệu...');
     await Promise.all([
       NhanVien.deleteMany({}),
       KhachHang.deleteMany({}),
@@ -67,9 +69,9 @@ const seedData = async () => {
     ]);
 
     // -------------------------------------------------------------
-    // 1. TÀI KHOẢN NHÂN VIÊN (6 VAI TRÒ CHUẨN)
+    // 1. TÀI KHOẢN NHÂN VIÊN (6 VAI TRÒ CHUẨN RBAC)
     // -------------------------------------------------------------
-    console.log('[Seed] 1. Khởi tạo 6 Tài khoản Nhân viên theo RBAC chuẩn...');
+    console.log('[Seed] 1. Khởi tạo 6 Tài khoản Nhân viên (RBAC chuẩn có dấu)...');
     const [nvAdmin, nvBanHang, nvThuKho, nvThuNgan, nvKeToan, nvKyThuat] = await Promise.all([
       NhanVien.create({
         hoTen: 'Nguyễn Quản Lý',
@@ -77,6 +79,7 @@ const seedData = async () => {
         vaiTro: 'Quản lý',
         tenDangNhap: 'admin',
         matKhau: 'admin123',
+        trangThai: 'Hoạt động',
         status: true
       }),
       NhanVien.create({
@@ -85,6 +88,7 @@ const seedData = async () => {
         vaiTro: 'NV bán hàng',
         tenDangNhap: 'banhang',
         matKhau: '123456',
+        trangThai: 'Hoạt động',
         status: true
       }),
       NhanVien.create({
@@ -93,6 +97,7 @@ const seedData = async () => {
         vaiTro: 'Thủ kho',
         tenDangNhap: 'thukho',
         matKhau: '123456',
+        trangThai: 'Hoạt động',
         status: true
       }),
       NhanVien.create({
@@ -101,6 +106,7 @@ const seedData = async () => {
         vaiTro: 'Thu ngân',
         tenDangNhap: 'thungan',
         matKhau: '123456',
+        trangThai: 'Hoạt động',
         status: true
       }),
       NhanVien.create({
@@ -109,6 +115,7 @@ const seedData = async () => {
         vaiTro: 'Kế toán',
         tenDangNhap: 'ketoan',
         matKhau: '123456',
+        trangThai: 'Hoạt động',
         status: true
       }),
       NhanVien.create({
@@ -117,6 +124,7 @@ const seedData = async () => {
         vaiTro: 'Kỹ thuật',
         tenDangNhap: 'kythuat',
         matKhau: '123456',
+        trangThai: 'Hoạt động',
         status: true
       })
     ]);
@@ -126,55 +134,64 @@ const seedData = async () => {
     // -------------------------------------------------------------
     console.log('[Seed] 2. Khởi tạo 5 Danh mục Hàng hóa chuẩn...');
     const [dmDienThoai, dmTablet, dmLaptop, dmPhuKien, dmLinhKien] = await DanhMuc.insertMany([
-      { tenDanhMuc: 'Điện thoại thông minh (Smartphones)', status: true },
-      { tenDanhMuc: 'Máy tính bảng (iPad & Tablets)', status: true },
-      { tenDanhMuc: 'Laptop & MacBook cao cấp', status: true },
-      { tenDanhMuc: 'Phụ kiện chính hãng Apple & Samsung', status: true },
-      { tenDanhMuc: 'Linh kiện sửa chữa & Thay thế', status: true }
+      { tenDanhMuc: 'Điện thoại thông minh (Smartphones)', moTa: 'Điện thoại di động iPhone, Samsung, Xiaomi quản lý theo IMEI', status: true },
+      { tenDanhMuc: 'Máy tính bảng (iPad & Tablets)', moTa: 'Máy tính bảng iPad, Galaxy Tab quản lý theo IMEI', status: true },
+      { tenDanhMuc: 'Laptop & MacBook cao cấp', moTa: 'MacBook, Laptop mỏng nhẹ cao cấp quản lý theo Serial/IMEI', status: true },
+      { tenDanhMuc: 'Phụ kiện chính hãng Apple & Samsung', moTa: 'Củ sạc, cáp sạc, tai nghe, ốp lưng quản lý số lượng tồn', status: true },
+      { tenDanhMuc: 'Linh kiện sửa chữa & Thay thế', moTa: 'Màn hình, pin, cụm camera phục vụ trung tâm bảo hành', status: true }
     ]);
 
     // -------------------------------------------------------------
     // 3. ĐỐI TÁC: NHÀ CUNG CẤP & KHÁCH HÀNG
     // -------------------------------------------------------------
-    console.log('[Seed] 3. Khởi tạo Nhà cung cấp & Khách hàng...');
-    const [nccApple, nccSamsung, nccFPT, nccDigiworld] = await NhaCungCap.insertMany([
+    console.log('[Seed] 3. Khởi tạo Nhà cung cấp & Khách hàng thực tế...');
+    const [nccApple, nccSamsung, nccFPT, nccDigiworld, nccVienSon] = await NhaCungCap.insertMany([
       {
         tenNCC: 'Apple Việt Nam Distribution',
         sdt: '02838221122',
-        diaChi: 'Tầng 12, Bitexco Financial Tower, Q.1, TP.HCM',
-        ghiChu: 'Nguồn hàng chính hãng Apple VN/A',
+        diaChi: 'Tầng 12, Bitexco Financial Tower, Quận 1, TP.HCM',
+        ghiChu: 'Nguồn hàng chính hãng Apple VN/A ủy quyền',
         status: true
       },
       {
         tenNCC: 'Samsung Vina Electronics',
         sdt: '02838223344',
-        diaChi: 'Số 2 Hải Triều, P. Bến Nghé, Q.1, TP.HCM',
-        ghiChu: 'Phân phối điện thoại & phụ kiện Samsung',
+        diaChi: 'Số 2 Hải Triều, P. Bến Nghé, Quận 1, TP.HCM',
+        ghiChu: 'Phân phối trực tiếp điện thoại & tablet Samsung',
         status: true
       },
       {
         tenNCC: 'FPT Synnex Distribution',
         sdt: '02473006666',
-        diaChi: 'Tòa nhà FPT Cầu Giấy, Phố Duy Tân, Hà Nội',
-        ghiChu: 'Đối tác phân phối tổng hợp linh kiện và máy',
+        diaChi: 'Tòa nhà FPT Cầu Giấy, Phố Duy Tân, Cầu Giấy, Hà Nội',
+        ghiChu: 'Đối tác phân phối tổng hợp linh kiện và máy tính',
         status: true
       },
       {
         tenNCC: 'Digiworld Corporation (DGW)',
         sdt: '02839290059',
         diaChi: '195 Điện Biên Phủ, P.15, Q. Bình Thạnh, TP.HCM',
-        ghiChu: 'Nhà phân phối ủy quyền Xiaomi & Laptop',
+        ghiChu: 'Nhà phân phối ủy quyền Xiaomi & Phụ kiện cao cấp',
+        status: true
+      },
+      {
+        tenNCC: 'Công ty CP Công Nghệ Viễn Sơn',
+        sdt: '02838326085',
+        diaChi: '162B Bùi Thị Xuân, Phường Phạm Ngũ Lão, Quận 1, TP.HCM',
+        ghiChu: 'Phân phối linh kiện chính hãng & sạc cáp Anker',
         status: true
       }
     ]);
 
-    const [khAn, khMai, khLong, khTrang, khYen, khTung] = await KhachHang.insertMany([
+    const [khAn, khMai, khLong, khTrang, khYen, khTung, khHoa, khDuc] = await KhachHang.insertMany([
       { hoTen: 'Nguyễn Văn An', sdt: '0988123456', diaChi: '45 Xuân Thủy, Cầu Giấy, Hà Nội', status: true },
       { hoTen: 'Trần Thị Mai', sdt: '0977234567', diaChi: '12 Nguyễn Trãi, Thanh Xuân, Hà Nội', status: true },
-      { hoTen: 'Lê Hoàng Long', sdt: '0912345678', diaChi: '78 Hai Bà Trưng, Q.1, TP.HCM', status: true },
+      { hoTen: 'Lê Hoàng Long', sdt: '0912345678', diaChi: '78 Hai Bà Trưng, Quận 1, TP.HCM', status: true },
       { hoTen: 'Phạm Minh Trang', sdt: '0933456789', diaChi: '15 Lê Duẩn, Hoàn Kiếm, Hà Nội', status: true },
-      { hoTen: 'Đỗ Hoàng Yến', sdt: '0944567890', diaChi: '88 Nguyễn Đình Chiểu, Q.3, TP.HCM', status: true },
-      { hoTen: 'Hoàng Thanh Tùng', sdt: '0966789012', diaChi: '102 Thái Hà, Đống Đa, Hà Nội', status: true }
+      { hoTen: 'Đỗ Hoàng Yến', sdt: '0944567890', diaChi: '88 Nguyễn Đình Chiểu, Quận 3, TP.HCM', status: true },
+      { hoTen: 'Hoàng Thanh Tùng', sdt: '0966789012', diaChi: '102 Thái Hà, Đống Đa, Hà Nội', status: true },
+      { hoTen: 'Vũ Thị Thanh Hoa', sdt: '0918889900', diaChi: '240 Trần Hưng Đạo, Quận 5, TP.HCM', status: true },
+      { hoTen: 'Đặng Minh Đức', sdt: '0982334455', diaChi: '56 Hoàng Hoa Thám, Ba Đình, Hà Nội', status: true }
     ]);
 
     // -------------------------------------------------------------
@@ -188,9 +205,9 @@ const seedData = async () => {
     ]);
 
     // -------------------------------------------------------------
-    // 5. MODEL SẢN PHẨM (10 Model)
+    // 5. MODEL SẢN PHẨM (12 Model chuẩn)
     // -------------------------------------------------------------
-    console.log('[Seed] 5. Khởi tạo 10 Model Sản phẩm...');
+    console.log('[Seed] 5. Khởi tạo 12 Model Sản phẩm chuẩn...');
     const [
       spIphone15PM,
       spIphone15Pro,
@@ -198,10 +215,12 @@ const seedData = async () => {
       spIphone14,
       spS24Ultra,
       spZFold5,
+      spS23,
       spXiaomi14U,
       spIpadPro,
       spIpadAir,
-      spMacBookAir
+      spMacBookAir,
+      spMacBookPro
     ] = await SanPham.insertMany([
       {
         danhMuc: dmDienThoai._id,
@@ -259,6 +278,15 @@ const seedData = async () => {
       },
       {
         danhMuc: dmDienThoai._id,
+        tenMay: 'Samsung Galaxy S23 128GB',
+        hang: 'Samsung',
+        giaBan: 14990000,
+        soThangBH: 12,
+        moTa: 'Thiết kế nhỏ gọn sang trọng, Snapdragon 8 Gen 2 for Galaxy',
+        status: true
+      },
+      {
+        danhMuc: dmDienThoai._id,
         tenMay: 'Xiaomi 14 Ultra 512GB',
         hang: 'Xiaomi',
         giaBan: 28990000,
@@ -292,6 +320,15 @@ const seedData = async () => {
         soThangBH: 12,
         moTa: 'Thiết kế siêu mỏng nhẹ thời thượng, màn hình Liquid Retina sắc nét',
         status: true
+      },
+      {
+        danhMuc: dmLaptop._id,
+        tenMay: 'MacBook Pro 14 inch M3 8GB/512GB',
+        hang: 'Apple',
+        giaBan: 39990000,
+        soThangBH: 12,
+        moTa: 'Chip M3 thế hệ mới, màn hình Liquid Retina XDR 120Hz đỉnh cao',
+        status: true
       }
     ]);
 
@@ -299,39 +336,44 @@ const seedData = async () => {
     // 6. PHỤ KIỆN & LINH KIỆN
     // -------------------------------------------------------------
     console.log('[Seed] 6. Khởi tạo Phụ kiện & Linh kiện...');
-    const [pkSac20w, pkCapC, pkOpLung15, pkSac45w, pkAirPods2, pkCuongLuc] = await PhuKien.insertMany([
+    const [pkSac20w, pkCapC, pkOpLung15, pkSac45w, pkAirPods2, pkCuongLuc, pkSacDuPhong, pkAirPodsPro] = await PhuKien.insertMany([
       { danhMuc: dmPhuKien._id, tenPK: 'Củ sạc Apple 20W Type-C Chính hãng', giaBan: 520000, soLuongTon: 60, status: true },
       { danhMuc: dmPhuKien._id, tenPK: 'Cáp sạc C to C Apple Braided 1m', giaBan: 490000, soLuongTon: 45, status: true },
       { danhMuc: dmPhuKien._id, tenPK: 'Ốp lưng MagSafe iPhone 15 Pro Max Clear Case', giaBan: 890000, soLuongTon: 35, status: true },
       { danhMuc: dmPhuKien._id, tenPK: 'Củ sạc Samsung 45W Type-C Super Fast', giaBan: 650000, soLuongTon: 30, status: true },
-      { danhMuc: dmPhuKien._id, tenPK: 'Tai nghe Apple AirPods Pro 2 USB-C', giaBan: 5490000, soLuongTon: 20, status: true },
-      { danhMuc: dmPhuKien._id, tenPK: 'Kính cường lực KingKong 9D chống nhìn trộm', giaBan: 180000, soLuongTon: 100, status: true }
+      { danhMuc: dmPhuKien._id, tenPK: 'Tai nghe Apple AirPods 3 Lightning', giaBan: 3990000, soLuongTon: 15, status: true },
+      { danhMuc: dmPhuKien._id, tenPK: 'Kính cường lực KingKong 9D chống nhìn trộm', giaBan: 180000, soLuongTon: 100, status: true },
+      { danhMuc: dmPhuKien._id, tenPK: 'Sạc dự phòng Anker MagGo 10000mAh 15W', giaBan: 1290000, soLuongTon: 25, status: true },
+      { danhMuc: dmPhuKien._id, tenPK: 'Tai nghe Apple AirPods Pro 2 USB-C', giaBan: 5490000, soLuongTon: 20, status: true }
     ]);
 
-    const [lkManHinh15, lkPin15, lkCamS24, lkChanSacC] = await LinhKien.insertMany([
+    const [lkManHinh15, lkPin15, lkCamS24, lkChanSacC, lkManHinh14, lkPin14] = await LinhKien.insertMany([
       { tenLK: 'Màn hình OLED iPhone 15 Pro Max GX', donGia: 7500000, soLuongTon: 8 },
       { tenLK: 'Pin Li-ion iPhone 15 Pro Max Pisen', donGia: 1800000, soLuongTon: 15 },
       { tenLK: 'Cụm Camera sau Galaxy S24 Ultra Zin bóc máy', donGia: 3200000, soLuongTon: 6 },
-      { tenLK: 'Cụm bo cáp sạc Type-C Galaxy S24 Ultra', donGia: 850000, soLuongTon: 10 }
+      { tenLK: 'Cụm bo cáp sạc Type-C Galaxy S24 Ultra', donGia: 850000, soLuongTon: 10 },
+      { tenLK: 'Màn hình Super Retina XDR iPhone 14 zin', donGia: 4200000, soLuongTon: 5 },
+      { tenLK: 'Pin Li-ion iPhone 14 Pisen dung lượng cao', donGia: 1200000, soLuongTon: 12 }
     ]);
 
     // -------------------------------------------------------------
-    // 7. MÁY THEO SỐ IMEI VẬT LÝ
+    // 7. MÁY THEO SỐ IMEI VẬT LÝ (36 máy logic khép kín)
     // -------------------------------------------------------------
-    console.log('[Seed] 7. Khởi tạo danh sách Máy IMEI vật lý...');
+    console.log('[Seed] 7. Khởi tạo 36 Máy IMEI vật lý theo logic giao dịch...');
     await MayImei.insertMany([
       // iPhone 15 Pro Max (Con hang: 4, Da ban: 2, Bao hanh: 1)
       { imei: '356789012345001', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Con hang', mauSac: 'Titan Tự Nhiên', dungLuong: '256GB', status: true },
       { imei: '356789012345002', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Con hang', mauSac: 'Titan Xanh', dungLuong: '256GB', status: true },
       { imei: '356789012345003', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Con hang', mauSac: 'Titan Đen', dungLuong: '256GB', status: true },
-      { imei: '356789012345004', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Da ban', mauSac: 'Titan Tự Nhiên', dungLuong: '256GB', status: true }, // Bán HĐ 1
-      { imei: '356789012345005', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Bao hanh', mauSac: 'Titan Trắng', dungLuong: '256GB', status: true }, // PBH 1
-      { imei: '356789012345006', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Con hang', mauSac: 'Titan Tự Nhiên', dungLuong: '256GB', status: true },
+      { imei: '356789012345004', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Da ban', mauSac: 'Titan Tự Nhiên', dungLuong: '256GB', status: true }, // Bán HD1 -> Đổi trả DT1
+      { imei: '356789012345005', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Bao hanh', mauSac: 'Titan Trắng', dungLuong: '256GB', status: true }, // PBH1
+      { imei: '356789012345006', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Da ban', mauSac: 'Titan Tự Nhiên', dungLuong: '256GB', status: true }, // Máy mới đổi trong DT1
+      { imei: '356789012345007', sanPham: spIphone15PM._id, giaNhap: 26500000, trangThai: 'Con hang', mauSac: 'Titan Trắng', dungLuong: '256GB', status: true },
 
       // iPhone 15 Pro (Con hang: 3, Da ban: 1)
       { imei: '356789012345011', sanPham: spIphone15Pro._id, giaNhap: 22000000, trangThai: 'Con hang', mauSac: 'Titan Tự Nhiên', dungLuong: '128GB', status: true },
       { imei: '356789012345012', sanPham: spIphone15Pro._id, giaNhap: 22000000, trangThai: 'Con hang', mauSac: 'Titan Đen', dungLuong: '128GB', status: true },
-      { imei: '356789012345013', sanPham: spIphone15Pro._id, giaNhap: 22000000, trangThai: 'Da ban', mauSac: 'Titan Trắng', dungLuong: '128GB', status: true }, // Bán HĐ 2
+      { imei: '356789012345013', sanPham: spIphone15Pro._id, giaNhap: 22000000, trangThai: 'Da ban', mauSac: 'Titan Trắng', dungLuong: '128GB', status: true }, // Bán HD2 (Trả góp)
       { imei: '356789012345014', sanPham: spIphone15Pro._id, giaNhap: 22000000, trangThai: 'Con hang', mauSac: 'Titan Xanh', dungLuong: '128GB', status: true },
 
       // iPhone 15 Plus (Con hang: 2)
@@ -341,17 +383,22 @@ const seedData = async () => {
       // iPhone 14 (Con hang: 2, Da ban: 1)
       { imei: '356789012345101', sanPham: spIphone14._id, giaNhap: 14500000, trangThai: 'Con hang', mauSac: 'Midnight', dungLuong: '128GB', status: true },
       { imei: '356789012345102', sanPham: spIphone14._id, giaNhap: 14500000, trangThai: 'Con hang', mauSac: 'Starlight', dungLuong: '128GB', status: true },
-      { imei: '356789012345103', sanPham: spIphone14._id, giaNhap: 14500000, trangThai: 'Da ban', mauSac: 'Blue', dungLuong: '128GB', status: true }, // PBH 2 (đã trả khách)
+      { imei: '356789012345103', sanPham: spIphone14._id, giaNhap: 14500000, trangThai: 'Da ban', mauSac: 'Blue', dungLuong: '128GB', status: true }, // PBH2 (đã sửa & trả khách)
 
-      // Samsung Galaxy S24 Ultra (Con hang: 3, Da ban: 1, Loi: 1)
-      { imei: '356789012345201', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Con hang', mauSac: 'Xám Titan', dungLuong: '512GB', status: true },
+      // Samsung Galaxy S24 Ultra (Con hang: 2, Da ban: 1, Loi: 1, Tra NCC: 1)
+      { imei: '356789012345201', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Con hang', mauSac: 'Xám Titan', dungLuong: '512GB', status: true }, // Gán Pre-order DDH2
       { imei: '356789012345202', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Con hang', mauSac: 'Đen Titan', dungLuong: '512GB', status: true },
-      { imei: '356789012345203', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Loi', mauSac: 'Tím Titan', dungLuong: '512GB', status: true },
-      { imei: '356789012345204', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Da ban', mauSac: 'Vàng Titan', dungLuong: '512GB', status: true }, // Bán HĐ 3
+      { imei: '356789012345203', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Loi', mauSac: 'Tím Titan', dungLuong: '512GB', status: true }, // Lỗi camera chờ bảo hành
+      { imei: '356789012345204', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Da ban', mauSac: 'Vàng Titan', dungLuong: '512GB', status: true }, // Bán HD3 (Công nợ KH)
+      { imei: '356789012345205', sanPham: spS24Ultra._id, giaNhap: 27800000, trangThai: 'Tra NCC', mauSac: 'Xám Titan', dungLuong: '512GB', status: false }, // Đã trả NCC Samsung
 
       // Samsung Galaxy Z Fold 5 (Con hang: 2)
       { imei: '356789012345211', sanPham: spZFold5._id, giaNhap: 28500000, trangThai: 'Con hang', mauSac: 'Xanh Icy', dungLuong: '256GB', status: true },
       { imei: '356789012345212', sanPham: spZFold5._id, giaNhap: 28500000, trangThai: 'Con hang', mauSac: 'Đen Phantom', dungLuong: '256GB', status: true },
+
+      // Samsung Galaxy S23 (Con hang: 2)
+      { imei: '356789012345221', sanPham: spS23._id, giaNhap: 12500000, trangThai: 'Con hang', mauSac: 'Kem Cotton', dungLuong: '128GB', status: true },
+      { imei: '356789012345222', sanPham: spS23._id, giaNhap: 12500000, trangThai: 'Con hang', mauSac: 'Đen Phantom', dungLuong: '128GB', status: true },
 
       // Xiaomi 14 Ultra (Con hang: 2)
       { imei: '356789012345301', sanPham: spXiaomi14U._id, giaNhap: 24500000, trangThai: 'Con hang', mauSac: 'Đen Da Thuộc', dungLuong: '512GB', status: true },
@@ -361,19 +408,22 @@ const seedData = async () => {
       { imei: '356789012345401', sanPham: spIpadPro._id, giaNhap: 17500000, trangThai: 'Con hang', mauSac: 'Space Gray', dungLuong: '128GB', status: true },
       { imei: '356789012345402', sanPham: spIpadPro._id, giaNhap: 17500000, trangThai: 'Con hang', mauSac: 'Silver', dungLuong: '128GB', status: true },
 
-      // iPad Air 5 (Con hang: 2)
+      // iPad Air 5 (Con hang: 1, Da ban: 1)
       { imei: '356789012345411', sanPham: spIpadAir._id, giaNhap: 12500000, trangThai: 'Con hang', mauSac: 'Blue', dungLuong: '64GB', status: true },
-      { imei: '356789012345412', sanPham: spIpadAir._id, giaNhap: 12500000, trangThai: 'Con hang', mauSac: 'Purple', dungLuong: '64GB', status: true },
+      { imei: '356789012345412', sanPham: spIpadAir._id, giaNhap: 12500000, trangThai: 'Da ban', mauSac: 'Purple', dungLuong: '64GB', status: true }, // Bán HD5
 
       // MacBook Air M2 (Con hang: 1, Da ban: 1)
       { imei: '356789012345501', sanPham: spMacBookAir._id, giaNhap: 21500000, trangThai: 'Con hang', mauSac: 'Midnight', dungLuong: '256GB', status: true },
-      { imei: '356789012345502', sanPham: spMacBookAir._id, giaNhap: 21500000, trangThai: 'Da ban', mauSac: 'Starlight', dungLuong: '256GB', status: true } // Bán HĐ 4
+      { imei: '356789012345502', sanPham: spMacBookAir._id, giaNhap: 21500000, trangThai: 'Da ban', mauSac: 'Starlight', dungLuong: '256GB', status: true }, // Bán HD4 (Pre-order DDH3)
+
+      // MacBook Pro 14 M3 (Con hang: 1)
+      { imei: '356789012345511', sanPham: spMacBookPro._id, giaNhap: 34500000, trangThai: 'Con hang', mauSac: 'Space Black', dungLuong: '512GB', status: true }
     ]);
 
     // -------------------------------------------------------------
-    // 8. TỒN KHO THEO TỪNG KHO & SẢN PHẨM
+    // 8. TỒN KHO KHỚP 100% VỚI MÁY CÒN HÀNG (TonKho)
     // -------------------------------------------------------------
-    console.log('[Seed] 8. Khởi tạo Thống kê Tồn kho đa kho...');
+    console.log('[Seed] 8. Khởi tạo Tồn kho (TonKho) khớp 100% với số lượng máy Con hang...');
     await TonKho.insertMany([
       { kho: khoCauGiay._id, sanPham: spIphone15PM._id, soLuong: 3 },
       { kho: khoThaiHa._id, sanPham: spIphone15PM._id, soLuong: 1 },
@@ -381,26 +431,29 @@ const seedData = async () => {
       { kho: khoThaiHa._id, sanPham: spIphone15Pro._id, soLuong: 1 },
       { kho: khoCauGiay._id, sanPham: spIphone15Plus._id, soLuong: 2 },
       { kho: khoCauGiay._id, sanPham: spIphone14._id, soLuong: 2 },
-      { kho: khoCauGiay._id, sanPham: spS24Ultra._id, soLuong: 2 },
+      { kho: khoCauGiay._id, sanPham: spS24Ultra._id, soLuong: 1 },
       { kho: khoSaiGon._id, sanPham: spS24Ultra._id, soLuong: 1 },
       { kho: khoCauGiay._id, sanPham: spZFold5._id, soLuong: 2 },
+      { kho: khoThaiHa._id, sanPham: spS23._id, soLuong: 2 },
       { kho: khoThaiHa._id, sanPham: spXiaomi14U._id, soLuong: 2 },
       { kho: khoCauGiay._id, sanPham: spIpadPro._id, soLuong: 2 },
-      { kho: khoCauGiay._id, sanPham: spIpadAir._id, soLuong: 2 },
-      { kho: khoCauGiay._id, sanPham: spMacBookAir._id, soLuong: 1 }
+      { kho: khoCauGiay._id, sanPham: spIpadAir._id, soLuong: 1 },
+      { kho: khoCauGiay._id, sanPham: spMacBookAir._id, soLuong: 1 },
+      { kho: khoSaiGon._id, sanPham: spMacBookPro._id, soLuong: 1 }
     ]);
 
     // -------------------------------------------------------------
     // 9. PHIẾU NHẬP KHO LÔ HÀNG (Tuân)
     // -------------------------------------------------------------
     console.log('[Seed] 9. Khởi tạo Phiếu Nhập kho & Chi tiết nhập...');
+    // PN1: Nhập Apple chính hãng (185.000.000 đ) - Thanh toán ngay
     const pn1 = await PhieuNhap.create({
       maPN: 'PN20260801',
       nhaCungCap: nccApple._id,
       nhanVien: nvThuKho._id,
-      ngayNhap: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+      ngayNhap: new Date(Date.now() - 22 * 24 * 60 * 60 * 1000),
       tongTien: 185000000,
-      ghiChu: 'Nhập lô hàng Apple chính hãng đợt 1',
+      ghiChu: 'Nhập lô iPhone 15 Series & MacBook Air đợt 1 từ Apple VN',
       status: true
     });
 
@@ -409,16 +462,19 @@ const seedData = async () => {
       { phieuNhap: pn1._id, imei: '356789012345002', sanPham: spIphone15PM._id, donGiaNhap: 26500000 },
       { phieuNhap: pn1._id, imei: '356789012345003', sanPham: spIphone15PM._id, donGiaNhap: 26500000 },
       { phieuNhap: pn1._id, imei: '356789012345004', sanPham: spIphone15PM._id, donGiaNhap: 26500000 },
-      { phieuNhap: pn1._id, imei: '356789012345501', sanPham: spMacBookAir._id, donGiaNhap: 21500000 }
+      { phieuNhap: pn1._id, imei: '356789012345006', sanPham: spIphone15PM._id, donGiaNhap: 26500000 },
+      { phieuNhap: pn1._id, imei: '356789012345501', sanPham: spMacBookAir._id, donGiaNhap: 21500000 },
+      { phieuNhap: pn1._id, imei: '356789012345502', sanPham: spMacBookAir._id, donGiaNhap: 21500000 }
     ]);
 
+    // PN2: Nhập Samsung Galaxy S24 Ultra (83.400.000 đ) - Ghi nợ NCC
     const pn2 = await PhieuNhap.create({
       maPN: 'PN20260802',
       nhaCungCap: nccSamsung._id,
       nhanVien: nvThuKho._id,
-      ngayNhap: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+      ngayNhap: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
       tongTien: 83400000,
-      ghiChu: 'Nhập lô Galaxy S24 Ultra & Phụ kiện (Ghi nợ gối đầu)',
+      ghiChu: 'Nhập lô Galaxy S24 Ultra 512GB (Hình thức Ghi nợ gối đầu 30 ngày)',
       status: true
     });
 
@@ -428,11 +484,22 @@ const seedData = async () => {
       { phieuNhap: pn2._id, imei: '356789012345204', sanPham: spS24Ultra._id, donGiaNhap: 27800000 }
     ]);
 
+    // PN3: Nhập phụ kiện & linh kiện từ FPT Synnex (45.000.000 đ) - Thanh toán ngay
+    const pn3 = await PhieuNhap.create({
+      maPN: 'PN20260803',
+      nhaCungCap: nccFPT._id,
+      nhanVien: nvThuKho._id,
+      ngayNhap: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      tongTien: 45000000,
+      ghiChu: 'Nhập củ sạc, cáp sạc, tai nghe và pin linh kiện',
+      status: true
+    });
+
     // -------------------------------------------------------------
     // 10. HÓA ĐƠN BÁN HÀNG & PHIẾU XUẤT KHO (Tuấn)
     // -------------------------------------------------------------
     console.log('[Seed] 10. Khởi tạo Hóa đơn Bán hàng & Phiếu xuất kho...');
-    // HD1: Khách An mua iPhone 15 Pro Max + Củ sạc 20W (Tiền mặt)
+    // HD1: Khách An mua iPhone 15 Pro Max + Củ sạc 20W (Tiền mặt: 30.510.000 đ)
     const hd1 = await HoaDon.create({
       soHD: 'HD20260801',
       khachHang: khAn._id,
@@ -447,7 +514,7 @@ const seedData = async () => {
     await CT_HoaDon_PhuKien.create({ hoaDon: hd1._id, phuKien: pkSac20w._id, soLuong: 1, donGiaBan: 520000 });
     await PhieuXuatKho.create({ hoaDon: hd1._id, lyDoXuat: `Xuat ban hang theo hoa don ${hd1.soHD}`, ngayXuat: hd1.ngayLap });
 
-    // HD2: Khách Mai mua iPhone 15 Pro (Chuyển khoản)
+    // HD2: Khách Mai mua iPhone 15 Pro (Trả góp 6 tháng: 25.490.000 đ)
     const hd2 = await HoaDon.create({
       soHD: 'HD20260802',
       khachHang: khMai._id,
@@ -455,13 +522,13 @@ const seedData = async () => {
       ngayLap: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
       tongTien: 25490000,
       trangThai: 'Da thanh toan',
-      ghiChu: 'Khách thanh toán chuyển khoản QR VietQR',
+      ghiChu: 'Khách mua qua hợp đồng trả góp 6 tháng, trả trước 10tr',
       status: true
     });
     await CT_HoaDon_May.create({ hoaDon: hd2._id, imei: '356789012345013', donGiaBan: 25490000 });
     await PhieuXuatKho.create({ hoaDon: hd2._id, lyDoXuat: `Xuat ban hang theo hoa don ${hd2.soHD}`, ngayXuat: hd2.ngayLap });
 
-    // HD3: Khách Long mua Galaxy S24 Ultra (Công nợ KH)
+    // HD3: Khách Long mua Galaxy S24 Ultra (Công nợ KH: 31.990.000 đ)
     const hd3 = await HoaDon.create({
       soHD: 'HD20260803',
       khachHang: khLong._id,
@@ -469,13 +536,13 @@ const seedData = async () => {
       ngayLap: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
       tongTien: 31990000,
       trangThai: 'Da thanh toan',
-      ghiChu: 'Khách trả trước 10tr, còn nợ 21.99tr',
+      ghiChu: 'Khách trả trước 10tr, còn ghi nợ 21.99tr',
       status: true
     });
     await CT_HoaDon_May.create({ hoaDon: hd3._id, imei: '356789012345204', donGiaBan: 31990000 });
     await PhieuXuatKho.create({ hoaDon: hd3._id, lyDoXuat: `Xuat ban hang theo hoa don ${hd3.soHD}`, ngayXuat: hd3.ngayLap });
 
-    // HD4: Khách Trang mua MacBook Air M2 sau khi cấn trừ cọc (Chuyển khoản)
+    // HD4: Khách Trang nhận máy MacBook Air M2 sau khi cấn trừ cọc (Chuyển khoản: 24.890.000 đ)
     const hd4 = await HoaDon.create({
       soHD: 'HD20260804',
       khachHang: khTrang._id,
@@ -483,17 +550,32 @@ const seedData = async () => {
       ngayLap: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       tongTien: 24890000,
       trangThai: 'Da thanh toan',
-      ghiChu: 'Đơn đặt trước nhận máy: Giá 24.89tr, cấn trừ cọc 3tr, thu 21.89tr',
+      ghiChu: 'Đơn đặt trước DAT20260803 nhận máy: Giá 24.89tr, cấn trừ cọc 3tr, thu 21.89tr',
       status: true
     });
     await CT_HoaDon_May.create({ hoaDon: hd4._id, imei: '356789012345502', donGiaBan: 24890000 });
     await PhieuXuatKho.create({ hoaDon: hd4._id, lyDoXuat: `Xuat ban hang theo hoa don ${hd4.soHD}`, ngayXuat: hd4.ngayLap });
 
+    // HD5: Khách Hoa mua iPad Air 5 + Kính cường lực (Chuyển khoản VietQR: 15.170.000 đ)
+    const hd5 = await HoaDon.create({
+      soHD: 'HD20260805',
+      khachHang: khHoa._id,
+      nhanVien: nvBanHang._id,
+      ngayLap: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      tongTien: 15170000,
+      trangThai: 'Da thanh toan',
+      ghiChu: 'Khách thanh toán chuyển khoản VietQR nhận máy tại chỗ',
+      status: true
+    });
+    await CT_HoaDon_May.create({ hoaDon: hd5._id, imei: '356789012345412', donGiaBan: 14990000 });
+    await CT_HoaDon_PhuKien.create({ hoaDon: hd5._id, phuKien: pkCuongLuc._id, soLuong: 1, donGiaBan: 180000 });
+    await PhieuXuatKho.create({ hoaDon: hd5._id, lyDoXuat: `Xuat ban hang theo hoa don ${hd5.soHD}`, ngayXuat: hd5.ngayLap });
+
     // -------------------------------------------------------------
     // 11. ĐƠN ĐẶT HÀNG TRƯỚC (PRE-ORDER) (Việt)
     // -------------------------------------------------------------
-    console.log('[Seed] 11. Khởi tạo Đơn đặt trước (Pre-order)...');
-    // Đơn 1: Đã đặt cọc (chờ hàng)
+    console.log('[Seed] 11. Khởi tạo Đơn đặt trước (Pre-order) 4 trạng thái...');
+    // Đơn 1: Đã đặt cọc (chờ hàng về)
     const ddh1 = await DonDatHangTruoc.create({
       maDonDat: 'DAT20260801',
       khachHang: khAn._id,
@@ -504,7 +586,7 @@ const seedData = async () => {
       ghiChu: 'Khách đặt màu Titan Tự Nhiên 256GB'
     });
 
-    // Đơn 2: Đã có hàng & gán IMEI
+    // Đơn 2: Đã có hàng & đã gán IMEI sẵn sàng
     const ddh2 = await DonDatHangTruoc.create({
       maDonDat: 'DAT20260802',
       khachHang: khMai._id,
@@ -513,10 +595,10 @@ const seedData = async () => {
       soTienCoc: 1500000,
       ngayDat: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
       trangThai: 'Da co hang',
-      ghiChu: 'Hàng đã về kho Thái Hà, chờ khách qua lấy'
+      ghiChu: 'Hàng đã về kho Cầu Giấy, đã gán IMEI, gọi khách qua nhận'
     });
 
-    // Đơn 3: Đã nhận máy (cấn trừ vào HĐ4)
+    // Đơn 3: Đã nhận máy (cấn trừ vào HD4)
     const ddh3 = await DonDatHangTruoc.create({
       maDonDat: 'DAT20260803',
       khachHang: khTrang._id,
@@ -528,7 +610,7 @@ const seedData = async () => {
       ghiChu: 'Đã hoàn tất giao máy theo Hóa đơn HD20260804'
     });
 
-    // Đơn 4: Đã hủy (hoàn cọc)
+    // Đơn 4: Đã hủy (hoàn cọc cho khách)
     const ddh4 = await DonDatHangTruoc.create({
       maDonDat: 'DAT20260804',
       khachHang: khYen._id,
@@ -536,7 +618,7 @@ const seedData = async () => {
       soTienCoc: 1000000,
       ngayDat: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
       trangThai: 'Da huy',
-      ghiChu: 'Khách đổi ý muốn lấy iPhone 16 nên yêu cầu hủy'
+      ghiChu: 'Khách đổi ý muốn lấy iPhone nên yêu cầu hủy'
     });
 
     // -------------------------------------------------------------
@@ -574,7 +656,7 @@ const seedData = async () => {
     });
     await CT_PBH_LinhKien.create({
       phieuBaoHanh: pbh2._id,
-      linhKien: lkPin15._id,
+      linhKien: lkPin14._id,
       soLuong: 1,
       donGia: 0
     });
@@ -595,7 +677,7 @@ const seedData = async () => {
       giaMayMoi: 29990000,
       tienChenhLech: 0,
       hinhThuc: 'Tien mat',
-      lyDo: 'Khách muốn đổi sang màu Titan Tự Nhiên khác',
+      lyDo: 'Khách muốn đổi sang máy nguyên seal khác cùng model',
       ngayDoiTra: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
       trangThai: 'Hoan tat',
       ghiChu: 'Đổi máy ngang giá theo chính sách 30 ngày'
@@ -613,7 +695,8 @@ const seedData = async () => {
       soTienNo: 31990000,
       soTienDaTra: 10000000,
       trangThai: 'Con no',
-      ghiChu: 'Nợ mua máy Galaxy S24 Ultra'
+      hanThanhToan: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
+      ghiChu: 'Nợ mua máy Galaxy S24 Ultra theo Hóa đơn HD20260803'
     });
 
     // Nợ NCC Samsung (Phiếu PN2: Tổng 83.4tr, đã trả 40tr, còn nợ 43.4tr)
@@ -624,7 +707,8 @@ const seedData = async () => {
       soTienNo: 83400000,
       soTienDaTra: 40000000,
       trangThai: 'Con no',
-      ghiChu: 'Nợ tiền hàng lô Samsung PN20260802'
+      hanThanhToan: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+      ghiChu: 'Nợ tiền hàng lô Samsung PN20260802 gối đầu'
     });
 
     // Nợ NCC Apple (Phiếu PN1: Đã thanh toán hết)
@@ -635,7 +719,8 @@ const seedData = async () => {
       soTienNo: 185000000,
       soTienDaTra: 185000000,
       trangThai: 'Da tra het',
-      ghiChu: 'Đã tất toán toàn bộ tiền nhập lô Apple'
+      hanThanhToan: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      ghiChu: 'Đã tất toán toàn bộ tiền nhập lô Apple PN20260801'
     });
 
     // -------------------------------------------------------------
@@ -650,7 +735,7 @@ const seedData = async () => {
       soTienMoiKy: 2581666,
       soKyDaThu: 1,
       trangThaiDuyet: 'Da duyet',
-      ghiChu: 'Hợp đồng trả góp 6 tháng lãi suất 0%'
+      ghiChu: 'Hợp đồng trả góp 6 tháng lãi suất 0% cho khách Trần Thị Mai'
     });
 
     // -------------------------------------------------------------
@@ -667,13 +752,23 @@ const seedData = async () => {
       status: true
     });
 
-    // Thu bán hàng HD2 (25.490.000 đ Chuyển khoản)
+    // Thu tiền trả trước HD2 (10.000.000 đ Chuyển khoản)
     await PhieuThu.create({
       hoaDon: hd2._id,
-      soTien: hd2.tongTien,
+      soTien: 10000000,
       hinhThuc: 'Chuyen khoan',
       ngayThu: hd2.ngayLap,
-      ghiChu: `Thu chuyển khoản bán hàng theo hóa đơn ${hd2.soHD}`,
+      ghiChu: `Thu tiền trả trước hợp đồng trả góp hóa đơn ${hd2.soHD}`,
+      status: true
+    });
+
+    // Thu trả góp kỳ 1 HD2 (2.581.666 đ Chuyển khoản)
+    await PhieuThu.create({
+      hoaDon: hd2._id,
+      soTien: 2581666,
+      hinhThuc: 'Chuyen khoan',
+      ngayThu: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      ghiChu: `Thu trả góp kỳ 1/6 hóa đơn ${hd2.soHD}`,
       status: true
     });
 
@@ -717,6 +812,16 @@ const seedData = async () => {
       status: true
     });
 
+    // Thu bán hàng HD5 (15.170.000 đ Chuyển khoản)
+    await PhieuThu.create({
+      hoaDon: hd5._id,
+      soTien: hd5.tongTien,
+      hinhThuc: 'Chuyen khoan',
+      ngayThu: hd5.ngayLap,
+      ghiChu: `Thu chuyển khoản VietQR bán hàng theo hóa đơn ${hd5.soHD}`,
+      status: true
+    });
+
     // Thu nợ khách hàng đợt 1 từ anh Long (10.000.000 đ Chuyển khoản)
     await PhieuThu.create({
       congNo: cnKH._id,
@@ -749,6 +854,17 @@ const seedData = async () => {
       status: true
     });
 
+    // Chi trả tiền nhập phụ kiện FPT PN3 (45.000.000 đ Chuyển khoản)
+    await PhieuChi.create({
+      phieuNhap: pn3._id,
+      maDT: nccFPT._id.toString(),
+      soTien: 45000000,
+      hinhThuc: 'Chuyen khoan',
+      ngayChi: pn3.ngayNhap,
+      lyDo: `Thanh toán tiền nhập phụ kiện & linh kiện theo phiếu ${pn3.maPN}`,
+      status: true
+    });
+
     // Chi hoàn tiền cọc cho khách Đỗ Hoàng Yến đơn DAT20260804 (1.000.000 đ Tiền mặt)
     await PhieuChi.create({
       donDatHang: ddh4._id,
@@ -773,19 +889,24 @@ const seedData = async () => {
     console.log('====================================================');
     console.log('🎉 RESET VÀ SEED CSDL MỚI 100% HOÀN TOÀN THÀNH CÔNG!');
     console.log('====================================================');
-    console.log('📊 Thống kê các thực thể đã tạo:');
-    console.log(' - 6 Tài khoản nhân viên (Bcrypt hashed, 6 vai trò)');
-    console.log(' - 5 Danh mục chính quy, 4 Nhà cung cấp, 6 Khách hàng');
-    console.log(' - 10 Model sản phẩm (iPhone 15/14, Galaxy S24U/ZFold, Xiaomi, iPad, Mac)');
-    console.log(' - 6 Phụ kiện & 4 Linh kiện sửa chữa');
-    console.log(' - 3 Kho hàng (Cầu Giấy, Thái Hà, Sài Gòn) & 13 bản ghi Tồn kho');
-    console.log(' - 28 Máy IMEI vật lý với các trạng thái logic khép kín');
-    console.log(' - 2 Phiếu nhập kho (1 thanh toán ngay, 1 ghi nợ)');
-    console.log(' - 4 Hóa đơn POS & Phiếu xuất kho liên kết');
-    console.log(' - 4 Đơn đặt trước Pre-order (4 trạng thái khác nhau)');
-    console.log(' - 2 Phiếu bảo hành & 1 Phiếu đổi trả máy');
-    console.log(' - 3 Hồ sơ công nợ đa hình & 1 Hợp đồng trả góp');
-    console.log(' - 7 Phiếu thu & 4 Phiếu chi dòng tiền chuẩn Sổ quỹ');
+    console.log('📊 Thống kê các thực thể dữ liệu sạch & liên kết chặt chẽ:');
+    console.log(' - 6 Tài khoản nhân viên (6 vai trò RBAC: admin, banhang, thukho, thungan, ketoan, kythuat)');
+    console.log(' - 5 Danh mục sản phẩm chuẩn hóa');
+    console.log(' - 5 Nhà cung cấp đối tác uy tín');
+    console.log(' - 8 Khách hàng với đầy đủ thông tin liên hệ');
+    console.log(' - 3 Kho hàng (Cầu Giấy, Thái Hà, Quận 1)');
+    console.log(' - 12 Model máy & thiết bị cao cấp (iPhone, Galaxy, Xiaomi, iPad, MacBook)');
+    console.log(' - 8 Phụ kiện & 6 Linh kiện sửa chữa chính hãng');
+    console.log(' - 36 Máy IMEI (15 số vật lý sạch, liên kết đầy đủ trạng thái)');
+    console.log(' - 15 Bản ghi Tồn kho (TonKho) khớp 100% số máy Còn hàng');
+    console.log(' - 3 Phiếu nhập kho (Apple, Samsung, FPT)');
+    console.log(' - 5 Hóa đơn bán hàng POS kèm Chi tiết máy, Phụ kiện & Phiếu xuất kho');
+    console.log(' - 4 Đơn đặt trước Pre-order (Đã cọc, Đã có hàng, Đã nhận máy, Đã hủy)');
+    console.log(' - 2 Phiếu bảo hành (Đang xử lý & Đã sửa xong)');
+    console.log(' - 1 Phiếu đổi trả máy trong 30 ngày');
+    console.log(' - 3 Hồ sơ công nợ đa hình (Khách hàng & Nhà cung cấp)');
+    console.log(' - 1 Hợp đồng trả góp 6 tháng lãi suất 0%');
+    console.log(' - 9 Phiếu thu & 5 Phiếu chi đồng bộ Sổ quỹ');
     console.log('====================================================');
     process.exit(0);
   } catch (error) {
