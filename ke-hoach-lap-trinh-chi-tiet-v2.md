@@ -52,7 +52,9 @@
  [Tuần 5] ĐÃ HOÀN THÀNH 100% ✅
    ├─ Module Hợp đồng Trả góp & Lịch thu kỳ hạn theo tháng [ĐÃ MERGE] (An)
    ├─ Xử lý tình huống biên: Đổi kèm phụ kiện & RBAC Quản lý Hủy phiếu hoàn tác kho/sổ quỹ [ĐÃ MERGE] (Việt)
-   ├─ Bộ Test Suite Trả góp (23 tests) & Tình huống biên Đổi trả (26 tests) PASS 100% (An, Việt, QA)
+   ├─ Nhập hàng loạt IMEI từ văn bản & Nghiệp vụ Trả hàng NCC cấn trừ công nợ [ĐÃ MERGE] (Tuân)
+   ├─ Universal Custom Dropdown Engine & Quản lý Danh mục Nâng cao [ĐÃ MERGE] (Vũ)
+   ├─ Bộ Test Suite Trả góp (23 tests), Tình huống biên Đổi trả (26 tests) & Trả hàng NCC (8 tests) PASS 100% (An, Việt, Tuân, QA)
    ├─ Báo cáo Doanh thu, Chi phí, Top SP, Tồn kho lâu ngày (Vượng)
    └─ Tích hợp Chart.js vẽ biểu đồ Dashboard (Vũ + Vượng)
 

@@ -63,11 +63,18 @@ Hệ thống được tổ chức theo mô hình **Layered MVC kết hợp OOP S
 * **Hệ thống Điều hướng Thông minh (`src/public/js/layout.js`):**
   - **Sidebar Thu gọn / Mở rộng (Collapsible Sidebar):** Hỗ trợ chuyển đổi trạng thái trên Desktop, ghi nhớ trạng thái người dùng qua `localStorage` (`sidebarCollapsed`).
   - **Mobile Responsive Drawer:** Hỗ trợ menu trượt kèm lớp nền mờ `sidebar-overlay`, tự động đóng sidebar khi người dùng chọn chuyển trang trên thiết bị di động (< 992px).
+  - **Top Navbar Đa năng:** Tích hợp đồng hồ thời gian thực (Live ticking clock), Avatar Initials theo họ tên và hiển thị Badge vai trò sắc nét.
+  - **Universal Custom Dropdown Engine (`enhanceSelect()`):** Tự động chuyển đổi toàn bộ `<select>` HTML thành Custom Dropdown hiện đại, tích hợp icon ngữ nghĩa (danh mục, hãng, kho, vai trò...), ô tìm kiếm tùy chọn realtime và animation mượt mà.
 * **Màn hình Đăng nhập Trực quan (`src/public/pages/login.html`):**
   - Hiệu ứng floating background orbs, logo chuyển động xoay tròn nhẹ khi tương tác, form focus nổi bật.
   - Hàng badge tài khoản demo tương tác cao giúp đăng nhập nhanh 1-click cho 6 vai trò.
 * **Hiệu ứng Đếm số Dashboard (`src/public/js/dashboard.js`):**
   - Hàm `animateCount(elementId, target, duration)` với easing `easeOutCubic` giúp các chỉ số thống kê (Tổng máy IMEI, Còn hàng, Đã bán, Bảo hành, KH, NCC...) nhảy số trực quan khi tải trang.
+  - Banner chào mừng kính mờ tích hợp vùng Quick Actions động hiển thị nút bấm phù hợp cho từng vai trò.
+* **Quản lý Danh mục Nâng cao (`src/public/pages/danh-muc/index.html` & `src/public/js/danhmuc.js`):**
+  - 4 thẻ thống kê tổng quan cơ cấu hàng hóa (Tổng DM, Model Điện thoại, Tablet, Phụ kiện).
+  - Bố cục 2 cột cân đối: Danh sách phân loại (kèm icon theo tên danh mục) và Form thêm nhanh (Quick Add).
+  - Tìm kiếm nhanh realtime có Debounce chống giật lag giao diện.
 * **Phân quyền Giao diện Đa tầng & Bảo vệ Điều hướng (Client-side RBAC & Route Guarding):**
   - **Lọc Sidebar thông minh theo 6 vai trò:** Tự động ẩn các menu và danh mục nhóm (`nav-category`) không thuộc quyền hạn để loại bỏ tình trạng rối mắt.
   - **Tùy biến Quick Actions trên Dashboard:** Tự động hiển thị các nút thao tác đầu trang phù hợp với vai trò (Bán hàng, Thủ kho, Thu ngân, Kỹ thuật, Kế toán, Quản lý).
@@ -89,8 +96,9 @@ onetech/
 ├── one_tech_store_erd.dbml              # Sơ đồ quan hệ thực thể ERD
 ├── README.md                            # Hướng dẫn cài đặt & tài khoản demo
 ├── PROJECT_WALKTHROUGH.md               # Bản Walkthrough kỹ thuật (File này)
-├── tests/                               # Bộ kiểm thử tự động
-│   ├── test_tuan_module.js              # Kiểm thử 44 test cases luồng Bán hàng POS, IMEI, Bảo hành
+├── tests/                               # Bộ kiểm thử tự động (17 Test Suites, 571 Assertions)
+│   ├── run_all_tests.js                 # Master Test Runner chạy toàn bộ 17 suites
+│   ├── test_tuan_module.js              # Kiểm thử 60 test cases luồng Bán hàng POS, IMEI, Bảo hành
 │   ├── test_tuan_tuan5_6_e2e.js         # Kiểm thử 33 test cases Luồng E2E tích hợp Bán hàng POS, Cọc, Bảo hành, KPI (Tuần 5-6)
 │   ├── test_viet_module.js              # Kiểm thử 32 test cases Đặt hàng trước, Cọc & Hoàn cọc (Tuần 3)
 │   ├── test_viet_tuan4.js               # Kiểm thử 39 test cases Đổi trả máy & Cấn trừ cọc (Tuần 4)
@@ -100,9 +108,13 @@ onetech/
 │   ├── test_an_tuan4.js                 # Kiểm thử 24 test cases Đối soát công nợ & Quản lý quá hạn (Tuần 4)
 │   ├── test_an_tuan5.js                 # Kiểm thử 23 test cases Hợp đồng Trả góp & Lịch thu kỳ hạn (Tuần 5)
 │   ├── test_tuan_nhap_kho.js            # Kiểm thử 25 test cases Nhập kho máy IMEI & Phụ kiện (Tuần 3)
+│   ├── test_tuan_tuan4.js               # Kiểm thử 13 test cases Nhập hàng loạt IMEI & Lịch sử NCC (Tuần 4)
+│   ├── test_tuan_tuan5.js               # Kiểm thử 8 test cases Trả hàng NCC & Cấn trừ công nợ (Tuần 5)
 │   ├── test_vuong_module.js             # Kiểm thử 37 test cases Thu - Chi & Báo cáo Sổ quỹ dùng chung (Tuần 3)
+│   ├── verify_all_logins.js             # Kiểm thử ma trận đăng nhập 6 vai trò
 │   ├── test_http_endpoints.js           # Kiểm thử tích hợp HTTP API & RBAC 403 Forbidden
-│   └── verify_all_logins.js             # Kiểm thử đăng nhập 6 vai trò
+│   ├── test_concurrency_stress.js       # Kiểm thử tranh chấp đồng thời & Atomic Lock máy IMEI
+│   └── test_ui_html_structure.js        # Kiểm thử cấu trúc HTML5, Bootstrap 5 & Assets (191 assertions)
 └── src/
     ├── server.js                        # Entry point khởi động HTTP Server (Port 3000)
     ├── app.js                           # Cấu hình Express, Middleware, Static & API Routes
