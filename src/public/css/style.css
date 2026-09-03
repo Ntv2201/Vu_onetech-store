@@ -548,6 +548,11 @@ body {
   transform: translateY(-1px);
 }
 
+#sectionFinancialReport .btn-outline-primary {
+  border-width: 2px;
+  font-weight: 500;
+}
+
 /* =========================================
    TOAST CONTAINER
    ========================================= */

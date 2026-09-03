@@ -82,7 +82,9 @@ class BaoCaoService extends BaseService {
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
 
-      if (nhom === 'thang') {
+      if (nhom === 'nam') {
+        return `${yyyy}`;
+      } else if (nhom === 'thang') {
         return `${yyyy}-${mm}`;
       } else if (nhom === 'tuan') {
         const startOfYear = new Date(d.getFullYear(), 0, 1);

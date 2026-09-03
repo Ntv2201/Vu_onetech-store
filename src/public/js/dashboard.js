@@ -265,7 +265,7 @@ async function loadFinancialReports() {
  */
 async function switchChartGroup(group) {
   currentChartGroup = group;
-  ['btnGroupNgay', 'btnGroupTuan', 'btnGroupThang'].forEach(id => {
+  ['btnGroupNgay', 'btnGroupTuan', 'btnGroupThang', 'btnGroupNam'].forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.classList.remove('active');
   });
