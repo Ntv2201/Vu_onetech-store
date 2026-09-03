@@ -187,7 +187,7 @@ async function openEditPKModal(id) {
     return;
   }
 
-  const pk = res.data;
+  const pk = res.data.phuKien || res.data;
   document.getElementById('inputEditPKId').value = pk._id;
   document.getElementById('inputEditTenPK').value = pk.tenPK;
   document.getElementById('selectEditDanhMuc').value = pk.danhMuc?._id || pk.danhMuc || '';

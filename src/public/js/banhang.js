@@ -217,29 +217,15 @@ function shortcutAction(key) {
 
 function initKeyboardShortcuts() {
   window.addEventListener('keydown', (e) => {
-    // 1. Phím chức năng F1 -> F9 (dùng capture phase để chặn hành vi mặc định của trình duyệt)
+    // Phím chức năng F1 -> F9 (capture phase để chặn hành vi mặc định trình duyệt)
     if (['F1', 'F2', 'F3', 'F4', 'F7', 'F8', 'F9'].includes(e.key)) {
       e.preventDefault();
-      e.stopPropagation();
       shortcutAction(e.key);
-      return false;
-    }
-
-    // 2. Phím Escape
-    if (e.key === 'Escape') {
-      shortcutAction('Escape');
       return;
     }
-
-    // 3. Tổ hợp phím Alt + Phím số / Phím chữ (tránh xung đột phím tắt mặc định của trình duyệt / Fn trên laptop)
-    if (e.altKey && !e.ctrlKey && !e.shiftKey) {
-      const k = e.key.toLowerCase();
-      if (['1', '2', '3', '4', '7', '8', '9', 's', 'k', 'p', 'd', 'x'].includes(k)) {
-        e.preventDefault();
-        e.stopPropagation();
-        shortcutAction(k);
-        return false;
-      }
+    // Phím Escape
+    if (e.key === 'Escape') {
+      shortcutAction('Escape');
     }
   }, { capture: true });
 
