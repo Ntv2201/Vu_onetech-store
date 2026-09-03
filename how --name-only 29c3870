@@ -1,0 +1,11 @@
+[33mcommit 29c38706aa1a7fa9abac247ddd99306dcdc43032[m[33m ([m[1;31morigin/ui-redesign[m[33m, [m[1;32mui-redesign[m[33m, [m[1;32mbackup-ui[m[33m)[m
+Author: Ntv2201 <vubadaolop6e@gmail.com>
+Date:   Thu Sep 3 15:47:31 2026 +0700
+
+    Update code UI
+
+ src/public/css/style.css       | 18 [32m++++++[m[31m------------[m
+ src/public/js/layout.js        | 12 [32m+[m[31m-----------[m
+ src/public/pages/index.html    | 40 [32m+++[m[31m-------------------------------------[m
+ src/services/DanhMucService.js | 12 [31m------------[m
+ 4 files changed, 10 insertions(+), 72 deletions(-)
