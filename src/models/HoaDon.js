@@ -6,6 +6,7 @@ const hoaDonSchema = new mongoose.Schema({
   nhanVien: { type: mongoose.Schema.Types.ObjectId, ref: 'NhanVien', required: true },
   donDatHang: { type: mongoose.Schema.Types.ObjectId, ref: 'DonDatHangTruoc' },
   tienCocDaTru: { type: Number, default: 0, min: 0 },
+  soTienGiam: { type: Number, default: 0, min: 0 },
   soTienThanhToan: { type: Number, default: 0, min: 0 },
   ngayLap: { type: Date, default: Date.now },
   tongTien: { type: Number, required: true, default: 0, min: 0 },
@@ -16,7 +17,8 @@ const hoaDonSchema = new mongoose.Schema({
     default: 'Da thanh toan'
   },
   hanThanhToan: { type: Date },
-  ghiChu: { type: String, default: '' }
+  ghiChu: { type: String, default: '' },
+  status: { type: Boolean, default: true } // Trạng thái hiệu lực hóa đơn (Bit: 1 - Hiệu lực, 0 - Đã hủy)
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -30,5 +32,8 @@ hoaDonSchema.pre('save', function(next) {
   }
   next();
 });
+
+hoaDonSchema.index({ ngayLap: -1, trangThai: 1 });
+hoaDonSchema.index({ khachHang: 1, ngayLap: -1 });
 
 module.exports = mongoose.model('HoaDon', hoaDonSchema, 'HOADON');

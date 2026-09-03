@@ -9,12 +9,15 @@ const donDatHangTruocSchema = new mongoose.Schema({
   trangThai: {
     type: String,
     required: true,
-    enum: ['Cho xu ly', 'Da co hang', 'Da nhan hang', 'Da huy'],
-    default: 'Cho xu ly'
+    enum: ['Cho xu ly', 'Da dat coc', 'Da co hang', 'Da nhan hang', 'Da nhan may', 'Da huy'],
+    default: 'Da dat coc'
   },
   ghiChu: { type: String, default: '' }
 }, {
   timestamps: true
 });
+
+donDatHangTruocSchema.index({ trangThai: 1, createdAt: -1 });
+donDatHangTruocSchema.index({ khachHang: 1, createdAt: -1 });
 
 module.exports = mongoose.model('DonDatHangTruoc', donDatHangTruocSchema, 'DONDATHANGTRUOC');

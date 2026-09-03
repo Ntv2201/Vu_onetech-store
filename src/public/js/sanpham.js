@@ -51,11 +51,13 @@ async function loadSanPhamList() {
     return;
   }
 
-  const { data: sanPhams, danhMucs, allHangs } = res;
+  const sanPhams = Array.isArray(res.data) ? res.data : (res.sanPhams || res.data?.sanPhams || res.data?.data || []);
+  const danhMucs = res.danhMucs || res.data?.danhMucs || [];
+  const allHangs = res.allHangs || res.data?.allHangs || [];
 
   // 1. Cập nhật các ô lọc (nếu chưa có option)
   const selectDanhMuc = document.getElementById('filterDanhMuc');
-  if (selectDanhMuc && selectDanhMuc.options.length <= 1 && danhMucs) {
+  if (selectDanhMuc && selectDanhMuc.options.length <= 1 && danhMucs && danhMucs.length > 0) {
     danhMucs.forEach(dm => {
       const opt = document.createElement('option');
       opt.value = dm._id;
@@ -65,7 +67,7 @@ async function loadSanPhamList() {
   }
 
   const selectHang = document.getElementById('filterHang');
-  if (selectHang && selectHang.options.length <= 1 && allHangs) {
+  if (selectHang && selectHang.options.length <= 1 && allHangs && allHangs.length > 0) {
     allHangs.forEach(h => {
       const opt = document.createElement('option');
       opt.value = h;
@@ -82,7 +84,11 @@ async function loadSanPhamList() {
     const isManagerOrStorekeeper = currentUser && ['Quản lý', 'Thủ kho'].includes(currentUser.vaiTro);
     const isManager = currentUser && currentUser.vaiTro === 'Quản lý';
 
-    tbody.innerHTML = sanPhams.map(sp => `
+    tbody.innerHTML = sanPhams.map(sp => {
+      const qtyCon = sp.soLuongTon !== undefined ? sp.soLuongTon : (sp.soLuongCon !== undefined ? sp.soLuongCon : 0);
+      const qtyTong = sp.tongImei !== undefined ? sp.tongImei : qtyCon;
+
+      return `
       <tr>
         <td>
           <a href="/san-pham/detail.html?id=${sp._id}" class="fw-bold text-decoration-none text-dark">
@@ -90,16 +96,16 @@ async function loadSanPhamList() {
           </a>
           ${sp.moTa ? `<div class="text-muted small text-truncate" style="max-width: 280px;">${escapeHtml(sp.moTa)}</div>` : ''}
         </td>
-        <td><span class="badge bg-light text-secondary border">${sp.danhMuc ? escapeHtml(sp.danhMuc.tenDanhMuc) : 'Chưa phân loại'}</span></td>
+        <td><span class="badge bg-light text-secondary border">${sp.danhMuc ? escapeHtml(sp.danhMuc.tenDanhMuc || sp.danhMuc) : 'Chưa phân loại'}</span></td>
         <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${escapeHtml(sp.hang || 'N/A')}</span></td>
         <td class="fw-bold text-primary">${formatCurrency(sp.giaBan)}</td>
         <td><span class="badge bg-info-subtle text-info-emphasis">${sp.soThangBH || 12} tháng</span></td>
         <td>
           <a href="/may-imei/index.html?sanPhamId=${sp._id}" class="text-decoration-none">
-            <span class="badge ${sp.soLuongCon > 0 ? 'bg-success' : 'bg-danger'}">
-              ${sp.soLuongCon} máy sẵn có
+            <span class="badge ${qtyCon > 0 ? 'bg-success' : 'bg-danger'}">
+              ${qtyCon} máy sẵn có
             </span>
-            <span class="text-muted small ms-1">(Tổng: ${sp.tongImei})</span>
+            <span class="text-muted small ms-1">(Tổng: ${qtyTong})</span>
           </a>
         </td>
         <td class="text-end">
@@ -123,7 +129,8 @@ async function loadSanPhamList() {
           </div>
         </td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
   } else {
     tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Không tìm thấy sản phẩm nào phù hợp</td></tr>';
   }

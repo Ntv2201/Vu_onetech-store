@@ -12,14 +12,17 @@ const {
   CT_HoaDon_PhuKien,
   PhieuXuatKho,
   PhieuBaoHanh,
-  CT_PBH_LinhKien
+  CT_PBH_LinhKien,
+  DonDatHangTruoc,
+  PhieuThu,
+  CongNo
 } = require('../src/models');
 
-const { HoaDonService, BaoHanhService } = require('../src/services');
+const { HoaDonService, BaoHanhService, ThanhToanService, CongNoService, TonKhoService } = require('../src/services');
 
 async function runTests() {
   console.log('===============================================================');
-  console.log('🚀 BẮT ĐẦU KIỂM THỬ MODULE NGUYỄN QUANG TUẤN (OOP & BÁN HÀNG - BẢO HÀNH)');
+  console.log('🚀 BẮT ĐẦU KIỂM THỬ MODULE NGUYỄN QUANG TUẤN (OOP & BÁN HÀNG - BẢO HÀNH - TUẦN 4)');
   console.log('===============================================================\n');
 
   const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/onetech_store';
@@ -48,6 +51,15 @@ async function runTests() {
       LinhKien.findOne({ tenLK: { $regex: 'Màn hình', $options: 'i' } })
     ]);
 
+    if (lkManHinh && lkManHinh.soLuongTon < 5) {
+      lkManHinh.soLuongTon = 50;
+      await lkManHinh.save();
+    }
+    if (pkSac && pkSac.soLuongTon < 5) {
+      pkSac.soLuongTon = 50;
+      await pkSac.save();
+    }
+
     // -------------------------------------------------------------
     // TEST 1: Lấy danh sách Hóa đơn
     // -------------------------------------------------------------
@@ -71,8 +83,15 @@ async function runTests() {
     // TEST 3: Bán hàng theo IMEI & Phụ kiện (taoHoaDonBanHang)
     // -------------------------------------------------------------
     console.log('\n--- TEST 3: Bán hàng theo IMEI & Tự sinh Phiếu xuất kho ---');
-    // Tìm 1 máy còn hàng
-    const mayConHang = await MayImei.findOne({ trangThai: 'Con hang' });
+    const testImei1 = 'TUAN' + Date.now().toString().slice(-11);
+    const mayConHang = await MayImei.create({
+      imei: testImei1,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Tự Nhiên',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
     const imeiToSell = mayConHang.imei;
     const initialPkStock = pkSac.soLuongTon;
 
@@ -132,20 +151,27 @@ async function runTests() {
     // TEST 6: Tiếp nhận Bảo hành cho máy chưa bán -> Bị chặn
     // -------------------------------------------------------------
     console.log('\n--- TEST 6: Chặn tiếp nhận bảo hành cho máy chưa bán ---');
-    const mayChuaBan = await MayImei.findOne({ trangThai: 'Con hang' });
+    const testImeiUnsold = 'TUAN_UNSOLD_' + Date.now().toString().slice(-6);
+    const mayChuaBan = await MayImei.create({
+      imei: testImeiUnsold,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Trắng',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+
     let unsoldErr = null;
-    if (mayChuaBan) {
-      try {
-        await BaoHanhService.tiepNhanBaoHanh({
-          imei: mayChuaBan.imei,
-          moTaLoi: 'Máy lỗi chưa bán',
-          nhanVien: nv._id
-        }, nv);
-      } catch (err) {
-        unsoldErr = err;
-      }
-      assert(unsoldErr !== null && unsoldErr.message.includes('chưa bán'), 'Chặn tiếp nhận bảo hành thành công với thông báo rõ ràng');
+    try {
+      await BaoHanhService.tiepNhanBaoHanh({
+        imei: mayChuaBan.imei,
+        moTaLoi: 'Máy lỗi chưa bán',
+        nhanVien: nv._id
+      }, nv);
+    } catch (err) {
+      unsoldErr = err;
     }
+    assert(unsoldErr !== null && unsoldErr.message.includes('chưa bán'), 'Chặn tiếp nhận bảo hành thành công với thông báo rõ ràng');
 
     // -------------------------------------------------------------
     // TEST 7: Tiếp nhận Bảo hành hợp lệ cho máy đã bán (tiepNhanBaoHanh)
@@ -200,17 +226,20 @@ async function runTests() {
     // TEST 10 (Tuần 3): Bán hàng cấn trừ tiền cọc từ Đơn đặt trước
     // -------------------------------------------------------------
     console.log('\n--- TEST 10 (Tuần 3): Bán hàng cấn trừ tiền cọc Đơn đặt trước ---');
-    const { DonDatHangTruoc } = require('../src/models');
-    
-    // Tìm 1 máy còn hàng để bán kèm cọc
-    const mayChoCoc = await MayImei.findOne({ trangThai: 'Con hang' }).populate('sanPham');
-    const giaMay = (mayChoCoc.sanPham && mayChoCoc.sanPham.giaBan) ? mayChoCoc.sanPham.giaBan : 20000000;
+    const testImei2 = 'TUAN_COC_' + Date.now().toString().slice(-6);
+    const mayChoCoc = await MayImei.create({
+      imei: testImei2,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Xanh',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
     const soTienCoc = 2000000;
 
-    // Tạo đơn đặt trước mẫu
     const donDatMoi = await DonDatHangTruoc.create({
       khachHang: kh._id,
-      sanPham: mayChoCoc.sanPham._id,
+      sanPham: spIphone._id,
       soTienCoc: soTienCoc,
       hanLay: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       trangThai: 'Cho xu ly',
@@ -223,7 +252,7 @@ async function runTests() {
       danhSachIMEI: [mayChoCoc.imei],
       danhSachPhuKien: [],
       donDatHangId: donDatMoi._id,
-      hinhThucThanhToan: 'Da thanh toan',
+      hinhThucThanhToan: 'Chuyen khoan',
       ghiChu: 'Xuất máy cho khách đã cọc'
     }, nv);
 
@@ -238,11 +267,19 @@ async function runTests() {
     // TEST 11 (Tuần 3): Concurrency Lock - Chặn bán đúp đồng thời cùng 1 IMEI
     // -------------------------------------------------------------
     console.log('\n--- TEST 11 (Tuần 3): Concurrency Lock - Chặn bán đúp đồng thời ---');
-    const mayConcurrent = await MayImei.findOne({ trangThai: 'Con hang' });
+    const testImei3 = 'TUAN_LOCK_' + Date.now().toString().slice(-5);
+    const mayConcurrent = await MayImei.create({
+      imei: testImei3,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Đen',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+
     if (mayConcurrent) {
       const imeiConcurrent = mayConcurrent.imei;
       
-      // Gửi 2 request bán hàng song song cùng 1 lúc
       const [req1, req2] = await Promise.allSettled([
         HoaDonService.taoHoaDonBanHang({
           khachHang: kh._id,
@@ -265,12 +302,162 @@ async function runTests() {
       assert(conflictCount === 1, `Giao dịch thứ 2 bị chặn với mã lỗi 409 Conflict (Kết quả: ${conflictCount})`);
     }
 
+    // -------------------------------------------------------------
+    // TEST 12 (Tuần 4): Bán hàng tự động sinh Phiếu Thu Sổ Quỹ (Vượng)
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 12 (Tuần 4): Tích hợp Bán hàng -> Tự sinh Phiếu Thu Sổ Quỹ ---');
+    const testImeiThu = 'TUAN_THU_' + Date.now().toString().slice(-5);
+    const mayThu = await MayImei.create({
+      imei: testImeiThu,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Tự Nhiên',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+
+    const orderThu = await HoaDonService.taoHoaDonBanHang({
+      khachHang: kh._id,
+      nhanVien: nv._id,
+      danhSachIMEI: [mayThu.imei],
+      hinhThucThanhToan: 'Chuyen khoan',
+      ghiChu: 'Bán hàng thu tiền qua chuyển khoản'
+    }, nv);
+
+    const phieuThuLienKet = await PhieuThu.findOne({ hoaDon: orderThu.hoaDon._id });
+    assert(phieuThuLienKet !== null, 'Hệ thống tự động sinh Phiếu Thu trong Sổ quỹ');
+    assert(phieuThuLienKet && phieuThuLienKet.soTien === orderThu.hoaDon.soTienThanhToan, 'Số tiền trên Phiếu Thu khớp 100% với số tiền thanh toán của Hóa đơn');
+
+    // -------------------------------------------------------------
+    // TEST 13 (Tuần 4): Bán hàng Ghi nợ -> Tự sinh Công Nợ Khách Hàng (An)
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 13 (Tuần 4): Tích hợp Bán hàng Ghi nợ -> Tự sinh Công Nợ KH ---');
+    const testImeiNo = 'TUAN_NO_' + Date.now().toString().slice(-5);
+    const mayNo = await MayImei.create({
+      imei: testImeiNo,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Tự Nhiên',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+
+    const orderNo = await HoaDonService.taoHoaDonBanHang({
+      khachHang: kh._id,
+      nhanVien: nv._id,
+      danhSachIMEI: [mayNo.imei],
+      hinhThucThanhToan: 'Cong no',
+      ghiChu: 'Khách mua trả chậm ghi nợ'
+    }, nv);
+
+    const congNoLienKet = await CongNo.findOne({ hoaDon: orderNo.hoaDon._id });
+    assert(congNoLienKet !== null, 'Tự động tạo hồ sơ Công Nợ cho Khách Hàng');
+    assert(congNoLienKet && congNoLienKet.loaiDoiTuong === 'KhachHang', 'Loại đối tượng công nợ: "KhachHang"');
+    assert(congNoLienKet && congNoLienKet.soTienNo === orderNo.hoaDon.soTienThanhToan, 'Số tiền công nợ khớp với hóa đơn');
+
+    // -------------------------------------------------------------
+    // TEST 14 (Tuần 4): Tra cứu danh sách IMEI khả dụng cho POS
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 14 (Tuần 4): Tra cứu IMEI khả dụng cho POS bán hàng ---');
+    const imeiListKhaDung = await HoaDonService.layImeiKhaDung({ search: 'Titan' });
+    assert(Array.isArray(imeiListKhaDung), 'layImeiKhaDung trả về danh sách dạng mảng');
+    assert(imeiListKhaDung.every(m => m.trangThai === 'Con hang'), 'Tất cả máy trả về đều có trạng thái "Con hang"');
+
+    // -------------------------------------------------------------
+    // TEST 15 (Tuần 4): Kiểm tra điều kiện đổi trả theo IMEI (Hỗ trợ Việt)
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 15 (Tuần 4): Kiểm tra điều kiện đổi trả theo IMEI (Hỗ trợ Việt) ---');
+    const checkDoiTra = await HoaDonService.kiemTraImeiDoiTra(imeiToSell);
+    assert(checkDoiTra.conHanDoiTra === true, 'Máy vừa bán còn trong thời hạn 30 ngày đổi trả');
+    assert(checkDoiTra.hoaDon !== null, 'Lấy được thông tin hóa đơn gốc đã mua máy');
+    assert(checkDoiTra.donGiaBan > 0, 'Lấy được đơn giá bán ban đầu để tính bù/hoàn tiền chênh lệch');
+
+    // -------------------------------------------------------------
+    // TEST 16 (Tuần 4): Thống kê bán hàng nhanh trong ngày
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 16 (Tuần 4): Thống kê bán hàng nhanh ---');
+    const thongKe = await HoaDonService.getThongKeNhanh();
+    assert(thongKe.soHoaDonHomNay > 0, `Đã ghi nhận ${thongKe.soHoaDonHomNay} hóa đơn bán hôm nay`);
+    assert(thongKe.doanhThuHomNay > 0, `Doanh thu hôm nay: ${thongKe.doanhThuHomNay.toLocaleString('vi-VN')} đ`);
+
+    // -------------------------------------------------------------
+    // TEST 17 (Tuần 5-6): Bán hàng kèm Chiết khấu / Giảm giá (soTienGiam)
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 17 (Tuần 5-6): Bán hàng kèm Giảm giá / Chiết khấu ---');
+    const testImeiGiam = 'TUAN_DISC_' + Date.now().toString().slice(-6);
+    const mayGiam = await MayImei.create({
+      imei: testImeiGiam,
+      sanPham: spIphone._id,
+      giaNhap: 26500000,
+      mauSac: 'Titan Tự Nhiên',
+      dungLuong: '256GB',
+      trangThai: 'Con hang'
+    });
+
+    const discountAmount = 500000;
+    const orderDiscount = await HoaDonService.taoHoaDonBanHang({
+      khachHang: kh._id,
+      nhanVien: nv._id,
+      danhSachIMEI: [mayGiam.imei],
+      soTienGiam: discountAmount,
+      hinhThucThanhToan: 'Tien mat',
+      ghiChu: 'Áp dụng voucher giảm giá khai trương'
+    }, nv);
+
+    assert(orderDiscount.hoaDon.soTienGiam === discountAmount, `Ghi nhận chính xác số tiền giảm: ${orderDiscount.hoaDon.soTienGiam} đ`);
+    assert(orderDiscount.hoaDon.soTienThanhToan === orderDiscount.hoaDon.tongTien - discountAmount, `Thực thu trừ đúng giảm giá: ${orderDiscount.hoaDon.soTienThanhToan} đ`);
+
+    // -------------------------------------------------------------
+    // TEST 18 (Tuần 5-6): Thống kê KPI Doanh số theo Nhân viên
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 18 (Tuần 5-6): Thống kê KPI Doanh số theo Nhân viên ---');
+    const kpiStats = await HoaDonService.getDoanhSoNhanVien();
+    assert(Array.isArray(kpiStats), 'getDoanhSoNhanVien trả về danh sách dạng mảng');
+    assert(kpiStats.length > 0, `Tìm thấy ${kpiStats.length} nhân viên trong báo cáo KPI`);
+    const myStats = kpiStats.find(s => s.nhanVienId.toString() === nv._id.toString());
+    assert(myStats !== undefined, 'Tìm thấy nhân viên bán hàng trong danh sách KPI');
+    assert(myStats && myStats.tongDoanhThu > 0, `Nhân viên ${nv.hoTen} có tổng doanh số: ${myStats?.tongDoanhThu?.toLocaleString('vi-VN')} đ`);
+
+    // -------------------------------------------------------------
+    // TEST 19 (Tuần 5-6): Thống kê Top Sản phẩm bán chạy nhất
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 19 (Tuần 5-6): Thống kê Top Sản phẩm bán chạy ---');
+    const topProducts = await HoaDonService.getTopSanPham({ limit: 5 });
+    // -------------------------------------------------------------
+    // TEST 20: Kiểm thử Danh mục & Phụ kiện & Sản phẩm & IMEI data contract
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 20: Kiểm thử Danh mục, Phụ kiện, Sản phẩm, IMEI Data Contract ---');
+    const { DanhMucService, PhuKienService, SanPhamService, MayImeiService } = require('../src/services');
+    
+    // 1. Danh mục
+    const allDMs = await DanhMucService.getAllDanhMucs();
+    assert(Array.isArray(allDMs), 'getAllDanhMucs trả về danh sách dạng mảng');
+    assert(allDMs.length > 0, `Tìm thấy ${allDMs.length} danh mục trong hệ thống`);
+    const hasCounts = allDMs.some(dm => dm.countSP > 0 || dm.countPK > 0);
+    assert(hasCounts, 'DanhMucService tính đúng số lượng countSP / countPK cho danh mục');
+
+    // 2. Phụ kiện
+    const pkRes = await PhuKienService.getAllPhuKiens();
+    assert(Array.isArray(pkRes.phuKiens), 'PhuKienService.getAllPhuKiens trả về mảng phuKiens');
+    assert(pkRes.phuKiens.length > 0, `Tìm thấy ${pkRes.phuKiens.length} phụ kiện trong kho`);
+
+    // 3. Sản phẩm
+    const spRes = await SanPhamService.getAllSanPhams();
+    assert(Array.isArray(spRes.sanPhams), 'SanPhamService.getAllSanPhams trả về mảng sanPhams');
+    assert(spRes.sanPhams.length > 0, `Tìm thấy ${spRes.sanPhams.length} model sản phẩm`);
+    assert(spRes.sanPhams[0].soLuongTon !== undefined, 'Sản phẩm có thuộc tính soLuongTon');
+
+    // 4. Máy IMEI
+    const imeiRes = await MayImeiService.getAllImeis();
+    assert(Array.isArray(imeiRes.imeis), 'MayImeiService.getAllImeis trả về mảng imeis');
+    assert(imeiRes.imeis.length > 0, `Tìm thấy ${imeiRes.imeis.length} máy IMEI`);
+
     console.log('\n===============================================================');
     console.log(`🎉 KẾT QUẢ KIỂM THỬ: ${passed} PASS, ${failed} FAIL`);
     console.log('===============================================================');
 
     if (failed === 0) {
-      console.log('✅ TẤT CẢ CÁC TEST CASES ĐÃ VƯỢT QUA 100%!');
+      console.log('✅ TẤT CẢ CÁC TEST CASES NÂNG CAO CỦA NGUYỄN QUANG TUẤN ĐÃ VƯỢT QUA 100%!');
       process.exit(0);
     } else {
       console.error('❌ CÓ TEST CASE BỊ LỖI!');

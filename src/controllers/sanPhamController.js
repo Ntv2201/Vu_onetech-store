@@ -15,7 +15,7 @@ class SanPhamController extends BaseController {
   async index(req, res) {
     try {
       const result = await SanPhamService.getAllSanPhams(req.query);
-      return this.sendSuccess(res, { data: result.sanPhams, danhMucs: result.danhMucs }, 'Lấy danh sách sản phẩm thành công');
+      return this.sendSuccess(res, { sanPhams: result.sanPhams, danhMucs: result.danhMucs, allHangs: result.allHangs }, 'Lấy danh sách sản phẩm thành công');
     } catch (error) {
       return this.handleError(res, error, 'Không thể tải danh sách sản phẩm');
     }

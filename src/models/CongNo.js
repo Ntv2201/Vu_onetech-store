@@ -12,6 +12,7 @@ const congNoSchema = new mongoose.Schema({
   phieuNhap: { type: mongoose.Schema.Types.ObjectId, ref: 'PhieuNhap' },
   soTienNo: { type: Number, required: true, default: 0, min: 0 },
   soTienDaTra: { type: Number, required: true, default: 0, min: 0 },
+  hanThanhToan: { type: Date },
   trangThai: {
     type: String,
     required: true,
@@ -21,5 +22,24 @@ const congNoSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Hook validate đa hình
+congNoSchema.pre('save', function (next) {
+  if (this.loaiDoiTuong === 'KhachHang') {
+    if (!this.khachHang) {
+      return next(new Error("ValidationError: Đối tượng Khách Hàng bắt buộc phải có thông tin 'khachHang'"));
+    }
+    this.nhaCungCap = undefined; // Đảm bảo null/undefined
+  } else if (this.loaiDoiTuong === 'NhaCungCap') {
+    if (!this.nhaCungCap) {
+      return next(new Error("ValidationError: Đối tượng Nhà Cung Cấp bắt buộc phải có thông tin 'nhaCungCap'"));
+    }
+    this.khachHang = undefined; // Đảm bảo null/undefined
+  }
+  next();
+});
+
+congNoSchema.index({ loaiDoiTuong: 1, trangThai: 1 });
+congNoSchema.index({ hanThanhToan: 1, trangThai: 1 });
 
 module.exports = mongoose.model('CongNo', congNoSchema, 'CONGNO');

@@ -9,8 +9,13 @@ const {
   PhieuXuatKho,
   KhachHang,
   NhanVien,
-  DonDatHangTruoc
+  DonDatHangTruoc,
+  CongNo
 } = require('../models');
+
+const TonKhoService = require('./TonKhoService');
+const ThanhToanService = require('./ThanhToanService');
+const CongNoService = require('./CongNoService');
 
 class HoaDonService extends BaseService {
   constructor() {
@@ -59,7 +64,8 @@ class HoaDonService extends BaseService {
         .populate('donDatHang', 'soTienCoc trangThai')
         .sort({ ngayLap: -1, createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       HoaDon.countDocuments(filter)
     ]);
 
@@ -75,11 +81,11 @@ class HoaDonService extends BaseService {
   }
 
   /**
-   * Tìm kiếm đơn đặt hàng trước còn hiệu lực (Cho xu ly, Da co hang) phục vụ bán hàng POS
+   * Tìm kiếm đơn đặt hàng trước còn hiệu lực (Cho xu ly, Da co hang, Da dat coc) phục vụ bán hàng POS
    */
   async timKiemDonDatHang(search = '') {
     const filter = {
-      trangThai: { $in: ['Cho xu ly', 'Da co hang'] }
+      trangThai: { $in: ['Cho xu ly', 'Da co hang', 'Da dat coc'] }
     };
 
     let donDatHangs = await DonDatHangTruoc.find(filter)
@@ -95,11 +101,115 @@ class HoaDonService extends BaseService {
         const sdtKH = d.khachHang ? d.khachHang.sdt : '';
         const tenSP = d.sanPham ? d.sanPham.tenMay.toLowerCase() : '';
         const idStr = d._id.toString();
-        return tenKH.includes(q) || sdtKH.includes(q) || tenSP.includes(q) || idStr.includes(q);
+        const maDon = d.maDonDat ? d.maDonDat.toLowerCase() : '';
+        return tenKH.includes(q) || sdtKH.includes(q) || tenSP.includes(q) || idStr.includes(q) || maDon.includes(q);
       });
     }
 
     return donDatHangs;
+  }
+
+  /**
+   * Lấy danh sách máy IMEI khả dụng (Con hang) hỗ trợ tìm kiếm nhanh & quét barcode trên POS
+   */
+  async layImeiKhaDung(query = {}) {
+    const filter = { trangThai: 'Con hang' };
+    if (query.sanPham && mongoose.Types.ObjectId.isValid(query.sanPham)) {
+      filter.sanPham = query.sanPham;
+    }
+
+    let imeis = await MayImei.find(filter)
+      .populate('sanPham', 'tenMay hang giaBan soThangBH')
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    if (query.search && query.search.trim()) {
+      const q = query.search.trim().toLowerCase();
+      imeis = imeis.filter(m => {
+        const imeiStr = m.imei.toLowerCase();
+        const tenSP = m.sanPham ? m.sanPham.tenMay.toLowerCase() : '';
+        const mauSac = m.mauSac ? m.mauSac.toLowerCase() : '';
+        const dungLuong = m.dungLuong ? m.dungLuong.toLowerCase() : '';
+        return imeiStr.includes(q) || tenSP.includes(q) || mauSac.includes(q) || dungLuong.includes(q);
+      });
+    }
+
+    return imeis;
+  }
+
+  /**
+   * Kiểm tra điều kiện đổi trả máy theo IMEI (Hỗ trợ phân hệ Đổi trả - Tô Quốc Việt)
+   * Kiểm tra: Máy đã bán, thuộc hóa đơn nào, đã mua bao nhiêu ngày, còn trong hạn 30 ngày không
+   */
+  async kiemTraImeiDoiTra(imei) {
+    if (!imei || !imei.trim()) {
+      throw this.createError('Vui lòng cung cấp số IMEI cần kiểm tra đổi trả', 400);
+    }
+    const cleanImei = imei.trim();
+
+    const may = await MayImei.findOne({ imei: cleanImei }).populate('sanPham');
+    if (!may) {
+      throw this.createError(`Không tìm thấy máy với IMEI: ${cleanImei}`, 404);
+    }
+
+    if (may.trangThai !== 'Da ban') {
+      throw this.createError(`Máy IMEI ${cleanImei} đang ở trạng thái "${may.trangThai}", không hợp lệ để làm thủ tục đổi trả`, 400);
+    }
+
+    // Tìm chi tiết hóa đơn bán máy này
+    const ctHoaDon = await CT_HoaDon_May.findOne({ imei: cleanImei }).sort({ createdAt: -1 });
+    if (!ctHoaDon) {
+      throw this.createError(`Không tìm thấy lịch sử hóa đơn bán của máy IMEI ${cleanImei}`, 404);
+    }
+
+    const hoaDon = await HoaDon.findById(ctHoaDon.hoaDon)
+      .populate('khachHang', 'hoTen sdt diaChi')
+      .populate('nhanVien', 'hoTen');
+
+    const ngayBan = hoaDon ? (hoaDon.ngayLap || hoaDon.createdAt) : ctHoaDon.createdAt;
+    const diffMs = Date.now() - new Date(ngayBan).getTime();
+    const soNgayDaQua = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hanDoiTraNgay = 30; // Chính sách đổi trả 30 ngày
+    const conHanDoiTra = soNgayDaQua <= hanDoiTraNgay;
+
+    return {
+      may,
+      hoaDon,
+      donGiaBan: ctHoaDon.donGiaBan,
+      ngayBan,
+      soNgayDaQua,
+      hanDoiTraNgay,
+      conHanDoiTra,
+      thongDiep: conHanDoiTra
+        ? `Máy đủ điều kiện đổi trả (Đã mua ${soNgayDaQua} ngày, hạn mức ${hanDoiTraNgay} ngày).`
+        : `Máy đã quá hạn đổi trả (Đã mua ${soNgayDaQua} ngày, vượt quá quy định ${hanDoiTraNgay} ngày).`
+    };
+  }
+
+  /**
+   * Thống kê nhanh tình hình bán hàng trong ngày / kỳ
+   */
+  async getThongKeNhanh() {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const [hoaDonHomNay, tongMayDaBan, tongMayConHang] = await Promise.all([
+      HoaDon.find({ ngayLap: { $gte: startOfDay } }),
+      MayImei.countDocuments({ trangThai: 'Da ban' }),
+      MayImei.countDocuments({ trangThai: 'Con hang' })
+    ]);
+
+    let doanhThuHomNay = 0;
+    hoaDonHomNay.forEach(hd => {
+      doanhThuHomNay += (hd.tongTien || 0);
+    });
+
+    return {
+      soHoaDonHomNay: hoaDonHomNay.length,
+      doanhThuHomNay,
+      tongMayDaBan,
+      tongMayConHang
+    };
   }
 
   /**
@@ -171,17 +281,18 @@ class HoaDonService extends BaseService {
   }
 
   /**
-   * Tạo Hóa đơn bán hàng theo IMEI & Tích hợp Cấn trừ Cọc (Tuần 3 - Nguyễn Quang Tuấn)
-   * 1. Validate đơn đặt trước (nếu có donDatHangId) & cấn trừ cọc
-   * 2. Lock + Validate trạng thái 'Con hang' của danh sách IMEI (Xung đột Concurrency -> 409)
+   * Tạo Hóa đơn bán hàng theo IMEI & Tích hợp liên Service (Tuần 3 & 4 - Nguyễn Quang Tuấn)
+   * 1. Validate đơn đặt trước & cấn trừ cọc (Việt)
+   * 2. Lock + Validate trạng thái 'Con hang' của danh sách IMEI (409 Conflict)
    * 3. Validate tồn kho phụ kiện
    * 4. Tính toán tổng tiền & tiền cọc cấn trừ
    * 5. Tạo HoaDon
    * 6. Tạo CT_HoaDon_May & CT_HoaDon_PhuKien
    * 7. Cập nhật MayImei -> 'Da ban'
-   * 8. Trừ tồn kho phụ kiện
+   * 8. Trừ tồn kho phụ kiện & Cập nhật TonKhoService (An & Tuân)
    * 9. Tự sinh PhieuXuatKho
    * 10. Đổi trạng thái DonDatHangTruoc -> 'Da nhan hang'
+   * 11. Xử lý tài chính: Sinh PhieuThu vào Sổ quỹ (Vượng) hoặc tạo CongNo Khách hàng (An)
    */
   async taoHoaDonBanHang(payload = {}, sessionUser = null) {
     let {
@@ -189,8 +300,9 @@ class HoaDonService extends BaseService {
       nhanVien,
       danhSachIMEI = [],
       danhSachPhuKien = [],
-      hinhThucThanhToan = 'Da thanh toan',
+      hinhThucThanhToan = 'Tien mat',
       ghiChu = '',
+      soTienGiam = 0,
       donDatHangId,
       donDatHang,
       maDat
@@ -267,7 +379,7 @@ class HoaDonService extends BaseService {
           .join(', ');
         throw this.createError(
           `Không thể bán! Các IMEI sau không khả dụng hoặc đã bán: ${detailStr}`,
-          409, // 409 Conflict chuẩn theo quy ước
+          409,
           { invalidImeis: invalidStatusMay.map(m => m.imei) }
         );
       }
@@ -310,7 +422,8 @@ class HoaDonService extends BaseService {
       tongTienMay += donGiaBan;
       ctMayDocs.push({
         imei: may.imei,
-        donGiaBan
+        donGiaBan,
+        sanPhamId: may.sanPham ? may.sanPham._id : null
       });
     }
 
@@ -323,35 +436,54 @@ class HoaDonService extends BaseService {
 
     // Giới hạn tiền cọc tối đa bằng tổng tiền hóa đơn
     const actualTienCocDaTru = Math.min(tienCocDaTru, tongTien);
-    const soTienThanhToan = Math.max(0, tongTien - actualTienCocDaTru);
+    const discount = Math.max(0, Number(soTienGiam) || 0);
+    const soTienThanhToan = Math.max(0, tongTien - actualTienCocDaTru - discount);
 
     // 5. Cập nhật MayImei -> 'Da ban' (Dùng atomic update với kiểm tra trangThai === 'Con hang' để chống race condition)
     if (imeis.length > 0) {
-      const updateResult = await MayImei.updateMany(
-        { imei: { $in: imeis }, trangThai: 'Con hang' },
-        { $set: { trangThai: 'Da ban' } }
-      );
+      const updatedImeis = [];
+      for (const targetImei of imeis) {
+        const updatedDoc = await MayImei.findOneAndUpdate(
+          { imei: targetImei, trangThai: 'Con hang' },
+          { $set: { trangThai: 'Da ban' } },
+          { new: true }
+        );
 
-      if (updateResult.modifiedCount !== imeis.length) {
-        // Rollback nếu có IMEI vừa bị đổi ở luồng khác
-        await MayImei.updateMany(
-          { imei: { $in: imeis } },
-          { $set: { trangThai: 'Con hang' } }
-        );
-        throw this.createError(
-          'Phát hiện xung đột đồng thời khi bán máy! Một hoặc nhiều IMEI vừa được bán ở giao dịch khác.',
-          409,
-          { expected: imeis.length, actual: updateResult.modifiedCount }
-        );
+        if (!updatedDoc) {
+          // Rollback chỉ những IMEI đã lỡ cập nhật trong mẻ này
+          if (updatedImeis.length > 0) {
+            await MayImei.updateMany(
+              { imei: { $in: updatedImeis } },
+              { $set: { trangThai: 'Con hang' } }
+            );
+          }
+          throw this.createError(
+            `Phát hiện xung đột đồng thời khi bán máy! Máy IMEI "${targetImei}" không còn ở trạng thái khả dụng hoặc vừa được bán ở quầy khác.`,
+            409,
+            { failedImei: targetImei }
+          );
+        }
+        updatedImeis.push(targetImei);
       }
     }
 
-    // 6. Trừ số lượng tồn phụ kiện
+    // 6. Trừ số lượng tồn phụ kiện & Tồn kho Model qua TonKhoService
     for (const pkItem of pkItems) {
       await PhuKien.findByIdAndUpdate(
         pkItem.phuKienId,
         { $inc: { soLuongTon: -pkItem.soLuong } }
       );
+    }
+
+    // Cập nhật giảm tồn kho model sản phẩm qua TonKhoService (An & Tuân)
+    for (const mayDoc of ctMayDocs) {
+      if (mayDoc.sanPhamId) {
+        try {
+          await TonKhoService.capNhatTonKho(mayDoc.sanPhamId, null, -1, { choPhepAm: true });
+        } catch (e) {
+          // Bỏ qua lỗi nếu chưa khởi tạo kho chi tiết
+        }
+      }
     }
 
     // 7. Tạo HoaDon
@@ -360,6 +492,12 @@ class HoaDonService extends BaseService {
     if (actualTienCocDaTru > 0) {
       noteText = (noteText ? noteText + ' | ' : '') + `Đã cấn trừ tiền cọc đơn đặt trước: ${actualTienCocDaTru.toLocaleString('vi-VN')} đ`;
     }
+    if (discount > 0) {
+      noteText = (noteText ? noteText + ' | ' : '') + `Chiết khấu giảm giá: ${discount.toLocaleString('vi-VN')} đ`;
+    }
+
+    const isDebt = hinhThucThanhToan === 'Cong no';
+    const hoaDonTrangThai = isDebt ? 'Cong no' : 'Da thanh toan';
 
     const hoaDon = await HoaDon.create({
       soHD: autoSoHD,
@@ -367,17 +505,19 @@ class HoaDonService extends BaseService {
       nhanVien: maNV,
       donDatHang: donDatHangDoc ? donDatHangDoc._id : null,
       tienCocDaTru: actualTienCocDaTru,
+      soTienGiam: discount,
       soTienThanhToan,
       ngayLap: new Date(),
       tongTien,
-      trangThai: ['Da thanh toan', 'Cong no', 'Tra gop'].includes(hinhThucThanhToan) ? hinhThucThanhToan : 'Da thanh toan',
+      trangThai: hoaDonTrangThai,
       ghiChu: noteText
     });
 
     // 8. Tạo CT_HoaDon_May
     if (ctMayDocs.length > 0) {
       const ctMayWithHD = ctMayDocs.map(item => ({
-        ...item,
+        imei: item.imei,
+        donGiaBan: item.donGiaBan,
         hoaDon: hoaDon._id
       }));
       await CT_HoaDon_May.insertMany(ctMayWithHD);
@@ -410,8 +550,127 @@ class HoaDonService extends BaseService {
       await donDatHangDoc.save();
     }
 
+    // 12. Xử lý tài chính liên Service (Sổ quỹ & Công nợ)
+    if (isDebt && khachHang) {
+      // Mua ghi nợ -> Tự sinh hồ sơ Công Nợ Khách Hàng (An)
+      try {
+        await CongNoService.taoCongNo({
+          loaiDoiTuong: 'KhachHang',
+          khachHang,
+          hoaDon: hoaDon._id,
+          soTienNo: soTienThanhToan
+        });
+      } catch (err) {
+        console.warn('[HoaDonService] Không thể tự động tạo công nợ:', err.message);
+      }
+    } else if (soTienThanhToan > 0) {
+      // Thanh toán ngay (Tiền mặt / Chuyển khoản / Quẹt thẻ) -> Sinh Phiếu Thu Sổ quỹ (Vượng)
+      try {
+        const paymentMethod = ['Tien mat', 'Chuyen khoan', 'Quet the', 'Vi dien tu'].includes(hinhThucThanhToan)
+          ? hinhThucThanhToan
+          : 'Tien mat';
+        await ThanhToanService.taoPhieuThu({
+          hoaDon: hoaDon._id,
+          soTien: soTienThanhToan,
+          hinhThuc: paymentMethod,
+          ghiChu: `Thu tiền bán hàng theo hóa đơn ${hoaDon.soHD}`
+        }, sessionUser);
+      } catch (err) {
+        console.warn('[HoaDonService] Không thể tự động tạo phiếu thu:', err.message);
+      }
+    }
+
     // Trả về dữ liệu chi tiết hóa đơn vừa tạo
     return await this.getHoaDonDetail(hoaDon._id);
+  }
+
+  /**
+   * Thống kê KPI doanh số bán hàng theo từng Nhân Viên (Tuần 5-6 - Nguyễn Quang Tuấn)
+   */
+  async getDoanhSoNhanVien(query = {}) {
+    const { tuNgay, denNgay } = query;
+    const filter = { trangThai: { $ne: 'Da huy' } };
+
+    if (tuNgay || denNgay) {
+      filter.ngayLap = {};
+      if (tuNgay) filter.ngayLap.$gte = new Date(tuNgay);
+      if (denNgay) filter.ngayLap.$lte = new Date(denNgay);
+    }
+
+    const danhSachNhanVien = await NhanVien.find({
+      trangThai: { $ne: 'Khóa' },
+      vaiTro: { $in: ['NV bán hàng', 'Thu ngân', 'Quản lý'] }
+    }).select('_id hoTen tenDangNhap vaiTro');
+
+    const hoaDons = await HoaDon.find(filter);
+
+    const nhanVienStats = danhSachNhanVien.map(nv => {
+      const hdList = hoaDons.filter(hd => hd.nhanVien && hd.nhanVien.toString() === nv._id.toString());
+      const tongDoanhThu = hdList.reduce((sum, hd) => sum + (hd.tongTien || 0), 0);
+      const tongThucThu = hdList.reduce((sum, hd) => sum + (hd.soTienThanhToan || 0), 0);
+      const soHoaDon = hdList.length;
+      const giaTriTrungBinh = soHoaDon > 0 ? Math.round(tongDoanhThu / soHoaDon) : 0;
+
+      return {
+        nhanVienId: nv._id,
+        hoTen: nv.hoTen,
+        tenDangNhap: nv.tenDangNhap,
+        vaiTro: nv.vaiTro,
+        soHoaDon,
+        tongDoanhThu,
+        tongThucThu,
+        giaTriTrungBinh
+      };
+    });
+
+    // Sắp xếp theo tổng doanh thu giảm dần
+    nhanVienStats.sort((a, b) => b.tongDoanhThu - a.tongDoanhThu);
+
+    return nhanVienStats;
+  }
+
+  /**
+   * Thống kê Top Sản Phẩm bán chạy nhất (Tuần 5-6 - Nguyễn Quang Tuấn)
+   */
+  async getTopSanPham(query = {}) {
+    const limit = parseInt(query.limit) || 10;
+    const ctMayList = await CT_HoaDon_May.find().populate({
+      path: 'hoaDon',
+      match: { trangThai: { $ne: 'Da huy' } }
+    });
+
+    // Lấy thông tin model máy từ MayImei
+    const imeis = ctMayList.filter(item => item.hoaDon).map(item => item.imei);
+    const mayList = await MayImei.find({ imei: { $in: imeis } }).populate('sanPham');
+    const imeiToSPMap = {};
+    mayList.forEach(m => {
+      if (m.sanPham) {
+        imeiToSPMap[m.imei] = m.sanPham;
+      }
+    });
+
+    const productStats = {};
+    ctMayList.forEach(ct => {
+      if (!ct.hoaDon) return;
+      const sp = imeiToSPMap[ct.imei];
+      if (!sp) return;
+      const spId = sp._id.toString();
+      if (!productStats[spId]) {
+        productStats[spId] = {
+          sanPhamId: sp._id,
+          tenMay: sp.tenMay,
+          hang: sp.hang,
+          giaBan: sp.giaBan,
+          soLuongBan: 0,
+          doanhThu: 0
+        };
+      }
+      productStats[spId].soLuongBan += 1;
+      productStats[spId].doanhThu += (ct.donGiaBan || sp.giaBan || 0);
+    });
+
+    const result = Object.values(productStats).sort((a, b) => b.soLuongBan - a.soLuongBan).slice(0, limit);
+    return result;
   }
 }
 

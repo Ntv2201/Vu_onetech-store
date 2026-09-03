@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đổi Trả Máy & Hoàn Tiền - OneTech Store</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app-wrapper">
+  <!-- Sidebar Inject Container (layout.js) -->
+  <div id="appSidebar"></div>
+
+  <!-- Main Content Wrapper -->
+  <div class="app-main">
+    <!-- Navbar Inject Container (layout.js) -->
+    <div id="appNavbar"></div>
+
+    <!-- Page Body -->
+    <main class="page-container">
+      <!-- Breadcrumb & Header -->
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+              <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Trang chủ</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Đổi trả máy & Hoàn tiền</li>
+            </ol>
+          </nav>
+          <h4 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-arrow-left-right text-primary me-2"></i>Quản Lý Đổi Trả Máy & Hoàn Tiền
+          </h4>
+        </div>
+      </div>
+
+      <!-- Thống kê nhanh -->
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card-custom p-3 border-start border-primary border-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small">Tổng phiếu đổi trả</span>
+                <h4 class="fw-bold mb-0 mt-1" id="statTotalDoiTra">0</h4>
+              </div>
+              <div class="bg-primary-subtle text-primary p-3 rounded-circle">
+                <i class="bi bi-file-earmark-text fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card-custom p-3 border-start border-info border-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small">Đổi máy sang máy mới</span>
+                <h4 class="fw-bold mb-0 mt-1 text-info" id="statDoiMayCount">0</h4>
+              </div>
+              <div class="bg-info-subtle text-info p-3 rounded-circle">
+                <i class="bi bi-phone-flip fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card-custom p-3 border-start border-warning border-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small">Trả hàng hoàn tiền 100%</span>
+                <h4 class="fw-bold mb-0 mt-1 text-warning" id="statTraHangCount">0</h4>
+              </div>
+              <div class="bg-warning-subtle text-warning p-3 rounded-circle">
+                <i class="bi bi-cash-coin fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card-custom p-3 border-start border-success border-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small">Tổng thu thêm chênh lệch</span>
+                <h4 class="fw-bold mb-0 mt-1 text-success font-monospace" id="statTotalThuThem">0 đ</h4>
+              </div>
+              <div class="bg-success-subtle text-success p-3 rounded-circle">
+                <i class="bi bi-cash-stack fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NAV TABS -->
+      <ul class="nav nav-tabs mb-4" id="doiTraTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active fw-semibold" id="tab-list-btn" data-bs-toggle="tab" data-bs-target="#tab-list" type="button" role="tab">
+            <i class="bi bi-list-ul me-1"></i> Danh Sách Phiếu Đổi Trả
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold" id="tab-create-btn" data-bs-toggle="tab" data-bs-target="#tab-create" type="button" role="tab">
+            <i class="bi bi-plus-circle me-1"></i> Lập Phiếu Đổi Trả Mới
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold" id="tab-lookup-btn" data-bs-toggle="tab" data-bs-target="#tab-lookup" type="button" role="tab">
+            <i class="bi bi-search me-1"></i> Tra Cứu Lịch Sử IMEI
+          </button>
+        </li>
+      </ul>
+
+      <!-- TAB CONTENT -->
+      <div class="tab-content" id="doiTraTabContent">
+        <!-- TAB 1: DANH SÁCH PHIẾU ĐỔI TRẢ -->
+        <div class="tab-pane fade show active" id="tab-list" role="tabpanel">
+          <div class="card-custom p-0 overflow-hidden">
+            <!-- Filter Bar -->
+            <div class="p-3 bg-light border-bottom">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md-3">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchDoiTraInput" class="form-control" placeholder="Tìm theo mã phiếu, IMEI, HĐ, lý do...">
+                  </div>
+                </div>
+                <div class="col-6 col-md-2">
+                  <select id="filterLoaiDoiTra" class="form-select form-select-sm">
+                    <option value="All">-- Tất cả loại --</option>
+                    <option value="Doi may">Đổi máy mới</option>
+                    <option value="Tra hang">Trả hàng hoàn tiền</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-2">
+                  <select id="filterTrangThaiDoiTra" class="form-select form-select-sm">
+                    <option value="All">-- Tất cả trạng thái --</option>
+                    <option value="Hoan tat">Hoàn tất</option>
+                    <option value="Da huy">Đã hủy / Thu hồi</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-2">
+                  <input type="date" id="filterTuNgay" class="form-control form-control-sm" title="Từ ngày">
+                </div>
+                <div class="col-6 col-md-2">
+                  <input type="date" id="filterDenNgay" class="form-control form-control-sm" title="Đến ngày">
+                </div>
+                <div class="col-12 col-md-1 text-end">
+                  <button id="btnRefreshList" class="btn btn-sm btn-outline-secondary w-100" title="Làm mới">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3">Mã phiếu</th>
+                    <th>Số Hóa Đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Loại</th>
+                    <th>IMEI máy cũ</th>
+                    <th>IMEI máy mới</th>
+                    <th class="text-end">Chênh lệch tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày lập</th>
+                    <th class="text-end pe-3">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="doiTraTableBody">
+                  <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">
+                      <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                      Đang tải dữ liệu...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Phân trang -->
+            <div class="p-3 border-top d-flex justify-content-between align-items-center" id="paginationContainer" style="display: none !important;">
+              <span class="text-muted small" id="paginationInfo">Trang 1 / 1</span>
+              <div class="btn-group btn-group-sm" id="paginationButtons"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: LẬP PHIẾU ĐỔI TRẢ MỚI -->
+        <div class="tab-pane fade" id="tab-create" role="tabpanel">
+          <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+              <div class="card-custom p-4">
+                <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-file-earmark-plus me-2"></i>Tiếp Nhận Đổi Trả Máy</h5>
+                <p class="text-muted small mb-4">Hệ thống sẽ kiểm tra hóa đơn và điều kiện 30 ngày, sau đó tính toán tự động chênh lệch giá để sinh Phiếu Thu / Phiếu Chi tương ứng.</p>
+
+                <!-- BƯỚC 1: KIỂM TRA ĐIỀU KIỆN -->
+                <div class="card p-3 mb-4 bg-light border">
+                  <h6 class="fw-bold mb-3"><i class="bi bi-1-circle-fill text-primary me-2"></i>Bước 1: Tra cứu Hóa đơn & IMEI máy cũ cần đổi/trả</h6>
+                  <div class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                      <label class="form-label fw-semibold small">Số Hóa Đơn <span class="text-danger">*</span></label>
+                      <input type="text" id="checkSoHDInput" class="form-control font-monospace text-uppercase" placeholder="Ví dụ: HD82655928 hoặc HD20260801" required>
+                    </div>
+                    <div class="col-md-5">
+                      <label class="form-label fw-semibold small">Số IMEI máy cũ <span class="text-danger">*</span></label>
+                      <input type="text" id="checkImeiInput" class="form-control font-monospace" placeholder="Ví dụ: 356789012345001" required>
+                    </div>
+                    <div class="col-md-2">
+                      <button type="button" id="btnCheckCondition" class="btn btn-primary w-100 fw-semibold">
+                        <i class="bi bi-search me-1"></i> Kiểm tra
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Kết quả kiểm tra -->
+                  <div id="checkResultContainer" class="mt-3" style="display: none;"></div>
+                </div>
+
+                <!-- BƯỚC 2: CHỌN MÁY MỚI HOẶC TRẢ HÀNG -->
+                <form id="createDoiTraForm" style="display: none;">
+                  <div class="card p-3 mb-4 border">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-2-circle-fill text-primary me-2"></i>Bước 2: Chọn hình thức đổi trả & máy mới / phụ kiện</h6>
+                    
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label fw-semibold">Hình thức đổi trả <span class="text-danger">*</span></label>
+                        <select id="selectLoaiDoiTra" class="form-select fw-semibold" required>
+                          <option value="Doi may">1. Đổi sang máy mới khác</option>
+                          <option value="Tra hang">2. Trả hàng hoàn tiền 100%</option>
+                        </select>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-semibold">Phương thức giao dịch tài chính</label>
+                        <select id="selectHinhThucThanhToan" class="form-select">
+                          <option value="Tien mat">Tiền mặt</option>
+                          <option value="Chuyen khoan">Chuyển khoản</option>
+                          <option value="Quet the">Quẹt thẻ</option>
+                          <option value="Vi dien tu">Ví điện tử</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Phần chọn máy mới (Chỉ hiển thị khi loại là Đổi máy) -->
+                    <div id="doiMaySection">
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <label class="form-label fw-semibold">Model sản phẩm mới</label>
+                          <select id="selectSanPhamMoi" class="form-select">
+                            <option value="">-- Lọc theo Model máy mới --</option>
+                          </select>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label fw-semibold">Chọn máy IMEI mới trong kho <span class="text-danger">*</span></label>
+                          <select id="selectImeiMoi" class="form-select font-monospace" required>
+                            <option value="">-- Chọn IMEI máy mới (Còn hàng) --</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Chọn phụ kiện mua kèm / đổi kèm (Tuần 5 Edge Case) -->
+                    <div class="mt-3 pt-3 border-top">
+                      <label class="form-label fw-semibold text-secondary small mb-2"><i class="bi bi-bag-plus me-1"></i>Phụ kiện mua kèm / đổi kèm (nếu có):</label>
+                      <div class="row g-2 align-items-center">
+                        <div class="col-md-7">
+                          <select id="selectPhuKienMoi" class="form-select form-select-sm">
+                            <option value="">-- Chọn phụ kiện trong kho --</option>
+                          </select>
+                        </div>
+                        <div class="col-md-3">
+                          <input type="number" id="inputSoLuongPhuKien" class="form-control form-control-sm" placeholder="SL" min="1" value="1">
+                        </div>
+                        <div class="col-md-2">
+                          <button type="button" id="btnAddPhuKien" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-plus"></i> Thêm
+                          </button>
+                        </div>
+                      </div>
+                      <!-- Danh sách phụ kiện đã chọn -->
+                      <div id="selectedPhuKienContainer" class="mt-2"></div>
+                    </div>
+
+                    <!-- Bảng tính toán chênh lệch tiền -->
+                    <div class="card mt-3 p-3 bg-light border-0">
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Giá trị máy cũ:</span>
+                        <strong id="displayGiaMayCu" class="font-monospace fs-6">0 đ</strong>
+                      </div>
+                      <div class="d-flex justify-content-between align-items-center mb-2" id="rowGiaMayMoi">
+                        <span class="text-muted">Giá trị máy mới:</span>
+                        <strong id="displayGiaMayMoi" class="font-monospace fs-6 text-primary">0 đ</strong>
+                      </div>
+                      <div class="d-flex justify-content-between align-items-center mb-2" id="rowGiaPhuKien" style="display: none;">
+                        <span class="text-muted">Tiền phụ kiện mua kèm:</span>
+                        <strong id="displayGiaPhuKien" class="font-monospace fs-6 text-info">0 đ</strong>
+                      </div>
+                      <hr class="my-2">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold" id="labelTienChenhLech">Chênh lệch tài chính:</span>
+                        <strong id="displayTienChenhLech" class="font-monospace fs-5 text-success">0 đ</strong>
+                      </div>
+                      <small class="text-muted mt-1" id="noteChenhLech"></small>
+                    </div>
+                  </div>
+
+                  <!-- BƯỚC 3: LÝ DO VÀ XÁC NHẬN -->
+                  <div class="card p-3 mb-4 border">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-3-circle-fill text-primary me-2"></i>Bước 3: Lý do & Xác nhận</h6>
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Lý do đổi trả hàng <span class="text-danger">*</span></label>
+                      <textarea id="createLyDoInput" class="form-control" rows="2" placeholder="Ví dụ: Máy lỗi màn hình theo chính sách 30 ngày, khách muốn lên đời dung lượng cao hơn..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Ghi chú thêm</label>
+                      <input type="text" id="createGhiChuInput" class="form-control" placeholder="Ghi chú thêm (nếu có)">
+                    </div>
+                  </div>
+
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" id="btnResetCreateForm" class="btn btn-light px-4">Xóa form</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold" id="btnSubmitDoiTra">
+                      <i class="bi bi-check-circle me-1"></i> Xác Nhận Lập Phiếu Đổi Trả
+                    </button>
+                  </div>
+                </form>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: TRA CỨU LỊCH SỬ IMEI -->
+        <div class="tab-pane fade" id="tab-lookup" role="tabpanel">
+          <div class="card-custom p-4 mb-4">
+            <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-search me-2"></i>Tra Cứu Lịch Sử Đổi Trả Theo IMEI</h5>
+            <div class="row g-3 align-items-end">
+              <div class="col-md-8">
+                <label class="form-label fw-semibold small">Nhập số IMEI cần tra cứu</label>
+                <input type="text" id="lookupImeiInput" class="form-control font-monospace" placeholder="Nhập số IMEI (15 ký tự)...">
+              </div>
+              <div class="col-md-4">
+                <button type="button" id="btnLookupImei" class="btn btn-primary w-100 fw-semibold">
+                  <i class="bi bi-search me-1"></i> Tra cứu lịch sử
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="lookupResultContainer"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL: XEM CHI TIẾT PHIẾU ĐỔI TRẢ -->
+<div class="modal fade" id="modalDoiTraDetail" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold text-primary"><i class="bi bi-info-circle me-2"></i>Chi Tiết Phiếu Đổi Trả</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modalDoiTraDetailContent">
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-primary btn-sm" id="btnPrintDoiTra">
+            <i class="bi bi-printer me-1"></i> In Phiếu Đổi Trả
+          </button>
+          <!-- Nút Hủy phiếu đổi trả (Chỉ hiển thị cho Quản lý) -->
+          <button type="button" class="btn btn-outline-danger btn-sm" id="btnCancelDoiTraModal" style="display: none;">
+            <i class="bi bi-x-circle me-1"></i> Hủy / Thu Hồi Phiếu Đổi Trả (Quản lý)
+          </button>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script src="/js/doitra.js"></script>
+</body>
+</html>

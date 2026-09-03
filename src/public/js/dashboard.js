@@ -28,6 +28,103 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadDashboardData();
 });
 
+/**
+ * Render nút thao tác nhanh trên Dashboard theo vai trò người dùng
+ */
+function renderDashboardActions(user) {
+  const container = document.getElementById('dashboardQuickActions');
+  if (!container || !user) return;
+
+  const role = user.vaiTro;
+  let buttonsHtml = '';
+
+  if (role === 'Quản lý') {
+    buttonsHtml = `
+      <a href="/ban-hang/index.html" class="btn btn-primary btn-sm">
+        <i class="bi bi-cart-check me-1"></i> Bán hàng POS
+      </a>
+      <a href="/may-imei/form.html" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i> Nhập máy / IMEI
+      </a>
+      <a href="/bao-hanh/index.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-shield-check me-1"></i> Bảo hành
+      </a>
+    `;
+  } else if (role === 'NV bán hàng') {
+    buttonsHtml = `
+      <a href="/ban-hang/index.html" class="btn btn-primary btn-sm">
+        <i class="bi bi-cart-check me-1"></i> Bán hàng POS & Hóa đơn
+      </a>
+      <a href="/bao-hanh/index.html" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-shield-check me-1"></i> Tra cứu & Tiếp nhận BH
+      </a>
+      <a href="/khach-hang/form.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-person-plus me-1"></i> Thêm Khách hàng
+      </a>
+    `;
+  } else if (role === 'Thủ kho') {
+    buttonsHtml = `
+      <a href="/may-imei/form.html" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i> Nhập máy / IMEI mới
+      </a>
+      <a href="/san-pham/form.html" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-phone me-1"></i> Thêm Model SP
+      </a>
+      <a href="/phu-kien/index.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-headphones me-1"></i> Quản lý Phụ kiện
+      </a>
+    `;
+  } else if (role === 'Thu ngân') {
+    buttonsHtml = `
+      <a href="/ban-hang/index.html" class="btn btn-primary btn-sm">
+        <i class="bi bi-cart-check me-1"></i> Bán hàng POS & Hóa đơn
+      </a>
+      <a href="/khach-hang/form.html" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-person-plus me-1"></i> Thêm Khách hàng
+      </a>
+    `;
+  } else if (role === 'Kế toán') {
+    buttonsHtml = `
+      <a href="/ban-hang/index.html" class="btn btn-primary btn-sm">
+        <i class="bi bi-receipt me-1"></i> Tra cứu Hóa đơn
+      </a>
+      <a href="/nha-cung-cap/index.html" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-truck me-1"></i> Nhà cung cấp
+      </a>
+      <a href="/phu-kien/index.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-headphones me-1"></i> Phụ kiện
+      </a>
+    `;
+  } else if (role === 'Kỹ thuật') {
+    buttonsHtml = `
+      <a href="/bao-hanh/index.html" class="btn btn-primary btn-sm">
+        <i class="bi bi-shield-check me-1"></i> Tra cứu & Tiếp nhận BH
+      </a>
+      <a href="/may-imei/index.html" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-upc-scan me-1"></i> Tra cứu Máy IMEI
+      </a>
+    `;
+  }
+
+  container.innerHTML = buttonsHtml;
+
+  // Ẩn/hiện liên kết các thẻ phụ theo quyền
+  const linkNhanVien = document.getElementById('linkNhanVien');
+  if (linkNhanVien && role !== 'Quản lý') {
+    linkNhanVien.style.display = 'none';
+  }
+
+  const linkNhaCungCap = document.getElementById('linkNhaCungCap');
+  if (linkNhaCungCap && !['Quản lý', 'Thủ kho', 'Kế toán'].includes(role)) {
+    linkNhaCungCap.style.display = 'none';
+  }
+
+  const linkKhachHang = document.getElementById('linkKhachHang');
+  if (linkKhachHang && !['Quản lý', 'NV bán hàng', 'Thu ngân', 'Kế toán'].includes(role)) {
+    linkKhachHang.style.display = 'none';
+  }
+}
+
 async function loadDashboardData() {
   const res = await api.get('/dashboard');
   if (!res.success) {
@@ -47,8 +144,17 @@ async function loadDashboardData() {
   animateCount('statTotalNhaCungCap', stats.totalNhaCungCap || 0, 600);
   animateCount('statTotalNhanVien', stats.totalNhanVien || 0, 600);
 
+  // 2. Render nút thao tác nhanh theo vai trò
+  if (currentUser) {
+    renderDashboardActions(currentUser);
+  } else {
+    // Đợi layout nạp user nếu cần
+    setTimeout(() => {
+      if (currentUser) renderDashboardActions(currentUser);
+    }, 150);
+  }
 
-  // 2. Render bảng IMEI mới nhất
+  // 3. Render bảng IMEI mới nhất
   const tableRecentImei = document.getElementById('tableRecentImei');
   if (recentMayImei && recentMayImei.length > 0) {
     tableRecentImei.innerHTML = recentMayImei.map(item => {
@@ -81,7 +187,7 @@ async function loadDashboardData() {
     tableRecentImei.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Chưa có bản ghi IMEI nào</td></tr>';
   }
 
-  // 3. Render bảng Sản phẩm mới nhất
+  // 4. Render bảng Sản phẩm mới nhất
   const tableRecentSanPham = document.getElementById('tableRecentSanPham');
   if (recentSanPham && recentSanPham.length > 0) {
     tableRecentSanPham.innerHTML = recentSanPham.map(sp => `

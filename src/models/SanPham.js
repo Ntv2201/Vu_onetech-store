@@ -7,7 +7,8 @@ const sanPhamSchema = new mongoose.Schema({
   giaBan: { type: Number, required: true, default: 0, min: 0 },
   soThangBH: { type: Number, default: 12, min: 0 }, // Số tháng bảo hành (theo ràng buộc brief)
   hinhAnh: { type: String, default: '' },
-  moTa: { type: String, default: '' }
+  moTa: { type: String, default: '' },
+  status: { type: Boolean, default: true } // Trạng thái hoạt động (Bit/Boolean: 1 - Hoạt động, 0 - Khóa/Xóa mềm)
 }, {
   timestamps: true,
   toJSON: { virtuals: true },

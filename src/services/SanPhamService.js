@@ -7,7 +7,7 @@ class SanPhamService extends BaseService {
   }
 
   async getAllSanPhams(query = {}) {
-    const { search, danhMucId } = query;
+    const { search, danhMucId, hang } = query;
     const filter = {};
 
     if (search && search.trim()) {
@@ -16,16 +16,21 @@ class SanPhamService extends BaseService {
     if (danhMucId) {
       filter.danhMuc = danhMucId;
     }
+    if (hang && hang.trim()) {
+      filter.hang = hang.trim();
+    }
 
-    const [sanPhams, danhMucs] = await Promise.all([
+    const [sanPhams, danhMucs, allHangs, counts, totalCounts] = await Promise.all([
       SanPham.find(filter).populate('danhMuc').sort({ createdAt: -1 }),
-      DanhMuc.find().sort({ tenDanhMuc: 1 })
-    ]);
-
-    // Thống kê tồn kho số lượng máy theo IMEI
-    const counts = await MayImei.aggregate([
-      { $match: { trangThai: 'Con hang' } },
-      { $group: { _id: '$sanPham', soLuongTon: { $sum: 1 } } }
+      DanhMuc.find().sort({ tenDanhMuc: 1 }),
+      SanPham.distinct('hang'),
+      MayImei.aggregate([
+        { $match: { trangThai: 'Con hang' } },
+        { $group: { _id: '$sanPham', soLuongTon: { $sum: 1 } } }
+      ]),
+      MayImei.aggregate([
+        { $group: { _id: '$sanPham', tongImei: { $sum: 1 } } }
+      ])
     ]);
 
     const countMap = {};
@@ -33,13 +38,20 @@ class SanPhamService extends BaseService {
       countMap[c._id.toString()] = c.soLuongTon;
     });
 
+    const totalMap = {};
+    totalCounts.forEach(c => {
+      totalMap[c._id.toString()] = c.tongImei;
+    });
+
     const enriched = sanPhams.map(sp => {
-      const spObj = sp.toObject();
+      const spObj = sp.toObject ? sp.toObject() : { ...sp };
       spObj.soLuongTon = countMap[sp._id.toString()] || 0;
+      spObj.soLuongCon = spObj.soLuongTon;
+      spObj.tongImei = totalMap[sp._id.toString()] || 0;
       return spObj;
     });
 
-    return { sanPhams: enriched, danhMucs };
+    return { sanPhams: enriched, danhMucs, allHangs };
   }
 
   async getSanPhamDetail(id) {

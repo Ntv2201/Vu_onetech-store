@@ -17,21 +17,258 @@ let allKhachHangs = [];
 
 let preOrderModalInstance = null;
 
+/**
+ * Hiệu ứng âm thanh POS khi quét mã vạch Barcode IMEI
+ */
+function playBeep(type = 'success') {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    if (type === 'success') {
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // Âm cao A5
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+    } else {
+      osc.frequency.setValueAtTime(220, ctx.currentTime); // Âm cảnh báo
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    }
+  } catch (e) {
+    // AudioContext blocked before user interaction
+  }
+}
+
+let barcodeBuffer = '';
+let lastKeyTime = 0;
+
 document.addEventListener('DOMContentLoaded', async () => {
-  await initPosPage();
-  await initInvoiceListPage();
+  // Đăng ký phím tắt & quét barcode ngay lập tức
+  initKeyboardShortcuts();
+
+  try {
+    await initPosPage();
+    await initInvoiceListPage();
+    await initReportsTab();
+  } catch (err) {
+    console.error('Lỗi khi tải dữ liệu trang bán hàng POS:', err);
+  }
+
+  // Tự động focus ô tìm / quét IMEI khi vào trang
+  const searchInput = document.getElementById('searchImeiInput');
+  if (searchInput) searchInput.focus();
 });
+
+function switchToPosTab() {
+  const posTabBtn = document.getElementById('tab-pos-tab');
+  if (posTabBtn && !posTabBtn.classList.contains('active')) {
+    const tabInstance = bootstrap.Tab.getOrCreateInstance(posTabBtn);
+    if (tabInstance) tabInstance.show();
+  }
+}
+
+function handleScanOrEnterImei(rawText) {
+  if (!rawText) return;
+  const keyword = rawText.trim();
+  const searchInput = document.getElementById('searchImeiInput');
+
+  // 1. Tìm chính xác IMEI
+  let found = allAvailableImeis.find(m => m.imei.toLowerCase() === keyword.toLowerCase());
+
+  // 2. Nếu không khớp chính xác, thử tìm máy duy nhất khớp một phần
+  if (!found) {
+    const inCartImeis = new Set(cart.imeis.map(m => m.imei));
+    const candidates = allAvailableImeis.filter(m => {
+      if (inCartImeis.has(m.imei)) return false;
+      return m.imei.toLowerCase().includes(keyword.toLowerCase()) ||
+             (m.sanPham && m.sanPham.tenMay.toLowerCase().includes(keyword.toLowerCase()));
+    });
+    if (candidates.length === 1) {
+      found = candidates[0];
+    }
+  }
+
+  if (found) {
+    const alreadyInCart = cart.imeis.some(m => m.imei === found.imei);
+    if (alreadyInCart) {
+      playBeep('error');
+      showToast(`Máy IMEI "${found.imei}" đã có trong giỏ hàng!`, 'warning');
+    } else {
+      addImeiToCart(found.imei);
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+      }
+      filterImeiDisplay();
+    }
+  } else {
+    playBeep('error');
+    showToast(`Không tìm thấy máy IMEI "${keyword}" còn hàng trong kho!`, 'danger');
+  }
+}
+
+function initGlobalBarcodeListener() {
+  document.addEventListener('keydown', (e) => {
+    // Bỏ qua các phím chức năng hoặc tổ hợp phím
+    if (e.key.startsWith('F') || e.key === 'Escape' || e.key === 'Tab' || e.ctrlKey || e.altKey) {
+      return;
+    }
+
+    const now = Date.now();
+    const timeDelta = now - lastKeyTime;
+    lastKeyTime = now;
+
+    if (e.key === 'Enter') {
+      // Nếu máy quét mã vạch đẩy chuỗi ký tự nhanh (< 80ms) và kết thúc bằng Enter
+      if (barcodeBuffer.length >= 4 && timeDelta < 80) {
+        e.preventDefault();
+        switchToPosTab();
+        handleScanOrEnterImei(barcodeBuffer);
+        barcodeBuffer = '';
+        return;
+      }
+      barcodeBuffer = '';
+    } else if (e.key.length === 1) {
+      if (timeDelta > 80) {
+        barcodeBuffer = '';
+      }
+      barcodeBuffer += e.key;
+    }
+  });
+}
+
+function shortcutAction(key) {
+  if (key === 'F1' || key === '1') {
+    switchToPosTab();
+    const searchInput = document.getElementById('searchImeiInput');
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.select();
+    }
+  } else if (key === 'F2' || key === '2' || key === 'k' || key === 'K') {
+    switchToPosTab();
+    const selectKh = document.getElementById('selectKhachHang');
+    if (selectKh) {
+      selectKh.focus();
+      selectKh.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  } else if (key === 'F3' || key === '3') {
+    switchToPosTab();
+    const filterSp = document.getElementById('filterPosSanPham');
+    if (filterSp) {
+      filterSp.focus();
+      filterSp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  } else if (key === 'F4' || key === '4' || key === 's' || key === 'S') {
+    switchToPosTab();
+    const btnSubmit = document.getElementById('btnSubmitOrder');
+    if (btnSubmit) {
+      if (btnSubmit.disabled) {
+        playBeep('error');
+        showToast('Giỏ hàng đang trống! Vui lòng chọn máy IMEI trước [F1 / Alt+1]', 'warning');
+      } else {
+        btnSubmit.click();
+      }
+    }
+  } else if (key === 'F7' || key === '7' || key === 'd' || key === 'D') {
+    switchToPosTab();
+    const btnOpen = document.getElementById('btnOpenPreOrderModal');
+    if (btnOpen) btnOpen.click();
+  } else if (key === 'F8' || key === '8' || key === 'x' || key === 'X') {
+    switchToPosTab();
+    const btnClear = document.getElementById('btnClearCart');
+    if (btnClear) {
+      if (cart.imeis.length === 0 && cart.phuKiens.length === 0) {
+        showToast('Giỏ hàng hiện đang trống', 'info');
+      } else {
+        btnClear.click();
+        playBeep('warning');
+        showToast('Đã xóa sạch giỏ hàng [F8 / Alt+8]', 'info');
+      }
+    }
+  } else if (key === 'F9' || key === '9' || key === 'p' || key === 'P') {
+    const invoiceModal = document.getElementById('invoiceDetailModal');
+    if (invoiceModal && invoiceModal.classList.contains('show')) {
+      printInvoiceReceipt();
+    } else {
+      const btnPrint = document.getElementById('btnPrintInvoice');
+      if (btnPrint) btnPrint.click();
+    }
+  } else if (key === 'Escape') {
+    const shownModals = document.querySelectorAll('.modal.show');
+    if (shownModals.length > 0) {
+      shownModals.forEach(m => {
+        const instance = bootstrap.Modal.getInstance(m);
+        if (instance) instance.hide();
+      });
+    } else {
+      const searchInput = document.getElementById('searchImeiInput');
+      if (searchInput && document.activeElement === searchInput) {
+        searchInput.value = '';
+        filterImeiDisplay();
+      }
+    }
+  }
+}
+
+function initKeyboardShortcuts() {
+  window.addEventListener('keydown', (e) => {
+    // 1. Phím chức năng F1 -> F9 (dùng capture phase để chặn hành vi mặc định của trình duyệt)
+    if (['F1', 'F2', 'F3', 'F4', 'F7', 'F8', 'F9'].includes(e.key)) {
+      e.preventDefault();
+      e.stopPropagation();
+      shortcutAction(e.key);
+      return false;
+    }
+
+    // 2. Phím Escape
+    if (e.key === 'Escape') {
+      shortcutAction('Escape');
+      return;
+    }
+
+    // 3. Tổ hợp phím Alt + Phím số / Phím chữ (tránh xung đột phím tắt mặc định của trình duyệt / Fn trên laptop)
+    if (e.altKey && !e.ctrlKey && !e.shiftKey) {
+      const k = e.key.toLowerCase();
+      if (['1', '2', '3', '4', '7', '8', '9', 's', 'k', 'p', 'd', 'x'].includes(k)) {
+        e.preventDefault();
+        e.stopPropagation();
+        shortcutAction(k);
+        return false;
+      }
+    }
+  }, { capture: true });
+
+  // Kích hoạt lắng nghe máy quét barcode
+  initGlobalBarcodeListener();
+}
 
 async function initPosPage() {
   await loadPosData();
   initPreOrderModal();
   renderCart();
 
-  // Search & Filter IMEI
+  // Discount input change
+  const inputDiscount = document.getElementById('inputSoTienGiam');
+  if (inputDiscount) {
+    inputDiscount.addEventListener('input', () => renderCart());
+  }
+
+  // Search & Filter IMEI (hỗ trợ nhập hoặc quét Barcode + Enter)
   const searchInput = document.getElementById('searchImeiInput');
   const filterSp = document.getElementById('filterPosSanPham');
   if (searchInput) {
-    searchInput.addEventListener('input', () => filterImeiDisplay());
+    searchInput.addEventListener('input', debounce(() => filterImeiDisplay(), 200));
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleScanOrEnterImei(searchInput.value);
+      }
+    });
   }
   if (filterSp) {
     filterSp.addEventListener('change', () => filterImeiDisplay());
@@ -173,6 +410,7 @@ function addImeiToCart(imei) {
     dungLuong: may.dungLuong
   });
 
+  playBeep('success');
   renderCart();
   filterImeiDisplay();
   showToast(`Đã thêm máy IMEI ${imei} vào giỏ`, 'success');
@@ -189,6 +427,7 @@ function addPhuKienToCart(pkId) {
   if (!pk) return;
 
   if (pk.soLuongTon <= 0) {
+    playBeep('error');
     showToast(`Phụ kiện "${pk.tenPK}" đã hết hàng trong kho!`, 'danger');
     return;
   }
@@ -196,6 +435,7 @@ function addPhuKienToCart(pkId) {
   const exist = cart.phuKiens.find(p => p._id === pkId);
   if (exist) {
     if (exist.soLuong >= pk.soLuongTon) {
+      playBeep('error');
       showToast(`Không thể thêm! Tồn kho chỉ còn ${pk.soLuongTon}`, 'warning');
       return;
     }
@@ -210,6 +450,7 @@ function addPhuKienToCart(pkId) {
     });
   }
 
+  playBeep('success');
   renderCart();
   showToast(`Đã thêm phụ kiện "${pk.tenPK}"`, 'success');
 }
@@ -243,9 +484,11 @@ function renderCart() {
     document.getElementById('totalAccessoryPrice').innerText = '0 đ';
     document.getElementById('totalGrandPrice').innerText = '0 đ';
     
-    // Ẩn dòng trừ cọc nếu giỏ trống
+    // Ẩn dòng trừ cọc & giảm giá nếu giỏ trống
     const depRow = document.getElementById('depositDeductionRow');
     if (depRow) depRow.classList.add('d-none');
+    const discRow = document.getElementById('discountDeductionRow');
+    if (discRow) discRow.classList.add('d-none');
     return;
   }
 
@@ -305,20 +548,32 @@ function renderCart() {
   document.getElementById('totalAccessoryPrice').innerText = formatCurrency(totalPk);
 
   const rawGrandTotal = totalMay + totalPk;
-  let finalPayment = rawGrandTotal;
+  const inputDiscount = document.getElementById('inputSoTienGiam');
+  const discount = Math.max(0, parseInt(inputDiscount ? inputDiscount.value : 0) || 0);
+
+  // Hiển thị giảm giá
+  const discountRow = document.getElementById('discountDeductionRow');
+  const discountPriceEl = document.getElementById('discountDeductionPrice');
+  if (discount > 0) {
+    if (discountRow) discountRow.classList.remove('d-none');
+    if (discountPriceEl) discountPriceEl.innerText = `-${formatCurrency(discount)}`;
+  } else {
+    if (discountRow) discountRow.classList.add('d-none');
+  }
 
   // Tính cấn trừ tiền cọc (nếu có đơn đặt trước được liên kết)
   const depositRow = document.getElementById('depositDeductionRow');
   const depositPriceEl = document.getElementById('depositDeductionPrice');
+  let tienCocDaTru = 0;
   if (selectedPreOrder && selectedPreOrder.soTienCoc > 0) {
-    const tienCocDaTru = Math.min(selectedPreOrder.soTienCoc, rawGrandTotal);
-    finalPayment = Math.max(0, rawGrandTotal - tienCocDaTru);
+    tienCocDaTru = Math.min(selectedPreOrder.soTienCoc, rawGrandTotal);
     if (depositRow) depositRow.classList.remove('d-none');
     if (depositPriceEl) depositPriceEl.innerText = `-${formatCurrency(tienCocDaTru)}`;
   } else {
     if (depositRow) depositRow.classList.add('d-none');
   }
 
+  const finalPayment = Math.max(0, rawGrandTotal - tienCocDaTru - discount);
   document.getElementById('totalGrandPrice').innerText = formatCurrency(finalPayment);
 }
 
@@ -462,6 +717,8 @@ async function handleCreateOrder() {
   const khachHang = document.getElementById('selectKhachHang')?.value || null;
   const hinhThucThanhToan = document.getElementById('selectPaymentMethod')?.value || 'Da thanh toan';
   const ghiChu = document.getElementById('inputGhiChu')?.value || '';
+  const inputDiscount = document.getElementById('inputSoTienGiam');
+  const soTienGiam = Math.max(0, parseInt(inputDiscount ? inputDiscount.value : 0) || 0);
 
   const payload = {
     khachHang,
@@ -473,6 +730,7 @@ async function handleCreateOrder() {
     })),
     hinhThucThanhToan,
     ghiChu,
+    soTienGiam,
     donDatHangId: selectedPreOrder ? selectedPreOrder._id : null
   };
 
@@ -483,23 +741,27 @@ async function handleCreateOrder() {
   const res = await api.post('/hoa-don', payload);
 
   btn.disabled = false;
-  btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> HOÀN TẤT BÁN HÀNG & XUẤT KHO`;
+  btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> HOÀN TẤT BÁN HÀNG & XUẤT KHO [F4]`;
 
   if (!res.success) {
+    playBeep('error');
     showToast(res.message || 'Lỗi khi tạo hóa đơn', 'danger');
     return;
   }
 
+  playBeep('success');
   showToast(res.message || 'Bán hàng thành công!', 'success');
 
-  // Reset giỏ và đơn cọc
+  // Reset giỏ, giảm giá và đơn cọc
   cart = { imeis: [], phuKiens: [] };
+  if (inputDiscount) inputDiscount.value = '0';
   clearPreOrder();
   renderCart();
 
   // Reload data
   await loadPosData();
   await loadInvoiceList();
+  await loadReportsData();
 
   // Mở modal xem và in hóa đơn
   if (res.data && res.data.hoaDon) {
@@ -558,7 +820,7 @@ async function loadInvoiceList() {
   tbody.innerHTML = hoaDons.map(hd => {
     const khName = hd.khachHang ? hd.khachHang.hoTen : 'Khách vãng lai';
     const nvName = hd.nhanVien ? hd.nhanVien.hoTen : 'Hệ thống';
-    const tienThucThu = hd.soTienThanhToan !== undefined ? hd.soTienThanhToan : (hd.tongTien - (hd.tienCocDaTru || 0));
+    const tienThucThu = hd.soTienThanhToan !== undefined ? hd.soTienThanhToan : (hd.tongTien - (hd.tienCocDaTru || 0) - (hd.soTienGiam || 0));
     return `
       <tr>
         <td class="fw-bold font-monospace text-primary">${hd.soHD}</td>
@@ -567,7 +829,10 @@ async function loadInvoiceList() {
         <td>${formatDate(hd.ngayLap)}</td>
         <td class="text-end fw-bold text-success">
           ${formatCurrency(tienThucThu)}
-          ${hd.tienCocDaTru > 0 ? `<div class="text-muted" style="font-size: 0.7rem;">(Gốc: ${formatCurrency(hd.tongTien)} - Cọc: ${formatCurrency(hd.tienCocDaTru)})</div>` : ''}
+          ${(hd.tienCocDaTru > 0 || hd.soTienGiam > 0) ? `
+            <div class="text-muted" style="font-size: 0.7rem;">
+              (Gốc: ${formatCurrency(hd.tongTien)}${hd.soTienGiam > 0 ? ` - Giảm: ${formatCurrency(hd.soTienGiam)}` : ''}${hd.tienCocDaTru > 0 ? ` - Cọc: ${formatCurrency(hd.tienCocDaTru)}` : ''})
+            </div>` : ''}
         </td>
         <td><span class="badge bg-success">${escapeHtml(hd.trangThai)}</span></td>
         <td class="text-end">
@@ -594,7 +859,8 @@ async function viewInvoiceDetail(id) {
   const kh = hoaDon.khachHang || {};
   const nv = hoaDon.nhanVien || {};
   const tienCocDaTru = hoaDon.tienCocDaTru || 0;
-  const soTienThanhToan = hoaDon.soTienThanhToan !== undefined ? hoaDon.soTienThanhToan : (hoaDon.tongTien - tienCocDaTru);
+  const soTienGiam = hoaDon.soTienGiam || 0;
+  const soTienThanhToan = hoaDon.soTienThanhToan !== undefined ? hoaDon.soTienThanhToan : (hoaDon.tongTien - tienCocDaTru - soTienGiam);
 
   content.innerHTML = `
     <div class="p-3 border rounded mb-3 bg-light">
@@ -683,6 +949,12 @@ async function viewInvoiceDetail(id) {
         <span class="text-muted">Tổng giá trị đơn hàng:</span>
         <span class="fw-semibold">${formatCurrency(hoaDon.tongTien)}</span>
       </div>
+      ${soTienGiam > 0 ? `
+        <div class="d-flex justify-content-between mb-1 text-warning">
+          <span>Chiết khấu / Giảm giá:</span>
+          <span class="fw-bold">-${formatCurrency(soTienGiam)}</span>
+        </div>
+      ` : ''}
       ${tienCocDaTru > 0 ? `
         <div class="d-flex justify-content-between mb-1 text-success">
           <span>Tiền cọc đã trừ (Đơn đặt trước):</span>
@@ -694,8 +966,130 @@ async function viewInvoiceDetail(id) {
     </div>
   `;
 
+  currentViewingInvoice = res;
   const modal = new bootstrap.Modal(document.getElementById('invoiceDetailModal'));
   modal.show();
+}
+
+let currentViewingInvoice = null;
+
+/**
+ * In Hóa đơn bán lẻ & Phiếu xuất kho chuẩn Thông tư 200/2014/TT-BTC & NĐ 123/2020/NĐ-CP
+ */
+function printInvoiceReceipt(invoiceData = null) {
+  const data = invoiceData || currentViewingInvoice;
+  if (!data || !data.hoaDon) {
+    showToast('Chưa có dữ liệu hóa đơn để in!', 'warning');
+    return;
+  }
+
+  const { hoaDon, danhSachMay = [], danhSachPhuKien = [] } = data;
+  const kh = hoaDon.khachHang || {};
+  const nv = hoaDon.nhanVien || {};
+  const tienCocDaTru = hoaDon.tienCocDaTru || 0;
+  const soTienGiam = hoaDon.soTienGiam || 0;
+  const soTienThanhToan = hoaDon.soTienThanhToan !== undefined ? hoaDon.soTienThanhToan : (hoaDon.tongTien - tienCocDaTru - soTienGiam);
+
+  if (typeof inHoaDonBanHangChuan === 'function') {
+    inHoaDonBanHangChuan({
+      soHD: hoaDon.soHD || hoaDon._id,
+      ngayLap: hoaDon.ngayLap || hoaDon.createdAt,
+      khachHang: kh,
+      nhanVien: nv,
+      danhSachMay: danhSachMay,
+      danhSachPK: danhSachPhuKien,
+      tienCocDaTru,
+      soTienGiam,
+      soTienThanhToan,
+      tongTien: hoaDon.tongTien,
+      hinhThucThanhToan: hoaDon.trangThai || 'Tiền mặt'
+    });
+  } else {
+    window.print();
+  }
+}
+
+/* =========================================================================
+   TAB 3: BÁO CÁO DOANH SỐ & KPI NHÂN VIÊN (TUẦN 5-6 - NGUYỄN QUANG TUẤN)
+========================================================================= */
+
+async function initReportsTab() {
+  const btnReload = document.getElementById('btnReloadStaffKpi');
+  if (btnReload) {
+    btnReload.addEventListener('click', loadReportsData);
+  }
+
+  // Load khi mở tab
+  const reportsTabBtn = document.getElementById('tab-reports-tab');
+  if (reportsTabBtn) {
+    reportsTabBtn.addEventListener('shown.bs.tab', loadReportsData);
+  }
+}
+
+async function loadReportsData() {
+  await Promise.all([
+    loadStaffKpi(),
+    loadTopProducts()
+  ]);
+}
+
+async function loadStaffKpi() {
+  const tbody = document.getElementById('staffKpiTableBody');
+  if (!tbody) return;
+
+  const res = await api.get('/hoa-don/bao-cao/doanh-so-nhan-vien');
+  if (!res.success) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger small">${res.message || 'Lỗi tải KPI'}</td></tr>`;
+    return;
+  }
+
+  const list = res.data || [];
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted small">Chưa có dữ liệu bán hàng</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(item => `
+    <tr>
+      <td>
+        <div class="fw-semibold small">${escapeHtml(item.hoTen)}</div>
+        <div class="text-muted" style="font-size: 0.7rem;">@${escapeHtml(item.tenDangNhap)}</div>
+      </td>
+      <td><span class="badge bg-secondary-subtle text-secondary border" style="font-size: 0.7rem;">${escapeHtml(item.vaiTro)}</span></td>
+      <td class="text-center fw-bold">${item.soHoaDon}</td>
+      <td class="text-end fw-bold text-success">${formatCurrency(item.tongDoanhThu)}</td>
+      <td class="text-end small text-muted">${formatCurrency(item.giaTriTrungBinh)}</td>
+    </tr>
+  `).join('');
+}
+
+async function loadTopProducts() {
+  const tbody = document.getElementById('topProductsTableBody');
+  if (!tbody) return;
+
+  const res = await api.get('/hoa-don/bao-cao/top-san-pham');
+  if (!res.success) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger small">${res.message || 'Lỗi tải top SP'}</td></tr>`;
+    return;
+  }
+
+  const list = res.data || [];
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted small">Chưa có dữ liệu</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map((item, idx) => `
+    <tr>
+      <td class="fw-bold text-muted">${idx + 1}</td>
+      <td>
+        <div class="fw-semibold small">${escapeHtml(item.tenMay)}</div>
+        <span class="badge bg-light text-dark border" style="font-size: 0.65rem;">${escapeHtml(item.hang || '')}</span>
+      </td>
+      <td class="text-center fw-bold text-primary">${item.soLuongBan}</td>
+      <td class="text-end fw-semibold small text-success">${formatCurrency(item.doanhThu)}</td>
+    </tr>
+  `).join('');
 }
 
 window.addImeiToCart = addImeiToCart;
@@ -703,4 +1097,7 @@ window.removeImeiFromCart = removeImeiFromCart;
 window.addPhuKienToCart = addPhuKienToCart;
 window.changePhuKienQty = changePhuKienQty;
 window.viewInvoiceDetail = viewInvoiceDetail;
+window.printInvoiceReceipt = printInvoiceReceipt;
 window.selectPreOrder = selectPreOrder;
+window.loadReportsData = loadReportsData;
+window.shortcutAction = shortcutAction;

@@ -6,7 +6,16 @@ const API_BASE = '/api';
 
 const api = {
   async request(endpoint, options = {}) {
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+    let url = endpoint;
+    if (!url.startsWith('http')) {
+      if (url.startsWith('/api/')) {
+        // Đã có tiền tố /api/
+      } else if (url.startsWith('/')) {
+        url = `${API_BASE}${url}`;
+      } else {
+        url = `${API_BASE}/${url}`;
+      }
+    }
     
     const headers = {
       'Content-Type': 'application/json',
@@ -74,6 +83,10 @@ const api = {
     return this.request(endpoint, { method: 'DELETE' });
   }
 };
+
+const apiFetch = (endpoint, options = {}) => api.request(endpoint, options);
+window.apiFetch = apiFetch;
+window.api = api;
 
 /**
  * Hiển thị Toast thông báo phía trên góc phải màn hình
@@ -158,3 +171,20 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+/**
+ * Debounce helper giúp hạn chế tần suất gọi hàm (tìm kiếm, gõ phím)
+ * @param {Function} fn Hàm cần thực thi
+ * @param {number} delay Thời gian chờ (mili-giây), mặc định 300ms
+ */
+function debounce(fn, delay = 300) {
+  let timer = null;
+  return function(...args) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+}
+
+window.debounce = debounce;

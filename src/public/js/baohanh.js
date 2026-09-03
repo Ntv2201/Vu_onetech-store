@@ -277,6 +277,7 @@ async function viewPbhDetail(id) {
   const kh = pbh.khachHang || {};
   const nv = pbh.nhanVien || {};
   const sp = (mayImei && mayImei.sanPham) ? mayImei.sanPham : {};
+  const canRepair = currentUser && ['Quản lý', 'Kỹ thuật'].includes(currentUser.vaiTro);
 
   content.innerHTML = `
     <div class="p-3 bg-light rounded mb-3">
@@ -303,7 +304,7 @@ async function viewPbhDetail(id) {
 
     <div class="d-flex justify-content-between align-items-center mb-2">
       <h6 class="fw-bold mb-0">Linh Kiện Đã Thay Thế / Sửa Chữa</h6>
-      ${pbh.trangThai === 'Dang xu ly' ? `
+      ${(pbh.trangThai === 'Dang xu ly' && canRepair) ? `
         <button class="btn btn-sm btn-outline-primary" onclick="openModalXuatLinhKien('${pbh._id}')">
           <i class="bi bi-plus-lg me-1"></i> Xuất Linh Kiện Thay Thế
         </button>
@@ -336,12 +337,15 @@ async function viewPbhDetail(id) {
 
   // Render buttons in footer
   if (footer) {
+    const canRepair = currentUser && ['Quản lý', 'Kỹ thuật'].includes(currentUser.vaiTro);
     if (pbh.trangThai === 'Dang xu ly') {
       footer.innerHTML = `
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-        <button type="button" class="btn btn-success fw-semibold" onclick="handleHoanTatBaoHanh('${pbh._id}')">
-          <i class="bi bi-check-circle me-1"></i> Hoàn Tất Sửa Chữa & Trả Khách
-        </button>
+        ${canRepair ? `
+          <button type="button" class="btn btn-success fw-semibold" onclick="handleHoanTatBaoHanh('${pbh._id}')">
+            <i class="bi bi-check-circle me-1"></i> Hoàn Tất Sửa Chữa & Trả Khách
+          </button>
+        ` : '<span class="badge bg-warning text-dark p-2"><i class="bi bi-hourglass-split me-1"></i> Đang chờ kỹ thuật sửa chữa</span>'}
       `;
     } else {
       footer.innerHTML = `

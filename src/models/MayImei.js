@@ -13,9 +13,13 @@ const mayImeiSchema = new mongoose.Schema({
   },
   mauSac: { type: String, default: '' },
   dungLuong: { type: String, default: '' },
-  ngayNhap: { type: Date, default: Date.now }
+  ngayNhap: { type: Date, default: Date.now },
+  status: { type: Boolean, default: true } // Trạng thái vật lý máy (Bit: 1 - Khả dụng/Hoạt động, 0 - Hỏng hủy/Đã xuất)
 }, {
   timestamps: true
 });
+
+mayImeiSchema.index({ sanPham: 1, trangThai: 1 });
+mayImeiSchema.index({ imei: 1, trangThai: 1 });
 
 module.exports = mongoose.model('MayImei', mayImeiSchema, 'MAY_IMEI');

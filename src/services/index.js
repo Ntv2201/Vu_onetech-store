@@ -10,6 +10,13 @@ const DanhMucService = require('./DanhMucService');
 const PhuKienService = require('./PhuKienService');
 const AuthService = require('./AuthService');
 const DashboardService = require('./DashboardService');
+const DatTruocService = require('./DatTruocService');
+const DoiTraService = require('./DoiTraService');
+const ThanhToanService = require('./ThanhToanService');
+const TonKhoService = require('./TonKhoService');
+const PhieuNhapService = require('./PhieuNhapService');
+const CongNoService = require('./CongNoService');
+const TraGopService = require('./TraGopService');
 
 module.exports = {
   BaseService,
@@ -23,5 +30,12 @@ module.exports = {
   DanhMucService,
   PhuKienService,
   AuthService,
-  DashboardService
+  DashboardService,
+  DatTruocService,
+  DoiTraService,
+  ThanhToanService,
+  TonKhoService,
+  PhieuNhapService,
+  CongNoService,
+  TraGopService
 };
