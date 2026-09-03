@@ -220,12 +220,16 @@ function initKeyboardShortcuts() {
     // Phím chức năng F1 -> F9 (capture phase để chặn hành vi mặc định trình duyệt)
     if (['F1', 'F2', 'F3', 'F4', 'F7', 'F8', 'F9'].includes(e.key)) {
       e.preventDefault();
+      e.stopPropagation();
       shortcutAction(e.key);
       return;
     }
     // Phím Escape
     if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
       shortcutAction('Escape');
+      return;
     }
   }, { capture: true });
 
