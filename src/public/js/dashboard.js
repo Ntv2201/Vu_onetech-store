@@ -41,73 +41,73 @@ function renderDashboardActions(user) {
 
   if (role === 'Quản lý') {
     buttonsHtml = `
-      <a href="/ban-hang/index.html" class="btn btn-primary btn-sm">
+      <a href="/ban-hang/index.html" class="btn btn-primary btn-sm border-2 fw-medium">
         <i class="bi bi-cart-check me-1"></i> Bán hàng POS
       </a>
-      <a href="/nhap-kho/index.html" class="btn btn-outline-primary btn-sm">
+      <a href="/nhap-kho/index.html" class="btn btn-outline-primary btn-sm border-2 fw-medium">
         <i class="bi bi-box-arrow-in-down me-1"></i> Nhập kho
       </a>
-      <a href="/kiem-ke/index.html" class="btn btn-outline-success btn-sm">
+      <a href="/kiem-ke/index.html" class="btn btn-outline-success btn-sm border-2 fw-medium">
         <i class="bi bi-clipboard-check me-1"></i> Kiểm kê kho
       </a>
-      <a href="/so-quy/index.html" class="btn btn-outline-secondary btn-sm">
+      <a href="/so-quy/index.html" class="btn btn-outline-secondary btn-sm border-2 fw-medium">
         <i class="bi bi-wallet2 me-1"></i> Sổ quỹ
       </a>
     `;
   } else if (role === 'NV bán hàng') {
     buttonsHtml = `
-      <a href="/ban-hang/index.html" class="btn btn-primary btn-sm">
+      <a href="/ban-hang/index.html" class="btn btn-primary btn-sm border-2 fw-medium">
         <i class="bi bi-cart-check me-1"></i> Bán hàng POS
       </a>
-      <a href="/dat-truoc/index.html" class="btn btn-outline-primary btn-sm">
+      <a href="/dat-truoc/index.html" class="btn btn-outline-primary btn-sm border-2 fw-medium">
         <i class="bi bi-bookmark-star me-1"></i> Đặt trước
       </a>
-      <a href="/bao-hanh/index.html" class="btn btn-outline-secondary btn-sm">
+      <a href="/bao-hanh/index.html" class="btn btn-outline-secondary btn-sm border-2 fw-medium">
         <i class="bi bi-shield-check me-1"></i> Tra cứu BH
       </a>
     `;
   } else if (role === 'Thủ kho') {
     buttonsHtml = `
-      <a href="/nhap-kho/index.html" class="btn btn-primary btn-sm">
+      <a href="/nhap-kho/index.html" class="btn btn-primary btn-sm border-2 fw-medium">
         <i class="bi bi-box-arrow-in-down me-1"></i> Nhập kho
       </a>
-      <a href="/kiem-ke/index.html" class="btn btn-outline-primary btn-sm">
+      <a href="/kiem-ke/index.html" class="btn btn-outline-primary btn-sm border-2 fw-medium">
         <i class="bi bi-clipboard-check me-1"></i> Kiểm kê kho
       </a>
-      <a href="/may-imei/index.html" class="btn btn-outline-secondary btn-sm">
+      <a href="/may-imei/index.html" class="btn btn-outline-secondary btn-sm border-2 fw-medium">
         <i class="bi bi-upc-scan me-1"></i> Quản lý IMEI
       </a>
     `;
   } else if (role === 'Thu ngân') {
     buttonsHtml = `
-      <a href="/ban-hang/index.html" class="btn btn-primary btn-sm">
+      <a href="/ban-hang/index.html" class="btn btn-primary btn-sm border-2 fw-medium">
         <i class="bi bi-cart-check me-1"></i> Bán hàng POS
       </a>
-      <a href="/so-quy/index.html" class="btn btn-outline-primary btn-sm">
+      <a href="/so-quy/index.html" class="btn btn-outline-primary btn-sm border-2 fw-medium">
         <i class="bi bi-wallet2 me-1"></i> Thu - Chi Sổ quỹ
       </a>
-      <a href="/cong-no/index.html" class="btn btn-outline-secondary btn-sm">
+      <a href="/cong-no/index.html" class="btn btn-outline-secondary btn-sm border-2 fw-medium">
         <i class="bi bi-journal-bookmark me-1"></i> Công nợ
       </a>
     `;
   } else if (role === 'Kế toán') {
     buttonsHtml = `
-      <a href="/so-quy/index.html" class="btn btn-primary btn-sm">
+      <a href="/so-quy/index.html" class="btn btn-primary btn-sm border-2 fw-medium">
         <i class="bi bi-wallet2 me-1"></i> Sổ quỹ
       </a>
-      <a href="/cong-no/index.html" class="btn btn-outline-primary btn-sm">
+      <a href="/cong-no/index.html" class="btn btn-outline-primary btn-sm border-2 fw-medium">
         <i class="bi bi-journal-bookmark me-1"></i> Đối soát công nợ
       </a>
-      <a href="/kiem-ke/index.html" class="btn btn-outline-secondary btn-sm">
+      <a href="/kiem-ke/index.html" class="btn btn-outline-secondary btn-sm border-2 fw-medium">
         <i class="bi bi-clipboard-check me-1"></i> Kiểm kê kho
       </a>
     `;
   } else if (role === 'Kỹ thuật') {
     buttonsHtml = `
-      <a href="/bao-hanh/index.html" class="btn btn-primary btn-sm">
+      <a href="/bao-hanh/index.html" class="btn btn-primary btn-sm border-2 fw-medium">
         <i class="bi bi-shield-check me-1"></i> Tra cứu & Bảo hành
       </a>
-      <a href="/may-imei/index.html" class="btn btn-outline-primary btn-sm">
+      <a href="/may-imei/index.html" class="btn btn-outline-primary btn-sm border-2 fw-medium">
         <i class="bi bi-upc-scan me-1"></i> Tra cứu IMEI
       </a>
     `;

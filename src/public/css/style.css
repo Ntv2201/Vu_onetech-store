@@ -40,6 +40,12 @@
   100% { background-position: 0% 50%; }
 }
 
+@keyframes skeletonShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+
 /* =========================================
    BASE
    ========================================= */
@@ -432,6 +438,33 @@ body {
 .stat-icon.danger  { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #ef4444; }
 
 /* =========================================
+   SKELETON LOADING
+   ========================================= */
+.skeleton {
+  display: block;
+  background: linear-gradient(90deg, #e8edf5 25%, #d8e2ef 50%, #e8edf5 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s ease infinite;
+  border-radius: 0.35rem;
+}
+
+.skeleton-row td {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stat-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.7);
+}
+
+
+/* =========================================
    STATUS BADGES
    ========================================= */
 .badge-imei-conhang {
@@ -548,7 +581,8 @@ body {
   transform: translateY(-1px);
 }
 
-#sectionFinancialReport .btn-outline-primary {
+#sectionFinancialReport .btn-outline-primary,
+#dashboardQuickActions .btn {
   border-width: 2px;
   font-weight: 500;
 }
