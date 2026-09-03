@@ -128,6 +128,7 @@ body {
   letter-spacing: 0.03em;
   background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -239,21 +240,13 @@ body {
 
 .user-role-badge {
   display: inline-block;
-<<<<<<< HEAD
-  padding: 0.15rem 0.5rem;
-  font-size: 0.68rem;
-=======
   padding: 0.2rem 0.55rem;
   font-size: 0.72rem;
->>>>>>> 1037d3c008ab196103ba0e17ea4eca696f4b1e6d
   font-weight: 600;
   border-radius: 9999px;
   background: rgba(56, 189, 248, 0.15);
   color: #38bdf8;
-<<<<<<< HEAD
-  border: 1px solid rgba(56, 190, 250, 0.25);
-=======
-  border: 1px solid rgba(56,189,248,0.25);
+  border: 1px solid rgba(56, 189, 248, 0.25);
   letter-spacing: 0.02em;
 }
 
@@ -291,7 +284,6 @@ body {
   background: rgba(245, 158, 11, 0.22);
   color: #fde68a;
   border-color: rgba(245, 158, 11, 0.45);
->>>>>>> 1037d3c008ab196103ba0e17ea4eca696f4b1e6d
 }
 
 /* Nút Đăng xuất */
@@ -348,8 +340,8 @@ body {
 .app-navbar {
   height: 68px;
   background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(199, 210, 254, 0.6);
   padding: 0 1.75rem;
   display: flex;
@@ -376,8 +368,8 @@ body {
    ========================================= */
 .card-custom {
   background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 1rem;
   box-shadow: 0 2px 8px rgba(79, 70, 229, 0.06), 0 8px 28px rgba(79, 70, 229, 0.05);
@@ -733,6 +725,7 @@ body {
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
   z-index: 999;
+  -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
   animation: fadeIn 0.2s ease;
 }
@@ -841,6 +834,7 @@ body {
 .custom-dropdown-container {
   position: relative;
   width: 100%;
+  -webkit-user-select: none;
   user-select: none;
 }
 

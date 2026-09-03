@@ -362,7 +362,6 @@ function renderSidebarAndNavbar(user) {
           <button class="btn btn-light d-lg-none shadow-sm rounded-3" type="button" id="btnToggleSidebar">
             <i class="bi bi-list fs-5"></i>
           </button>
-<<<<<<< HEAD
           <div class="d-flex align-items-center gap-2">
             <div class="d-flex align-items-center justify-content-center rounded-3 text-white" style="width: 32px; height: 32px; background: linear-gradient(135deg, #4f46e5, #06b6d4); box-shadow: 0 2px 8px rgba(79,70,229,0.3);">
               <i class="bi bi-phone-vibrate-fill" style="font-size: 0.95rem;"></i>
@@ -386,22 +385,13 @@ function renderSidebarAndNavbar(user) {
             <div class="text-end d-none d-sm-block">
               <div class="fw-bold small text-dark" style="line-height: 1.2;">${escapeHtml(user.hoTen)}</div>
               <div class="d-flex align-items-center justify-content-end gap-1 mt-0.5">
-                <span class="badge" style="background: linear-gradient(135deg, #4f46e5, #6366f1); font-size: 0.68rem; font-weight: 600; padding: 2px 6px;">${escapeHtml(user.vaiTro)}</span>
+                <span class="user-role-badge ${roleClass}" style="font-size: 0.68rem; font-weight: 600; padding: 2px 6px;">${escapeHtml(user.vaiTro)}</span>
                 <span class="text-muted" style="font-size: 0.72rem;">@${escapeHtml(user.tenDangNhap)}</span>
               </div>
             </div>
             <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px; background: linear-gradient(135deg, #6366f1, #a855f7); font-size: 0.85rem; border: 2px solid #ffffff;">
               ${initials}
             </div>
-=======
-          <span class="text-muted small fw-medium d-none d-md-inline">Hệ thống Quản lý Bán hàng theo từng IMEI/Serial</span>
-        </div>
-
-        <div class="d-flex align-items-center gap-3">
-          <div class="text-end d-none d-sm-block">
-            <div class="fw-semibold small">${escapeHtml(user.hoTen)}</div>
-            <div class="user-role-badge ${roleClass}" style="font-size: 0.68rem; padding: 0.1rem 0.45rem;">${escapeHtml(user.vaiTro)}</div>
->>>>>>> 1037d3c008ab196103ba0e17ea4eca696f4b1e6d
           </div>
         </div>
       </header>

@@ -15,17 +15,6 @@ class DanhMucService extends BaseService {
     ]);
 
     const spMap = {};
-<<<<<<< HEAD
-    spCounts.forEach(c => { if (c._id) spMap[c._id.toString()] = c.count; });
-    const pkMap = {};
-    pkCounts.forEach(c => { if (c._id) pkMap[c._id.toString()] = c.count; });
-
-    return danhMucs.map(dm => {
-      const dmObj = dm.toObject();
-      dmObj.countSP = spMap[dm._id.toString()] || 0;
-      dmObj.countPK = pkMap[dm._id.toString()] || 0;
-      dmObj.totalProducts = (dmObj.countSP + dmObj.countPK);
-=======
     spCounts.forEach(c => {
       if (c._id) spMap[c._id.toString()] = c.count;
     });
@@ -40,7 +29,6 @@ class DanhMucService extends BaseService {
       dmObj.countSP = spMap[dm._id.toString()] || 0;
       dmObj.countPK = pkMap[dm._id.toString()] || 0;
       dmObj.totalProducts = dmObj.countSP + dmObj.countPK;
->>>>>>> 1037d3c008ab196103ba0e17ea4eca696f4b1e6d
       return dmObj;
     });
   }
