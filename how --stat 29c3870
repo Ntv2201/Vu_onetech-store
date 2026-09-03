@@ -1,0 +1,13 @@
+* [33m29c3870[m[33m ([m[1;31morigin/ui-redesign[m[33m, [m[1;32mui-redesign[m[33m, [m[1;32mbackup-ui[m[33m)[m Update code UI
+*   [33mf722ac2[m merge
+[32m|[m[33m\[m  
+[32m|[m [33m|[m * [33m9126e4a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mui-redesign-new[m[33m, [m[1;31mupstream/main[m[33m, [m[1;31mupstream/HEAD[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m fix(pos): sua the dong modal dat truoc, toi uu phim tat POS va sua loi edit phu kien
+[32m|[m [33m|[m [34m|[m * [33m547f62b[m[33m ([m[1;31mupstream/feat/bao-cao-thong-ke[m[33m)[m feat(bao-cao): cap nhat controller bao cao thong ke
+[32m|[m [33m|[m [34m|[m[34m/[m  
+[32m|[m [33m|[m * [33m8ec3184[m feat(bao-cao): Hoan tat phan he Bao cao Doanh thu, Top SP, Ton kho lau ngay va Test E2E Tuan 5-6 Vuong
+[32m|[m [33m|[m * [33mf6a3402[m feat(kiem-ke): Hoan thien phan he Kiem ke kho, Doi soat IMEI, Dieu chinh ton kho, Mau in 05-VT va Test suite Tuan 4 Vuong
+[32m|[m [33m|[m *   [33mbc48a4b[m Merge pull request #13 from tuan-coder-code/feat/kiem-ke-kho
+[32m|[m [33m|[m [36m|[m[1;31m\[m  
+[32m|[m [33m|[m [36m|[m * [33m815bb82[m feat: them chuc nang kiem ke kho
+[32m|[m [33m|[m * [1;31m|[m [33m2a7b4ef[m test(qa): Nang cap toan dien 18 bo Test Suites kiem thu 24 REST Endpoints, DOM Bindings va Frontend Data Extractors
+[32m|[m [33m|[m * [1;31m|[m [33md01998a[m fix(dropdowns): Sua loi parse response API khong hien thi options NCC, SanPham va LinhKien tren cac form
