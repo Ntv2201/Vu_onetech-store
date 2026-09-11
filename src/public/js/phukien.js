@@ -191,7 +191,7 @@ async function openEditPKModal(id) {
   document.getElementById('inputEditPKId').value = pk._id;
   document.getElementById('inputEditTenPK').value = pk.tenPK;
   document.getElementById('selectEditDanhMuc').value = pk.danhMuc?._id || pk.danhMuc || '';
-  (document.getElementById('inputEditGiaBan').value || '').replace(/[^\\d]/g, '')= pk.giaBan;
+  document.getElementById('inputEditGiaBan').value = pk.giaBan ? Number(pk.giaBan).toLocaleString('vi-VN') : '';
   document.getElementById('inputEditSoLuongTon').value = pk.soLuongTon;
 
   if (editPKModalInstance) editPKModalInstance.show();

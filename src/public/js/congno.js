@@ -140,23 +140,26 @@ function openPaymentModal(id) {
   document.getElementById('lblPaymentConLai').textContent = formatCurrency(conLai);
 
   document.getElementById('inputSoTienThanhToan').max = conLai;
-  (document.getElementById('inputSoTienThanhToan').value || '').replace(/[^\\d]/g, '')= conLai;
+  document.getElementById('inputSoTienThanhToan').value = conLai ? Number(conLai).toLocaleString('vi-VN') : '';
   document.getElementById('inputGhiChuThanhToan').value = isKH ? `Thu tiền nợ từ ${ten}` : `Trả tiền hàng nợ ${ten}`;
 
-  const modal = new bootstrap.Modal(document.getElementById('modalThanhToanCongNo'));
-  modal.show();
+  const modalEl = document.getElementById('modalThanhToanCongNo');
+  if (modalEl) {
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+  }
 }
 
 function fillAllRemainingDebt() {
   if (!currentPaymentDebt) return;
   const conLai = Math.max(0, (currentPaymentDebt.soTienNo || 0) - (currentPaymentDebt.soTienDaTra || 0));
-  (document.getElementById('inputSoTienThanhToan').value || '').replace(/[^\\d]/g, '')= conLai;
+  document.getElementById('inputSoTienThanhToan').value = conLai ? Number(conLai).toLocaleString('vi-VN') : '';
 }
 
 async function handlePaymentSubmit(e) {
   e.preventDefault();
   const id = document.getElementById('paymentCongNoId').value;
-  const soTien = Number((document.getElementById('inputSoTienThanhToan').value || '').replace(/[^\\d]/g, ''));
+  const soTien = Number((document.getElementById('inputSoTienThanhToan').value || '').replace(/[^\d]/g, ''));
   const hinhThuc = document.getElementById('inputHinhThucThanhToan').value;
   const ghiChu = document.getElementById('inputGhiChuThanhToan').value.trim();
 
@@ -168,9 +171,20 @@ async function handlePaymentSubmit(e) {
   const res = await api.post(`/cong-no/${id}/thanh-toan`, { soTien, hinhThuc, ghiChu });
   if (res.success) {
     showToast('Thanh toán công nợ thành công! Đã tự động hạch toán vào Sổ quỹ.', 'success');
-    bootstrap.Modal.getInstance(document.getElementById('modalThanhToanCongNo')).hide();
+    const modalEl = document.getElementById('modalThanhToanCongNo');
+    if (modalEl) {
+      const modal = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+      if (modal) modal.hide();
+    }
     loadDanhSachCongNo();
   } else {
     showToast(res.message || 'Lỗi khi thanh toán công nợ', 'danger');
   }
 }
+
+window.openPaymentModal = openPaymentModal;
+window.fillAllRemainingDebt = fillAllRemainingDebt;
+window.handlePaymentSubmit = handlePaymentSubmit;
+window.resetFilters = resetFilters;
+window.loadDanhSachCongNo = loadDanhSachCongNo;
+

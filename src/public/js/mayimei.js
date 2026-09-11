@@ -189,7 +189,7 @@ async function initMayImeiForm() {
       const m = res.mayImei;
       document.getElementById('selectSanPham').value = m.sanPham?._id || m.sanPham || '';
       document.getElementById('inputImeiReadonly').value = m.imei || '';
-      (document.getElementById('inputGiaNhap').value || '').replace(/[^\\d]/g, '')= m.giaNhap || '';
+      document.getElementById('inputGiaNhap').value = m.giaNhap ? Number(m.giaNhap).toLocaleString('vi-VN') : '';
       document.getElementById('selectTrangThai').value = m.trangThai || 'Con hang';
       document.getElementById('inputMauSac').value = m.mauSac || '';
       document.getElementById('inputDungLuong').value = m.dungLuong || '';

@@ -34,6 +34,15 @@ console.log('🏆 ONETECH STORE - MASTER TEST SUITE RUNNER');
 console.log(`🚀 Bắt đầu thực thi kiểm thử tự động trên ${TEST_SUITES.length} bộ Test Suites...`);
 console.log('======================================================================\n');
 
+// Tự động khởi tạo & làm sạch CSDL mẫu trước khi chạy test đảm bảo tính độc lập tuyệt đối (Idempotency)
+process.stdout.write('🔄 Đang tự động chuẩn bị CSDL sạch cho bộ kiểm thử toàn hệ thống... ');
+const seedProc = spawnSync('node', [path.join(__dirname, '../src/seeds/seed.js')], { encoding: 'utf8', env: process.env });
+if (seedProc.status === 0) {
+  console.log('\x1b[32m✔ ĐÃ SẴN SÀNG\x1b[0m\n');
+} else {
+  console.log('\x1b[33m⚠ Tiếp tục với CSDL hiện tại\x1b[0m\n');
+}
+
 const startTime = Date.now();
 const results = [];
 let totalPassCount = 0;

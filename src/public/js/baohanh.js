@@ -220,6 +220,23 @@ async function initWarrantyList() {
   if (formXuat) {
     formXuat.addEventListener('submit', handleXuatLinhKien);
   }
+
+  // Tự động dọn dẹp backdrop khi đóng modal
+  const pbhModalEl = document.getElementById('pbhDetailModal');
+  if (pbhModalEl) {
+    pbhModalEl.addEventListener('hidden.bs.modal', cleanupModalBackdrops);
+  }
+  const xuatLkModalEl = document.getElementById('modalXuatLinhKien');
+  if (xuatLkModalEl) {
+    xuatLkModalEl.addEventListener('hidden.bs.modal', () => {
+      const pbhModal = document.getElementById('pbhDetailModal');
+      if (pbhModal && pbhModal.classList.contains('show')) {
+        document.body.classList.add('modal-open');
+      } else {
+        cleanupModalBackdrops();
+      }
+    });
+  }
 }
 
 async function loadWarrantyList() {
@@ -262,17 +279,33 @@ async function loadWarrantyList() {
   }).join('');
 }
 
-async function viewPbhDetail(id) {
+/* =========================================================================
+   MODAL BACKDROP CLEANUP HELPER
+========================================================================= */
+
+function cleanupModalBackdrops() {
+  setTimeout(() => {
+    const openModals = document.querySelectorAll('.modal.show');
+    if (openModals.length === 0) {
+      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+    }
+  }, 200);
+}
+
+async function loadPbhDetailContent(id) {
   const res = await api.get(`/bao-hanh/${id}`);
   if (!res.success) {
     showToast(res.message || 'Không thể tải chi tiết phiếu bảo hành', 'danger');
-    return;
+    return null;
   }
 
   const { phieuBaoHanh: pbh, mayImei, danhSachLinhKien } = res;
   const content = document.getElementById('pbhDetailContent');
   const footer = document.getElementById('pbhDetailFooter');
-  if (!content) return;
+  if (!content) return null;
 
   const kh = pbh.khachHang || {};
   const nv = pbh.nhanVien || {};
@@ -337,7 +370,6 @@ async function viewPbhDetail(id) {
 
   // Render buttons in footer
   if (footer) {
-    const canRepair = currentUser && ['Quản lý', 'Kỹ thuật'].includes(currentUser.vaiTro);
     if (pbh.trangThai === 'Dang xu ly') {
       footer.innerHTML = `
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
@@ -355,8 +387,18 @@ async function viewPbhDetail(id) {
     }
   }
 
-  const modal = new bootstrap.Modal(document.getElementById('pbhDetailModal'));
-  modal.show();
+  return pbh;
+}
+
+async function viewPbhDetail(id) {
+  const pbh = await loadPbhDetailContent(id);
+  if (!pbh) return;
+
+  const modalEl = document.getElementById('pbhDetailModal');
+  if (modalEl) {
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+  }
 }
 
 async function openModalXuatLinhKien(pbhId) {
@@ -371,8 +413,11 @@ async function openModalXuatLinhKien(pbhId) {
   select.innerHTML = '<option value="">-- Chọn linh kiện cần thay --</option>' +
     list.map(lk => `<option value="${lk._id}">${escapeHtml(lk.tenLK)} (Tồn: ${lk.soLuongTon}, Giá: ${(lk.donGia || 0).toLocaleString('vi-VN')} đ)</option>`).join('');
 
-  const modal = new bootstrap.Modal(document.getElementById('modalXuatLinhKien'));
-  modal.show();
+  const modalEl = document.getElementById('modalXuatLinhKien');
+  if (modalEl) {
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+  }
 }
 
 async function handleXuatLinhKien(e) {
@@ -380,7 +425,7 @@ async function handleXuatLinhKien(e) {
   const pbhId = document.getElementById('xuatLkPbhId').value;
   const linhKienId = document.getElementById('selectLinhKien').value;
   const soLuong = document.getElementById('inputLkSoLuong').value;
-  const donGia = (document.getElementById('inputLkDonGia').value || '').replace(/[^\\d]/g, '');
+  const donGia = (document.getElementById('inputLkDonGia').value || '').replace(/[^\d]/g, '');
 
   if (!linhKienId) {
     showToast('Vui lòng chọn linh kiện', 'warning');
@@ -394,8 +439,26 @@ async function handleXuatLinhKien(e) {
   }
 
   showToast('Xuất linh kiện thay thế thành công!', 'success');
-  bootstrap.Modal.getInstance(document.getElementById('modalXuatLinhKien')).hide();
-  await viewPbhDetail(pbhId);
+
+  // Đóng modal xuất linh kiện an toàn
+  const modalLkEl = document.getElementById('modalXuatLinhKien');
+  if (modalLkEl) {
+    const modalLkInstance = bootstrap.Modal.getInstance(modalLkEl) || bootstrap.Modal.getOrCreateInstance(modalLkEl);
+    if (modalLkInstance) {
+      modalLkInstance.hide();
+    }
+  }
+
+  // Cập nhật lại nội dung chi tiết mà KHÔNG gọi modal.show() tạo thêm backdrop lồng nhau
+  await loadPbhDetailContent(pbhId);
+
+  // Đảm bảo giữ lại lớp modal-open cho body vì pbhDetailModal vẫn đang mở
+  setTimeout(() => {
+    const pbhModal = document.getElementById('pbhDetailModal');
+    if (pbhModal && pbhModal.classList.contains('show')) {
+      document.body.classList.add('modal-open');
+    }
+  }, 250);
 }
 
 async function handleHoanTatBaoHanh(pbhId) {
@@ -410,10 +473,23 @@ async function handleHoanTatBaoHanh(pbhId) {
   }
 
   showToast('Đã hoàn tất bảo hành và cập nhật trạng thái máy!', 'success');
-  bootstrap.Modal.getInstance(document.getElementById('pbhDetailModal')).hide();
+
+  // Đóng modal chi tiết an toàn
+  const modalEl = document.getElementById('pbhDetailModal');
+  if (modalEl) {
+    const modalInstance = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+    if (modalInstance) {
+      modalInstance.hide();
+    }
+  }
+
+  // Dọn dẹp triệt để các backdrop bị kẹt (nếu có)
+  cleanupModalBackdrops();
+
   await loadWarrantyList();
 }
 
 window.viewPbhDetail = viewPbhDetail;
 window.openModalXuatLinhKien = openModalXuatLinhKien;
 window.handleHoanTatBaoHanh = handleHoanTatBaoHanh;
+window.cleanupModalBackdrops = cleanupModalBackdrops;

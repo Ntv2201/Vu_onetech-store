@@ -785,3 +785,18 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(applyCurrencyFormat, 300);
   setTimeout(applyCurrencyFormat, 1000);
 });
+
+// =========================================
+// GLOBAL MODAL BACKDROP RESCUE & CLEANUP
+// =========================================
+document.addEventListener('hidden.bs.modal', function() {
+  setTimeout(function() {
+    const openModals = document.querySelectorAll('.modal.show');
+    if (openModals.length === 0) {
+      document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+    }
+  }, 200);
+});
