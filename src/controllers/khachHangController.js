@@ -9,6 +9,7 @@ class KhachHangController extends BaseController {
     this.postCreate = this.postCreate.bind(this);
     this.postEdit = this.postEdit.bind(this);
     this.delete = this.delete.bind(this);
+    this.toggleStatus = this.toggleStatus.bind(this);
   }
 
   // GET /api/khach-hang
@@ -51,14 +52,20 @@ class KhachHangController extends BaseController {
     }
   }
 
-  // DELETE /api/khach-hang/:id
-  async delete(req, res) {
+  // PUT /api/khach-hang/:id/toggle-status
+  async toggleStatus(req, res) {
     try {
-      const result = await KhachHangService.deleteKhachHang(req.params.id);
-      return this.sendSuccess(res, result, 'Xóa khách hàng thành công');
+      const result = await KhachHangService.toggleStatusKhachHang(req.params.id);
+      const action = result.status ? 'Mở khóa' : 'Khóa';
+      return this.sendSuccess(res, result, `${action} khách hàng thành công`);
     } catch (error) {
-      return this.handleError(res, error, 'Lỗi khi xóa khách hàng');
+      return this.handleError(res, error, 'Lỗi khi thay đổi trạng thái khách hàng');
     }
+  }
+
+  // DELETE /api/khach-hang/:id (Alias hỗ trợ backward compatibility)
+  async delete(req, res) {
+    return this.toggleStatus(req, res);
   }
 }
 

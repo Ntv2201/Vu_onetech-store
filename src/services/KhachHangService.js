@@ -19,10 +19,21 @@ class KhachHangService extends BaseService {
     const { search } = query;
     const filter = {};
 
+    if (query.status === 'all') {
+      // Không lọc theo status (lấy tất cả)
+    } else if (query.status === false || query.status === 'false') {
+      filter.status = false;
+    } else if (query.status === true || query.status === 'true') {
+      filter.status = true;
+    } else {
+      filter.status = { $ne: false }; // Mặc định chỉ lấy khách hàng còn hoạt động
+    }
+
     if (search && search.trim()) {
+      const safeSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       filter.$or = [
-        { hoTen: { $regex: search.trim(), $options: 'i' } },
-        { sdt: { $regex: search.trim(), $options: 'i' } }
+        { hoTen: { $regex: safeSearch, $options: 'i' } },
+        { sdt: { $regex: safeSearch, $options: 'i' } }
       ];
     }
     if (query.hangThanhVien) {
@@ -32,11 +43,6 @@ class KhachHangService extends BaseService {
       filter.tongChiTieu = {};
       if (query.tongChiTieuMin) filter.tongChiTieu.$gte = Number(query.tongChiTieuMin);
       if (query.tongChiTieuMax) filter.tongChiTieu.$lte = Number(query.tongChiTieuMax);
-    }
-    if (query.status !== undefined) {
-      filter.status = query.status === 'true' || query.status === true;
-    } else {
-      filter.status = true; // mặc định chỉ lấy khách hàng còn hoạt động
     }
 
     return await KhachHang.find(filter).sort({ createdAt: -1 });
@@ -150,14 +156,18 @@ class KhachHangService extends BaseService {
     return updated;
   }
 
-  async deleteKhachHang(id) {
-    // Soft delete instead of hard delete
-    const deleted = await KhachHang.findByIdAndUpdate(id, { status: false }, { new: true });
-    if (!deleted) {
+  async toggleStatusKhachHang(id) {
+    const khachHang = await KhachHang.findById(id);
+    if (!khachHang) {
       throw this.createError('Không tìm thấy khách hàng', 404);
     }
+    khachHang.status = !khachHang.status;
+    await khachHang.save();
+    return { success: true, id, status: khachHang.status };
+  }
 
-    return { success: true, id };
+  async deleteKhachHang(id) {
+    return this.toggleStatusKhachHang(id);
   }
 }
 

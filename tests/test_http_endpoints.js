@@ -229,11 +229,16 @@ async function runHttpContractTests() {
   }, kyThuatCookie);
   assert(rbac2.status === 403, 'Kỹ thuật không có quyền lập hóa đơn bán hàng POS (Nhận 403 Forbidden)');
 
-  // 4.3 Thủ kho xóa Nhà cung cấp (Chỉ Quản lý được xóa) -> Phải nhận 403
-  const rbac3 = await requestApi('/api/nha-cung-cap/600000000000000000000000', {
+  // 4.3 Thủ kho khóa/xóa Nhà cung cấp (Chỉ Quản lý được phép) -> Phải nhận 403
+  const rbac3 = await requestApi('/api/nha-cung-cap/600000000000000000000000/toggle-status', {
+    method: 'PUT'
+  }, thuKhoCookie);
+  assert(rbac3.status === 403, 'Thủ kho không có quyền khóa nhà cung cấp (Nhận 403 Forbidden)');
+
+  const rbac3b = await requestApi('/api/nha-cung-cap/600000000000000000000000', {
     method: 'DELETE'
   }, thuKhoCookie);
-  assert(rbac3.status === 403, 'Thủ kho không có quyền xóa nhà cung cấp (Nhận 403 Forbidden)');
+  assert(rbac3b.status === 403, 'Thủ kho không có quyền xóa nhà cung cấp qua DELETE alias (Nhận 403 Forbidden)');
 
   // 4.4 Thu ngân lập Phiếu nhập kho -> Phải nhận 403
   const rbac4 = await requestApi('/api/phieu-nhap', {

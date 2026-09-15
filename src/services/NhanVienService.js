@@ -168,21 +168,28 @@ class NhanVienService extends BaseService {
     return nvObj;
   }
 
-  async deleteNhanVien(id, currentUserId = null) {
+  async toggleStatusNhanVien(id, currentUserId = null) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw this.createError('ID nhân viên không hợp lệ', 400);
     }
     if (currentUserId && id.toString() === currentUserId.toString()) {
-      throw this.createError('Bạn không thể tự xóa tài khoản của chính mình!', 400);
+      throw this.createError('Bạn không thể tự thay đổi trạng thái tài khoản của chính mình!', 400);
     }
 
-    // Xoá mềm (Nghỉ việc)
-    const deleted = await NhanVien.findByIdAndUpdate(id, { trangThai: 'Nghỉ việc' }, { new: true });
-    if (!deleted) {
+    const nv = await NhanVien.findById(id);
+    if (!nv) {
       throw this.createError('Không tìm thấy nhân viên', 404);
     }
+    
+    // Nếu đang là Khóa hoặc Nghỉ việc thì mở lại thành Hoạt động. Ngược lại thì Khóa.
+    nv.trangThai = (nv.trangThai === 'Khóa' || nv.trangThai === 'Nghỉ việc') ? 'Hoạt động' : 'Khóa';
+    await nv.save();
 
-    return { success: true, id };
+    return { success: true, id: nv._id, trangThai: nv.trangThai };
+  }
+
+  async deleteNhanVien(id, currentUserId = null) {
+    return this.toggleStatusNhanVien(id, currentUserId);
   }
 }
 

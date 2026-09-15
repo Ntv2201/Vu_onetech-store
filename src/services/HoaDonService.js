@@ -119,7 +119,7 @@ class HoaDonService extends BaseService {
     }
 
     let imeis = await MayImei.find(filter)
-      .populate('sanPham', 'tenMay hang giaBan soThangBH')
+      .populate('sanPham', 'tenMay hang giaBan soThangBH status')
       .sort({ createdAt: -1 })
       .limit(50);
 
@@ -133,6 +133,9 @@ class HoaDonService extends BaseService {
         return imeiStr.includes(q) || tenSP.includes(q) || mauSac.includes(q) || dungLuong.includes(q);
       });
     }
+
+    // Lọc bỏ những máy có sản phẩm đã bị khóa
+    imeis = imeis.filter(m => m.sanPham && m.sanPham.status !== false);
 
     return imeis;
   }

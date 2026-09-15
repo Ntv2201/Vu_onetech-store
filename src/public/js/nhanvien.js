@@ -92,6 +92,8 @@ async function loadNhanVienList() {
 
       const isCurrentLoggedIn = currentUser && currentUser._id.toString() === nv._id.toString();
 
+      const safeHoTen = escapeHtml((nv.hoTen || '').replace(/'/g, "\\'"));
+
       return `
         <tr>
           <td>
@@ -112,8 +114,8 @@ async function loadNhanVienList() {
                 <i class="bi bi-pencil"></i>
               </a>
               ${!isCurrentLoggedIn ? `
-                <button type="button" class="btn-action btn-action-cancel" title="Xóa" onclick="deleteNhanVien('${nv._id}', '${escapeHtml(nv.hoTen)}')">
-                  <i class="bi bi-trash"></i>
+                <button type="button" class="btn-action ${nv.trangThai === 'Khóa' || nv.trangThai === 'Nghỉ việc' ? 'btn-action-success' : 'btn-action-cancel'}" title="${nv.trangThai === 'Khóa' || nv.trangThai === 'Nghỉ việc' ? 'Mở khóa' : 'Khóa'}" onclick="toggleStatusNhanVien('${nv._id}', '${safeHoTen}', '${escapeHtml(nv.trangThai)}')">
+                  <i class="bi ${nv.trangThai === 'Khóa' || nv.trangThai === 'Nghỉ việc' ? 'bi-unlock-fill' : 'bi-lock-fill'}"></i>
                 </button>
               ` : ''}
             </div>
@@ -126,15 +128,17 @@ async function loadNhanVienList() {
   }
 }
 
-async function deleteNhanVien(id, hoTen) {
-  if (!confirm(`Bạn có chắc chắn muốn xóa nhân viên "${hoTen}"?`)) return;
+async function toggleStatusNhanVien(id, hoTen, trangThai) {
+  const isLocked = trangThai === 'Khóa' || trangThai === 'Nghỉ việc';
+  const actionName = isLocked ? 'mở khóa' : 'khóa';
+  if (!confirm(`Bạn có chắc chắn muốn ${actionName} tài khoản nhân viên "${hoTen}"?`)) return;
 
-  const res = await api.delete(`/nhan-vien/${id}`);
+  const res = await api.put(`/nhan-vien/${id}/toggle-status`);
   if (res.success) {
-    showToast(res.message || 'Xóa nhân viên thành công', 'success');
+    showToast(res.message || `${actionName} nhân viên thành công`, 'success');
     loadNhanVienList();
   } else {
-    showToast(res.message || 'Lỗi khi xóa nhân viên', 'danger');
+    showToast(res.message || `Lỗi khi ${actionName} nhân viên`, 'danger');
   }
 }
 

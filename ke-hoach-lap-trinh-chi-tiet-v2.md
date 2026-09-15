@@ -69,6 +69,8 @@
     ├─ Stress test dữ liệu lớn (1.000+ máy IMEI) (Việt Anh - QA + Cả nhóm)
     ├─ Concurrency Race Condition Lock: Chặn bán đúp đồng thời 1 IMEI [5/5 PASS] (Việt Anh - QA)
     ├─ Rà soát ma trận bảo mật 6 Actor (RBAC Security Audit) 403 Forbidden [PASS] (Việt Anh - QA)
+    ├─ Cơ chế Khóa/Mở Soft Delete Toggle & Chống Tự Khóa Quản Lý (PR #26) [24/24 PASS] (Tuấn + Cả nhóm)
+    ├─ Tìm kiếm Realtime An toàn chống ReDoS & Tối ưu Cuộn Bảng UI (Cả nhóm)
     ├─ Bổ sung trường status: Boolean (Bit) trên toàn bộ 10 Model CSDL (Cả nhóm)
     └─ Tích hợp cơ chế cô lập và tự động dọn dẹp dữ liệu test cleanup_db.js (Việt Anh - QA)
 

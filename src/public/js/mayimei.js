@@ -32,6 +32,17 @@ async function initMayImeiIndex() {
       loadMayImeiList();
     });
   }
+  
+  const searchInput = document.getElementById('filterSearch');
+  if (searchInput) {
+    let timeout;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        loadMayImeiList();
+      }, 300);
+    });
+  }
 
   if (btnReset) {
     btnReset.addEventListener('click', () => {
@@ -48,7 +59,7 @@ async function loadMayImeiList() {
   const sanPhamId = document.getElementById('filterSanPham')?.value || '';
   const trangThai = document.getElementById('filterTrangThai')?.value || '';
 
-  const res = await api.get('/may-imei', { search, sanPhamId, trangThai });
+  const res = await api.get('/may-imei', { search, sanPhamId, trangThai, status: 'all' });
   if (!res.success) {
     showToast(res.message || 'Không thể tải danh sách máy IMEI', 'danger');
     return;

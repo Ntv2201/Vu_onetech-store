@@ -10,14 +10,25 @@ class NhaCungCapService extends BaseService {
     const { search } = query;
     const filter = {};
 
+    if (query.status === 'all') {
+      // Không lọc theo status (lấy cả hoạt động lẫn đã khóa)
+    } else if (query.status === false || query.status === 'false') {
+      filter.status = false;
+    } else if (query.status === true || query.status === 'true') {
+      filter.status = true;
+    } else {
+      filter.status = { $ne: false }; // Mặc định: chỉ lấy hoạt động
+    }
+
     if (search && search.trim()) {
+      const safeSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       filter.$or = [
-        { tenNCC: { $regex: search.trim(), $options: 'i' } },
-        { sdt: { $regex: search.trim(), $options: 'i' } }
+        { tenNCC: { $regex: safeSearch, $options: 'i' } },
+        { sdt: { $regex: safeSearch, $options: 'i' } }
       ];
     }
 
-    return await NhaCungCap.find(filter).sort({ createdAt: -1 });
+    return await NhaCungCap.find(filter).sort({ createdAt: -1 }).lean();
   }
 
   async getNhaCungCapDetail(id) {
@@ -101,12 +112,18 @@ class NhaCungCapService extends BaseService {
     return updated;
   }
 
-  async deleteNhaCungCap(id) {
-    const deleted = await NhaCungCap.findByIdAndDelete(id);
-    if (!deleted) {
+  async toggleStatusNhaCungCap(id) {
+    const ncc = await NhaCungCap.findById(id);
+    if (!ncc) {
       throw this.createError('Không tìm thấy nhà cung cấp', 404);
     }
-    return { success: true, id };
+    ncc.status = !ncc.status;
+    await ncc.save();
+    return { success: true, id, status: ncc.status };
+  }
+
+  async deleteNhaCungCap(id) {
+    return this.toggleStatusNhaCungCap(id);
   }
 
   /**

@@ -450,7 +450,7 @@ async function runTests() {
     // Test Soft Delete & ObjectId validation (PR #18)
     let errIdInvalid = null;
     try {
-      await SanPhamService.deleteSanPham('invalid_id_123');
+      await SanPhamService.toggleStatusSanPham('invalid_id_123');
     } catch (e) {
       errIdInvalid = e;
     }
@@ -463,7 +463,7 @@ async function runTests() {
       hang: 'TestBrand',
       giaBan: 15000000
     });
-    const delRes = await SanPhamService.deleteSanPham(spTestXoa._id);
+    const delRes = await SanPhamService.toggleStatusSanPham(spTestXoa._id);
     assert(delRes.success === true, 'Xóa mềm (Soft delete) sản phẩm thành công');
 
     const spSauXoa = await SanPham.findById(spTestXoa._id);

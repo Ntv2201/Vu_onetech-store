@@ -10,16 +10,27 @@ class PhuKienService extends BaseService {
     const { search, danhMucId } = query;
     const filter = {};
 
+    if (query.status === 'all') {
+      // Không lọc theo status (lấy cả hoạt động lẫn đã khóa)
+    } else if (query.status === false || query.status === 'false') {
+      filter.status = false;
+    } else if (query.status === true || query.status === 'true') {
+      filter.status = true;
+    } else {
+      filter.status = { $ne: false }; // Mặc định: chỉ lấy hoạt động
+    }
+
     if (search && search.trim()) {
-      filter.tenPK = { $regex: search.trim(), $options: 'i' };
+      const safeSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.tenPK = { $regex: safeSearch, $options: 'i' };
     }
     if (danhMucId) {
       filter.danhMuc = danhMucId;
     }
 
     const [phuKiens, danhMucs] = await Promise.all([
-      PhuKien.find(filter).populate('danhMuc').sort({ createdAt: -1 }),
-      DanhMuc.find().sort({ tenDanhMuc: 1 })
+      PhuKien.find(filter).populate('danhMuc').sort({ createdAt: -1 }).lean(),
+      DanhMuc.find().sort({ tenDanhMuc: 1 }).lean()
     ]);
 
     return { phuKiens, danhMucs };
@@ -73,12 +84,18 @@ class PhuKienService extends BaseService {
     return updated;
   }
 
-  async deletePhuKien(id) {
-    const deleted = await PhuKien.findByIdAndDelete(id);
-    if (!deleted) {
+  async toggleStatusPhuKien(id) {
+    const pk = await PhuKien.findById(id);
+    if (!pk) {
       throw this.createError('Không tìm thấy phụ kiện', 404);
     }
-    return { success: true, id };
+    pk.status = !pk.status;
+    await pk.save();
+    return { success: true, id, status: pk.status };
+  }
+
+  async deletePhuKien(id) {
+    return this.toggleStatusPhuKien(id);
   }
 }
 

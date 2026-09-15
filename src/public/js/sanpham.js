@@ -29,6 +29,17 @@ async function initSanPhamIndex() {
       loadSanPhamList();
     });
   }
+  
+  const searchInput = document.getElementById('filterSearch');
+  if (searchInput) {
+    let timeout;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        loadSanPhamList();
+      }, 300);
+    });
+  }
 
   if (btnReset) {
     btnReset.addEventListener('click', () => {
@@ -45,7 +56,7 @@ async function loadSanPhamList() {
   const danhMucId = document.getElementById('filterDanhMuc')?.value || '';
   const hang = document.getElementById('filterHang')?.value || '';
 
-  const res = await api.get('/san-pham', { search, danhMucId, hang });
+  const res = await api.get('/san-pham', { search, danhMucId, hang, status: 'all' });
   if (!res.success) {
     showToast(res.message || 'Không thể tải danh sách sản phẩm', 'danger');
     return;
@@ -87,6 +98,7 @@ async function loadSanPhamList() {
     tbody.innerHTML = sanPhams.map(sp => {
       const qtyCon = sp.soLuongTon !== undefined ? sp.soLuongTon : (sp.soLuongCon !== undefined ? sp.soLuongCon : 0);
       const qtyTong = sp.tongImei !== undefined ? sp.tongImei : qtyCon;
+      const safeTenMay = escapeHtml((sp.tenMay || '').replace(/'/g, "\\'"));
 
       return `
       <tr>
@@ -97,16 +109,21 @@ async function loadSanPhamList() {
           ${sp.moTa ? `<div class="text-muted small text-truncate" style="max-width: 280px;">${escapeHtml(sp.moTa)}</div>` : ''}
         </td>
         <td><span class="badge bg-light text-secondary border">${sp.danhMuc ? escapeHtml(sp.danhMuc.tenDanhMuc || sp.danhMuc) : 'Chưa phân loại'}</span></td>
-        <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${escapeHtml(sp.hang || 'N/A')}</span></td>
-        <td class="fw-bold text-primary">${formatCurrency(sp.giaBan)}</td>
-        <td><span class="badge bg-info-subtle text-info-emphasis">${sp.soThangBH || 12} tháng</span></td>
+        <td><span class="fw-semibold text-secondary">${escapeHtml(sp.hang || 'Khác')}</span></td>
+        <td class="fw-bold text-primary">${formatCurrency(sp.giaBan || 0)}</td>
+        <td>${sp.soThangBH ? sp.soThangBH + ' tháng' : '12 tháng'}</td>
         <td>
-          <a href="/may-imei/index.html?sanPhamId=${sp._id}" class="text-decoration-none">
-            <span class="badge ${qtyCon > 0 ? 'bg-success' : 'bg-danger'}">
-              ${qtyCon} máy sẵn có
+          <a href="/may-imei/?sanPhamId=${sp._id}" class="text-decoration-none" title="Xem danh sách IMEI của máy này">
+            <span class="badge ${qtyCon > 0 ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'}">
+              ${qtyCon > 0 ? `<i class="bi bi-check-circle me-1"></i>Còn ${qtyCon} máy` : '<i class="bi bi-x-circle me-1"></i>Hết hàng'}
             </span>
             <span class="text-muted small ms-1">(Tổng: ${qtyTong})</span>
           </a>
+        </td>
+        <td>
+          ${sp.status !== false 
+            ? '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Hoạt động</span>' 
+            : '<span class="badge bg-danger-subtle text-danger"><i class="bi bi-lock me-1"></i>Đã khóa</span>'}
         </td>
         <td class="text-end pe-3">
           <div class="d-inline-flex justify-content-end align-items-center" style="gap: 6px;">
@@ -122,8 +139,8 @@ async function loadSanPhamList() {
               </a>
             ` : ''}
             ${isManager ? `
-              <button type="button" class="btn-action btn-action-cancel" title="Xóa" onclick="deleteSanPham('${sp._id}', '${escapeHtml(sp.tenMay)}')">
-                <i class="bi bi-trash"></i>
+              <button type="button" class="btn-action ${sp.status !== false ? 'btn-action-cancel' : 'btn-action-success'}" title="${sp.status !== false ? 'Khóa' : 'Mở khóa'}" onclick="toggleStatusSanPham('${sp._id}', '${safeTenMay}')">
+                <i class="bi ${sp.status !== false ? 'bi-lock-fill' : 'bi-unlock-fill'}"></i>
               </button>
             ` : ''}
           </div>
@@ -136,11 +153,11 @@ async function loadSanPhamList() {
   }
 }
 
-async function deleteSanPham(id, tenMay) {
+async function toggleStatusSanPham(id, tenMay) {
   // Hiện modal xác nhận
   document.getElementById('modalTenSanPham').textContent = `"${tenMay}"`;
 
-  const modal = new bootstrap.Modal(document.getElementById('modalXacNhanXoa'));
+  const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalXacNhanXoa'));
   modal.show();
 
   // Gắn sự kiện cho nút xác nhận (xóa listener cũ để tránh duplicate)
@@ -151,18 +168,12 @@ async function deleteSanPham(id, tenMay) {
   newBtn.addEventListener('click', async () => {
     modal.hide();
 
-    const res = await api.delete(`/san-pham/${id}`);
+    const res = await api.put(`/san-pham/${id}/toggle-status`);
     if (res.success) {
-      // Xóa row khỏi giao diện, không reload trang
-      const row = document.querySelector(`button[onclick*="${id}"]`)?.closest('tr');
-      if (row) {
-        row.style.transition = 'opacity 0.3s';
-        row.style.opacity = '0';
-        setTimeout(() => row.remove(), 300);
-      }
-      showToast(res.message || 'Đã ẩn sản phẩm khỏi danh sách', 'success');
+      showToast(res.message || 'Thay đổi trạng thái sản phẩm thành công', 'success');
+      loadSanPhamList();
     } else {
-      showToast(res.message || 'Lỗi khi xóa sản phẩm', 'danger');
+      showToast(res.message || 'Lỗi khi thay đổi trạng thái sản phẩm', 'danger');
     }
   });
 }

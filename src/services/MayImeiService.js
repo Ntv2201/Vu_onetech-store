@@ -11,7 +11,8 @@ class MayImeiService extends BaseService {
     const filter = {};
 
     if (search && search.trim()) {
-      filter.imei = { $regex: search.trim(), $options: 'i' };
+      const safeSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.imei = { $regex: safeSearch, $options: 'i' };
     }
     if (sanPhamId) {
       filter.sanPham = sanPhamId;
@@ -26,11 +27,17 @@ class MayImeiService extends BaseService {
           path: 'sanPham',
           populate: { path: 'danhMuc' }
         })
-        .sort({ createdAt: -1 }),
-      SanPham.find().sort({ tenMay: 1 })
+        .sort({ createdAt: -1 })
+        .lean(),
+      SanPham.find(query.status === 'all' ? {} : { status: { $ne: false } }).sort({ tenMay: 1 }).lean()
     ]);
 
-    return { imeis, sanPhams };
+    let finalImeis = imeis;
+    if (query.status !== 'all') {
+      finalImeis = imeis.filter(m => m.sanPham && m.sanPham.status !== false);
+    }
+
+    return { imeis: finalImeis, sanPhams };
   }
 
   async getImeiDetail(imei) {

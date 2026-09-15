@@ -9,6 +9,7 @@ class NhanVienController extends BaseController {
     this.postCreate = this.postCreate.bind(this);
     this.postEdit = this.postEdit.bind(this);
     this.delete = this.delete.bind(this);
+    this.toggleStatus = this.toggleStatus.bind(this);
   }
 
   // GET /api/nhan-vien
@@ -24,10 +25,10 @@ class NhanVienController extends BaseController {
   // GET /api/nhan-vien/:id
   async getDetail(req, res) {
     try {
-      const nhanVien = await NhanVienService.getNhanVienDetail(req.params.id);
-      return this.sendSuccess(res, nhanVien, 'Lấy chi tiết nhân viên thành công');
+      const nv = await NhanVienService.getNhanVienById(req.params.id);
+      return this.sendSuccess(res, nv, 'Lấy thông tin nhân viên thành công');
     } catch (error) {
-      return this.handleError(res, error, 'Không thể tải thông tin nhân viên');
+      return this.handleError(res, error, 'Lỗi khi lấy thông tin nhân viên');
     }
   }
 
@@ -35,7 +36,7 @@ class NhanVienController extends BaseController {
   async postCreate(req, res) {
     try {
       const nv = await NhanVienService.createNhanVien(req.body);
-      return this.sendSuccess(res, nv, `Tạo tài khoản nhân viên "${nv.hoTen}" thành công`, 201);
+      return this.sendSuccess(res, nv, `Thêm nhân viên "${nv.hoTen}" thành công`, 201);
     } catch (error) {
       return this.handleError(res, error, 'Lỗi khi tạo nhân viên');
     }
@@ -52,15 +53,21 @@ class NhanVienController extends BaseController {
     }
   }
 
-  // DELETE /api/nhan-vien/:id
-  async delete(req, res) {
+  // PUT /api/nhan-vien/:id/toggle-status
+  async toggleStatus(req, res) {
     try {
       const currentUserId = req.session && req.session.user ? req.session.user._id : null;
-      const result = await NhanVienService.deleteNhanVien(req.params.id, currentUserId);
-      return this.sendSuccess(res, result, 'Xóa tài khoản nhân viên thành công');
+      const result = await NhanVienService.toggleStatusNhanVien(req.params.id, currentUserId);
+      const actionName = result.trangThai === 'Khóa' ? 'Khóa' : 'Mở khóa';
+      return this.sendSuccess(res, result, `${actionName} tài khoản nhân viên thành công`);
     } catch (error) {
-      return this.handleError(res, error, 'Lỗi khi xóa nhân viên');
+      return this.handleError(res, error, 'Lỗi khi thay đổi trạng thái nhân viên');
     }
+  }
+
+  // DELETE /api/nhan-vien/:id (Alias hỗ trợ backward compatibility)
+  async delete(req, res) {
+    return this.toggleStatus(req, res);
   }
 }
 

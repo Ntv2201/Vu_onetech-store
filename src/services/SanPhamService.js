@@ -9,10 +9,21 @@ class SanPhamService extends BaseService {
 
   async getAllSanPhams(query = {}) {
     const { search, danhMucId, hang } = query;
-    const filter = { status: { $ne: false } };
+    const filter = {};
+
+    if (query.status === 'all') {
+      // Không lọc theo status (lấy cả hoạt động lẫn đã khóa)
+    } else if (query.status === false || query.status === 'false') {
+      filter.status = false;
+    } else if (query.status === true || query.status === 'true') {
+      filter.status = true;
+    } else {
+      filter.status = { $ne: false }; // Mặc định: chỉ lấy hoạt động
+    }
 
     if (search && search.trim()) {
-      filter.tenMay = { $regex: search.trim(), $options: 'i' };
+      const safeSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.tenMay = { $regex: safeSearch, $options: 'i' };
     }
     if (danhMucId) {
       filter.danhMuc = danhMucId;
@@ -138,20 +149,23 @@ class SanPhamService extends BaseService {
     return updated;
   }
 
-  async deleteSanPham(id) {
+  async toggleStatusSanPham(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw this.createError('ID sản phẩm không hợp lệ', 400);
     }
 
-    const updated = await SanPham.findByIdAndUpdate(
-      id,
-      { status: false },
-      { new: true }
-    );
-    if (!updated) {
+    const sp = await SanPham.findById(id);
+    if (!sp) {
       throw this.createError('Không tìm thấy sản phẩm', 404);
     }
-    return { success: true, id };
+
+    sp.status = (sp.status === false) ? true : false;
+    await sp.save();
+    return { success: true, id, status: sp.status };
+  }
+
+  async deleteSanPham(id) {
+    return this.toggleStatusSanPham(id);
   }
 }
 

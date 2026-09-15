@@ -24,6 +24,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadPhuKienList();
     });
   }
+  
+  const searchInput = document.getElementById('filterSearch');
+  if (searchInput) {
+    let timeout;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        loadPhuKienList();
+      }, 300);
+    });
+  }
 
   if (btnReset) {
     btnReset.addEventListener('click', () => {
@@ -96,7 +107,7 @@ async function loadPhuKienList() {
   const search = document.getElementById('filterSearch')?.value.trim() || '';
   const danhMucId = document.getElementById('filterDanhMuc')?.value || '';
 
-  const res = await api.get('/phu-kien', { search, danhMucId });
+  const res = await api.get('/phu-kien', { search, danhMucId, status: 'all' });
   if (!res.success) {
     showToast(res.message || 'Không thể tải danh sách phụ kiện', 'danger');
     return;
@@ -116,7 +127,9 @@ async function loadPhuKienList() {
     const isManagerOrStorekeeper = currentUser && ['Quản lý', 'Thủ kho'].includes(currentUser.vaiTro);
     const isManager = currentUser && currentUser.vaiTro === 'Quản lý';
 
-    tbody.innerHTML = phuKiens.map(pk => `
+    tbody.innerHTML = phuKiens.map(pk => {
+      const safeTenPK = escapeHtml((pk.tenPK || '').replace(/'/g, "\\'"));
+      return `
       <tr>
         <td class="fw-bold text-dark">${escapeHtml(pk.tenPK)}</td>
         <td><span class="badge bg-light text-secondary border">${pk.danhMuc ? escapeHtml(pk.danhMuc.tenDanhMuc) : 'N/A'}</span></td>
@@ -126,6 +139,11 @@ async function loadPhuKienList() {
             ${pk.soLuongTon} cái
           </span>
         </td>
+        <td>
+          ${pk.status !== false 
+            ? '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Hoạt động</span>' 
+            : '<span class="badge bg-danger-subtle text-danger"><i class="bi bi-lock me-1"></i>Đã khóa</span>'}
+        </td>
         <td class="text-end pe-3">
           <div class="d-inline-flex justify-content-end align-items-center" style="gap: 6px;">
             ${isManagerOrStorekeeper ? `
@@ -134,16 +152,17 @@ async function loadPhuKienList() {
               </button>
             ` : ''}
             ${isManager ? `
-              <button type="button" class="btn-action btn-action-cancel" title="Xóa" onclick="deletePhuKien('${pk._id}', '${escapeHtml(pk.tenPK)}')">
-                <i class="bi bi-trash"></i>
+              <button type="button" class="btn-action ${pk.status !== false ? 'btn-action-cancel' : 'btn-action-success'}" title="${pk.status !== false ? 'Khóa' : 'Mở khóa'}" onclick="toggleStatusPhuKien('${pk._id}', '${safeTenPK}', ${pk.status !== false})">
+                <i class="bi ${pk.status !== false ? 'bi-lock-fill' : 'bi-unlock-fill'}"></i>
               </button>
             ` : ''}
           </div>
         </td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
   } else {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Không tìm thấy phụ kiện nào</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Không tìm thấy phụ kiện nào</td></tr>';
   }
 }
 
@@ -197,14 +216,15 @@ async function openEditPKModal(id) {
   if (editPKModalInstance) editPKModalInstance.show();
 }
 
-async function deletePhuKien(id, tenPK) {
-  if (!confirm(`Bạn có chắc muốn xóa phụ kiện "${tenPK}"?`)) return;
+async function toggleStatusPhuKien(id, tenPK, currentStatus) {
+  const actionName = currentStatus ? 'khóa' : 'mở khóa';
+  if (!confirm(`Bạn có chắc muốn ${actionName} phụ kiện "${tenPK}"?`)) return;
 
-  const res = await api.delete(`/phu-kien/${id}`);
+  const res = await api.put(`/phu-kien/${id}/toggle-status`);
   if (res.success) {
-    showToast(res.message || 'Xóa phụ kiện thành công', 'success');
+    showToast(res.message || `${actionName} phụ kiện thành công`, 'success');
     loadPhuKienList();
   } else {
-    showToast(res.message || 'Lỗi khi xóa phụ kiện', 'danger');
+    showToast(res.message || `Lỗi khi ${actionName} phụ kiện`, 'danger');
   }
 }

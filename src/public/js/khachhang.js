@@ -63,7 +63,7 @@ async function loadKhachHangList() {
   const hangThanhVien = document.getElementById('filterHangThanhVien')?.value || '';
   const tongChiTieuRange = document.getElementById('filterTongChiTieu')?.value || '';
   
-  let query = { search, hangThanhVien };
+  let query = { search, hangThanhVien, status: 'all' };
   if (tongChiTieuRange) {
     const parts = tongChiTieuRange.split('-');
     if (parts[0]) query.tongChiTieuMin = parts[0];
@@ -91,6 +91,7 @@ async function loadKhachHangList() {
         if (hang === 'Bạc') return 'bg-secondary';
         return 'bg-info text-dark';
       };
+      const safeHoTen = escapeHtml((kh.hoTen || '').replace(/'/g, "\\'"));
       
       return `
       <tr>
@@ -104,6 +105,11 @@ async function loadKhachHangList() {
         </td>
         <td><span class="badge ${getBadgeColor(kh.hangThanhVien)}">${escapeHtml(kh.hangThanhVien || 'Đồng')}</span></td>
         <td class="fw-semibold">${formatCurrency(kh.tongChiTieu || 0)}</td>
+        <td>
+          ${kh.status !== false 
+            ? '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Hoạt động</span>' 
+            : '<span class="badge bg-danger-subtle text-danger"><i class="bi bi-lock me-1"></i>Đã khóa</span>'}
+        </td>
         <td class="text-end pe-3">
           <div class="d-inline-flex justify-content-end align-items-center" style="gap: 6px;">
             ${isSellerOrCashierOrManager ? `
@@ -112,8 +118,8 @@ async function loadKhachHangList() {
               </a>
             ` : ''}
             ${isManager ? `
-              <button type="button" class="btn-action btn-action-cancel" title="Xóa" onclick="deleteKhachHang('${kh._id}', '${escapeHtml(kh.hoTen)}')">
-                <i class="bi bi-trash"></i>
+              <button type="button" class="btn-action ${kh.status !== false ? 'btn-action-cancel' : 'btn-action-success'}" title="${kh.status !== false ? 'Khóa' : 'Mở khóa'}" onclick="toggleStatusKhachHang('${kh._id}', '${safeHoTen}', ${kh.status !== false})">
+                <i class="bi ${kh.status !== false ? 'bi-lock-fill' : 'bi-unlock-fill'}"></i>
               </button>
             ` : ''}
           </div>
@@ -126,15 +132,16 @@ async function loadKhachHangList() {
   }
 }
 
-async function deleteKhachHang(id, hoTen) {
-  if (!confirm(`Bạn có chắc chắn muốn xóa khách hàng "${hoTen}"?`)) return;
+async function toggleStatusKhachHang(id, hoTen, currentStatus) {
+  const actionName = currentStatus ? 'khóa' : 'mở khóa';
+  if (!confirm(`Bạn có chắc chắn muốn ${actionName} khách hàng "${hoTen}"?`)) return;
 
-  const res = await api.delete(`/khach-hang/${id}`);
+  const res = await api.put(`/khach-hang/${id}/toggle-status`);
   if (res.success) {
-    showToast(res.message || 'Xóa khách hàng thành công', 'success');
+    showToast(res.message || `${actionName} khách hàng thành công`, 'success');
     loadKhachHangList();
   } else {
-    showToast(res.message || 'Lỗi khi xóa khách hàng', 'danger');
+    showToast(res.message || `Lỗi khi ${actionName} khách hàng`, 'danger');
   }
 }
 

@@ -8,15 +8,28 @@ let currentPaymentDebt = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   loadDanhSachCongNo();
+
+  const searchInput = document.getElementById('filterSearch');
+  if (searchInput) {
+    let timeout;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        loadDanhSachCongNo();
+      }, 300);
+    });
+  }
 });
 
 async function loadDanhSachCongNo() {
   const loaiDoiTuong = document.getElementById('filterLoaiDoiTuong')?.value;
   const trangThai = document.getElementById('filterTrangThai')?.value;
+  const search = document.getElementById('filterSearch')?.value.trim() || '';
 
   const params = {};
   if (loaiDoiTuong) params.loaiDoiTuong = loaiDoiTuong;
   if (trangThai) params.trangThai = trangThai;
+  if (search) params.search = search;
 
   const res = await api.get('/cong-no', params);
   const tbody = document.getElementById('tableCongNoBody');

@@ -72,6 +72,50 @@ class TraGopService extends BaseService {
     const filter = {};
     if (trangThaiDuyet) filter.trangThaiDuyet = trangThaiDuyet;
 
+    if (search && search.trim()) {
+      const keyword = search.trim();
+      const safeKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const mongoose = require('mongoose');
+      
+      // 1. Tìm Khách hàng khớp
+      const KhachHang = mongoose.model('KhachHang');
+      const khachHangs = await KhachHang.find({ 
+        $or: [
+          { hoTen: { $regex: safeKeyword, $options: 'i' } }, 
+          { sdt: { $regex: safeKeyword, $options: 'i' } }
+        ] 
+      }, '_id').lean();
+      
+      // 2. Tìm Hóa đơn khớp với mã hóa đơn (soHD) HOẶC thuộc các khách hàng trên
+      const HoaDon = mongoose.model('HoaDon');
+      const hoaDonFilter = {
+        $or: [
+          { soHD: { $regex: safeKeyword, $options: 'i' } }
+        ]
+      };
+      if (khachHangs.length > 0) {
+        hoaDonFilter.$or.push({ khachHang: { $in: khachHangs.map(kh => kh._id) } });
+      }
+      
+      const hoaDons = await HoaDon.find(hoaDonFilter, '_id').lean();
+      
+      // 3. Áp dụng vào filter của hợp đồng
+      const orConditions = [];
+      if (hoaDons.length > 0) {
+        orConditions.push({ hoaDon: { $in: hoaDons.map(hd => hd._id) } });
+      }
+      if (mongoose.Types.ObjectId.isValid(keyword)) {
+        orConditions.push({ _id: keyword });
+      }
+      
+      if (orConditions.length > 0) {
+        filter.$or = orConditions;
+      } else {
+        // Không tìm thấy gì -> trả về rỗng
+        filter._id = null; 
+      }
+    }
+
     const { page, limit, skip } = this.getPaginationOptions(query);
     const [items, total, thongKeRaw] = await Promise.all([
       HopDongTraGop.find(filter)

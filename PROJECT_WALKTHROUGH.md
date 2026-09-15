@@ -70,7 +70,13 @@ Hệ thống được tổ chức theo mô hình **Layered MVC kết hợp OOP S
   - **Ràng buộc nghiệp vụ Giá bán:** `SanPhamService` bắt buộc `giaBan > giaGoc` khi tạo mới và cập nhật, chống rủi ro bán lỗ.
   - **Tự động điền Giá gốc & Dung lượng:** Khi lập phiếu nhập kho, việc chọn model sẽ tự động điền đơn giá và dung lượng.
   - **Nhập Hàng Loạt IMEI (Bulk Import Modal):** Cho phép thủ kho quét mã vạch hoặc dán danh sách hàng chục IMEI cùng lúc để sinh các dòng nhập kho tự động.
-* **Modal Xác nhận Xóa & Soft Delete Model Sản Phẩm (`src/public/pages/san-pham/`):** Tích hợp Modal Bootstrap `modalXacNhanXoa` phong cách hiện đại thay thế confirm thô sơ, hiệu ứng fade-out dòng tr sau khi ẩn và chuyển sang cơ chế Soft Delete (`status: false`) để bảo toàn lịch sử hóa đơn/IMEI.
+* **Cơ chế Khóa/Mở (Soft Delete Toggle) & Bảo Toàn Toàn Vẹn Dữ Liệu (PR #26):**
+  - **Chuyển đổi toàn diện:** Chuyển đổi toàn bộ thao tác xóa cứng sang cơ chế Khóa/Mở (Soft Delete qua trường `status: Boolean` hoặc `trangThai: 'Khóa' | 'Hoạt động'`) cho 5 đối tượng cốt lõi: Khách hàng, Nhà cung cấp, Sản phẩm, Phụ kiện, Nhân viên (`PUT /api/[entity]/:id/toggle-status`).
+  - **Bảo toàn REST Compatibility:** Duy trì endpoint alias `DELETE /api/[entity]/:id` và các phương thức `delete[Entity]` ở tầng Service nhằm đảm bảo tương thích 100% với các hợp đồng kiểm thử và client cũ.
+  - **Bảo vệ Chống Tự Khóa (Self-Lockout Prevention):** Kiểm tra `currentUserId === id` ở `NhanVienService`, ngăn chặn tuyệt đối tình huống Quản lý tự thao tác khóa tài khoản của chính mình.
+  - **Loại trừ nghiệp vụ tự động:** Quầy bán hàng POS (`HoaDonService.layImeiKhaDung`), danh sách linh kiện sửa chữa (`BaoHanhService.getAllLinhKien`) và máy IMEI (`MayImeiService.getAllImeis`) tự động lọc bỏ các máy/linh kiện thuộc sản phẩm cha đã bị khóa.
+  - **Tìm kiếm An Toàn Thời Gian Thực (Realtime Safe Search & Debounce 300ms):** Bổ sung ô tìm kiếm realtime chống ReDoS / Regex injection cho Sổ quỹ, Công nợ, Trả góp, Nhà cung cấp, Phụ kiện, Máy IMEI.
+  - **Tối ưu Thanh cuộn Bảng (`style.css`):** Thanh cuộn hai chiều ngang/dọc đồng bộ, tiêu đề `thead th` dính cố định (sticky), giới hạn chiều cao hợp lý và tương thích tốt trong cửa sổ modal.
 * **Màn hình Đăng nhập Trực quan (`src/public/pages/login.html`):**
   - Hiệu ứng floating background orbs, logo chuyển động xoay tròn nhẹ khi tương tác, form focus nổi bật.
   - Hàng badge tài khoản demo tương tác cao giúp đăng nhập nhanh 1-click cho 6 vai trò.

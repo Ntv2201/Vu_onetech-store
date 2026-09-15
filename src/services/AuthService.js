@@ -16,8 +16,8 @@ class AuthService extends BaseService {
       throw this.createError('Tên đăng nhập hoặc mật khẩu không chính xác', 401);
     }
 
-    if (nhanVien.trangThai === 'Khóa') {
-      throw this.createError('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản lý.', 403);
+    if (nhanVien.trangThai === 'Khóa' || nhanVien.trangThai === 'Nghỉ việc') {
+      throw this.createError(`Tài khoản của bạn đã bị ${nhanVien.trangThai.toLowerCase()}. Vui lòng liên hệ quản lý.`, 403);
     }
 
     const isMatch = await nhanVien.comparePassword(matKhau);

@@ -9,6 +9,7 @@ router.get('/', khachHangController.index);
 router.get('/:id', khachHangController.getDetail);
 router.post('/', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân'), khachHangController.postCreate);
 router.put('/:id', requireRole('Quản lý', 'NV bán hàng', 'Thu ngân'), khachHangController.postEdit);
+router.put('/:id/toggle-status', requireRole('Quản lý'), khachHangController.toggleStatus);
 router.delete('/:id', requireRole('Quản lý'), khachHangController.delete);
 
 module.exports = router;
