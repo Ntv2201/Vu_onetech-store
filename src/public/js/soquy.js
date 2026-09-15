@@ -242,12 +242,22 @@ async function loadDanhSachChi() {
 
 function openCreateThuModal() {
   document.getElementById('formCreateThu').reset();
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  const inputNgay = document.getElementById('inputThuNgay');
+  if (inputNgay) inputNgay.value = now.toISOString().slice(0, 16);
+
   const modal = new bootstrap.Modal(document.getElementById('modalCreateThu'));
   modal.show();
 }
 
 function openCreateChiModal() {
   document.getElementById('formCreateChi').reset();
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  const inputNgay = document.getElementById('inputChiNgay');
+  if (inputNgay) inputNgay.value = now.toISOString().slice(0, 16);
+
   const modal = new bootstrap.Modal(document.getElementById('modalCreateChi'));
   modal.show();
 }
@@ -345,7 +355,7 @@ async function viewTransactionDetail(id, type) {
         </div>
         ${item.nguoiNhan ? `<div class="row g-2 mb-2"><div class="col-6 text-muted">Người nhận:</div><div class="col-6 text-end">${escapeHtml(item.nguoiNhan)}</div></div>` : ''}
         ${item.chungTuLienQuan ? `<div class="row g-2 mb-2"><div class="col-6 text-muted">Chứng từ liên quan:</div><div class="col-6 text-end">${escapeHtml(item.chungTuLienQuan)}</div></div>` : ''}
-        ${item.maDT ? `<div class="row g-2 mb-2"><div class="col-6 text-muted">Đối tượng nhận (Mã):</div><div class="col-6 text-end font-monospace">${escapeHtml(item.maDT)}</div></div>` : ''}
+        ${item.maDT ? `<div class="row g-2 mb-2"><div class="col-6 text-muted">Đối tượng nhận:</div><div class="col-6 text-end font-monospace">${escapeHtml(item.maDT)}</div></div>` : ''}
         ${item.phieuNhap ? `<div class="row g-2 mb-2"><div class="col-6 text-muted">Phiếu nhập kho:</div><div class="col-6 text-end font-monospace">${item.phieuNhap.soPN || item.phieuNhap._id}</div></div>` : ''}
         ${item.donDatHang ? `<div class="row g-2 mb-2"><div class="col-6 text-muted">Hoàn cọc đơn:</div><div class="col-6 text-end font-monospace">${item.donDatHang.maDonDat || item.donDatHang._id}</div></div>` : ''}
       `}
@@ -364,7 +374,7 @@ async function viewTransactionDetail(id, type) {
           ngayThu: item.ngayThu || item.createdAt,
           soTien: item.soTien,
           lyDo: item.ghiChu || 'Thu tiền',
-          hoTenNguoiNop: item.hoaDon?.khachHang?.hoTen || 'Khách hàng',
+          hoTenNguoiNop: item.nguoiNop || item.hoaDon?.khachHang?.hoTen || 'Khách hàng',
           diaChi: item.hoaDon?.khachHang?.diaChi || ''
         });
       } else {
@@ -373,7 +383,7 @@ async function viewTransactionDetail(id, type) {
           ngayChi: item.ngayChi || item.createdAt,
           soTien: item.soTien,
           lyDo: item.lyDo || 'Chi tiền',
-          hoTenNguoiNhan: item.maDT || 'Đối tác / Nhà cung cấp'
+          hoTenNguoiNhan: item.nguoiNhan || item.maDT || 'Đối tác / Nhà cung cấp'
         });
       }
     };

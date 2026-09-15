@@ -89,6 +89,12 @@ Hệ thống được tổ chức theo mô hình **Layered MVC kết hợp OOP S
   - Thu ngân có thể nhập trực tiếp Tên, SĐT, CCCD khách vãng lai ngay trên quầy thu ngân; `HoaDonService` tự động sinh tài khoản khách hàng mới vào hệ thống.
 * **Bộ lọc Ngày Doanh thu trên Dashboard (`src/public/pages/index.html`, `src/public/js/dashboard.js`):**
   - Tích hợp bộ lọc khoảng ngày (Từ ngày - Đến ngày) kết hợp chuyển đổi phân nhóm Ngày/Tuần/Tháng/Năm trực quan trên Chart.js.
+* **Tải & Bóc tách IMEI Tự động từ File Excel/CSV (`src/public/pages/kiem-ke/`, `src/public/pages/nhap-kho/`):**
+  - Tích hợp thư viện SheetJS (`xlsx.full.min.js`) xử lý trực tiếp ở Client-side, không gây tải nặng cho máy chủ.
+  - Hỗ trợ định dạng `.xlsx`, `.xls`, `.csv`.
+  - Bộ bóc tách thông minh: Tự động lọc bỏ các header cột (STT, MAMAY, SERIALNUMBER, DESCRIPTION...), chuyển đổi số khoa học (VD: `3.58E+14` $\rightarrow$ `358912345678901`), phân tách khoảng trắng và yêu cầu có số chống nhận nhầm tên model máy.
+  - Bảo vệ chống tấn công DOM-based XSS qua `escapeHtml()` cho tên file và thông báo lỗi.
+  - Tự động khử trùng lặp và thống kê chi tiết số lượng mã IMEI mới nạp thành công vào hệ thống.
 * **Phân quyền Giao diện Đa tầng & Bảo vệ Điều hướng (Client-side RBAC & Route Guarding):**
   - **Lọc Sidebar thông minh theo 6 vai trò:** Tự động ẩn các menu và danh mục nhóm (`nav-category`) không thuộc quyền hạn để loại bỏ tình trạng rối mắt.
   - **Tùy biến Quick Actions trên Dashboard:** Tự động hiển thị các nút thao tác đầu trang phù hợp với vai trò (Bán hàng, Thủ kho, Thu ngân, Kỹ thuật, Kế toán, Quản lý).

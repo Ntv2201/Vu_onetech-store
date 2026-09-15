@@ -597,6 +597,81 @@ async function runTests() {
     assert(Array.isArray(imeiRes.imeis), 'MayImeiService.getAllImeis trả về mảng imeis');
     assert(imeiRes.imeis.length > 0, `Tìm thấy ${imeiRes.imeis.length} máy IMEI`);
 
+    // -------------------------------------------------------------
+    // TEST 21: Kiểm thử biên (Edge Cases) - Phụ kiện vượt tồn, Quá hạn BH, XSS
+    // -------------------------------------------------------------
+    console.log('\n--- TEST 21: Kiểm thử biên (Edge Cases) - Phụ kiện vượt tồn, Quá hạn BH, XSS ---');
+    
+    // 1. Lỗi khi bán phụ kiện số lượng vượt tồn kho
+    let errVotTonKho = null;
+    try {
+      await HoaDonService.taoHoaDonBanHang({
+        khachHang: kh._id,
+        nhanVien: nv._id,
+        danhSachIMEI: [],
+        danhSachPhuKien: [{ phuKien: pkSac._id, soLuong: 999999 }], // Chắc chắn vượt tồn kho
+        hinhThucThanhToan: 'Tien mat'
+      }, nv);
+    } catch (e) {
+      errVotTonKho = e;
+    }
+    assert(errVotTonKho !== null && errVotTonKho.statusCode === 400, 'Chặn tạo hóa đơn khi bán phụ kiện vượt số lượng tồn kho (400 Bad Request)');
+    assert(errVotTonKho && errVotTonKho.message.includes('không đủ tồn kho'), 'Thông báo lỗi chỉ rõ sản phẩm không đủ số lượng');
+
+    // 2. Chặn tiếp nhận bảo hành máy đã hết hạn
+    const expiredImei = 'TUAN_EXP_' + Date.now().toString().slice(-5);
+    const mayExpired = await MayImei.create({
+      imei: expiredImei,
+      sanPham: spIphone._id,
+      giaNhap: 26000000,
+      trangThai: 'Con hang'
+    });
+    
+    // Bán máy 
+    const orderExpired = await HoaDonService.taoHoaDonBanHang({
+      khachHang: kh._id,
+      nhanVien: nv._id,
+      danhSachIMEI: [mayExpired.imei],
+      danhSachPhuKien: [],
+      hinhThucThanhToan: 'Tien mat'
+    }, nv);
+    
+    // Ghi đè ngày lập hóa đơn để giả lập quá hạn bảo hành (lùi về 5 năm trước)
+    const pastDate = new Date();
+    pastDate.setFullYear(pastDate.getFullYear() - 5);
+    await HoaDon.findByIdAndUpdate(orderExpired.hoaDon._id, { ngayLap: pastDate });
+    
+    let errExpired = null;
+    try {
+      await BaoHanhService.tiepNhanBaoHanh({
+        imei: mayExpired.imei,
+        moTaLoi: 'Lỗi phần cứng sau 5 năm',
+        nhanVien: nv._id
+      }, nv);
+    } catch (e) {
+      errExpired = e;
+    }
+    assert(errExpired !== null && errExpired.statusCode === 400, 'Chặn tiếp nhận bảo hành khi máy đã hết hạn (400 Bad Request)');
+    assert(errExpired && errExpired.message.toLowerCase().includes('hết hạn bảo hành'), 'Thông báo báo lỗi từ chối vì đã hết thời gian BH');
+
+    // 3. Test XSS trên trường Ghi chú hóa đơn (Theo rule 4.4, Backend lưu nguyên gốc)
+    const xssImei = 'TUAN_XSS_' + Date.now().toString().slice(-5);
+    await MayImei.create({
+      imei: xssImei,
+      sanPham: spIphone._id,
+      giaNhap: 26000000,
+      trangThai: 'Con hang'
+    });
+    const orderXSS = await HoaDonService.taoHoaDonBanHang({
+      khachHang: kh._id,
+      nhanVien: nv._id,
+      danhSachIMEI: [xssImei],
+      danhSachPhuKien: [],
+      hinhThucThanhToan: 'Tien mat',
+      ghiChu: '<script>alert("Hacked POS")</script> XSS Test payload'
+    }, nv);
+    assert(orderXSS.hoaDon.ghiChu === '<script>alert("Hacked POS")</script> XSS Test payload', 'Dữ liệu XSS được DB lưu giữ, phó thác việc escape cho Frontend xử lý (Quy tắc 4.4)');
+
     console.log('\n===============================================================');
     console.log(`🎉 KẾT QUẢ KIỂM THỬ: ${passed} PASS, ${failed} FAIL`);
     console.log('===============================================================');

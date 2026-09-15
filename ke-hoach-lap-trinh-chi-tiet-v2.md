@@ -186,6 +186,7 @@
 - [x] Viết bộ kiểm thử tự động 23/23 test cases PASS ([`tests/test_an_tuan5.js`](tests/test_an_tuan5.js)).
 
 #### Tuần 6-8: Nối UI, Kiểm thử Dữ liệu & Demo
+- [x] Tích hợp Upload & Bóc tách danh sách IMEI tự động từ file Excel/CSV (.xlsx, .xls, .csv) bằng SheetJS trên Kiểm kê & Nhập kho (PR #25).
 - [ ] Nối API với giao diện Công nợ & Trả góp của Vũ.
 - [ ] Phối hợp cùng Việt Anh (QA) kiểm thử đối soát tồn kho và tính toán trả góp 12 kỳ chính xác 100%.
 - [ ] Demo luồng lập hợp đồng trả góp & đối soát công nợ khách hàng/NCC.

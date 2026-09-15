@@ -506,3 +506,128 @@ function formatDateTime(dateStr) {
     year: 'numeric'
   });
 }
+
+/**
+ * Đọc file Excel (.xlsx, .xls, .csv) và dán danh sách IMEI vào modal nhập hàng loạt
+ */
+async function handleExcelNhapKhoUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  if (typeof XLSX === 'undefined') {
+    if (typeof api !== 'undefined' && api.showToast) {
+      api.showToast('Thư viện SheetJS chưa được tải. Vui lòng làm mới trang!', 'danger');
+    } else if (typeof showToast === 'function') {
+      showToast('Thư viện SheetJS chưa được tải. Vui lòng làm mới trang!', 'danger');
+    }
+    return;
+  }
+
+  // Danh sách từ khóa tiêu đề cột thường gặp trong Excel cần bỏ qua
+  const ignoreKeywords = new Set([
+    'STT', 'MAMAY', 'TENMAY', 'SANPHAM', 'IMEI', 'MAIMEI', 'SERIAL', 'SERIALNUMBER',
+    'DESCRIPTION', 'NOTE', 'GHICHU', 'STATUS', 'TRANGTHAI', 'PRICE', 'GIANHAP', 'GIABAN',
+    'SOLUONG', 'QUANTITY', 'NHACUNGCAP', 'SUPPLIER', 'PHONENUMBER', 'DIENTHOAI', 'DANHSACH'
+  ]);
+
+  try {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
+
+    let rawValues = [];
+    workbook.SheetNames.forEach(sheetName => {
+      const sheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
+      json.forEach(row => {
+        if (Array.isArray(row)) {
+          row.forEach(cell => {
+            if (cell != null) {
+              const str = String(cell).trim();
+              if (str) rawValues.push(str);
+            }
+          });
+        }
+      });
+    });
+
+    const imeis = [];
+    rawValues.forEach(val => {
+      // Nếu nguyên ô khi bỏ khoảng trắng là mã IMEI 14-16 chữ số (VD: 3589 1234 5678 901)
+      const cellClean = String(val).trim();
+      const cellDigits = cellClean.replace(/\s+/g, '');
+      if (/^\d{14,16}$/.test(cellDigits)) {
+        imeis.push(cellDigits);
+        return;
+      }
+
+      // Tách theo khoảng trắng, xuống dòng, dấu phẩy, chấm phẩy, tab
+      const parts = cellClean.split(/[\n,;\t\r\s]+/).map(s => s.trim()).filter(Boolean);
+      parts.forEach(p => {
+        let clean = p;
+        // Chuyển đổi số khoa học (VD: 3.58912E+14) về dạng số nguyên đầy đủ
+        if (/^[0-9]+(\.[0-9]+)?[eE]\+[0-9]+$/.test(clean)) {
+          try {
+            clean = BigInt(Math.round(Number(clean))).toString();
+          } catch (e) {}
+        }
+        clean = clean.replace(/[^a-zA-Z0-9]/g, '');
+        // Kiểm tra hợp lệ: độ dài 8-20 alphanumeric, PHẢI có ít nhất 1 chữ số, không nằm trong danh sách tiêu đề cột
+        if (/^[a-zA-Z0-9]{8,20}$/.test(clean) && /\d/.test(clean) && !ignoreKeywords.has(clean.toUpperCase())) {
+          imeis.push(clean);
+        }
+      });
+    });
+
+    const uniqueImeis = [...new Set(imeis)];
+    const safeFileName = typeof escapeHtml === 'function' ? escapeHtml(file.name) : file.name;
+
+    if (uniqueImeis.length === 0) {
+      if (typeof api !== 'undefined' && api.showToast) {
+        api.showToast(`Không tìm thấy mã IMEI hợp lệ nào trong file "${safeFileName}"`, 'warning');
+      } else if (typeof showToast === 'function') {
+        showToast(`Không tìm thấy mã IMEI hợp lệ nào trong file "${safeFileName}"`, 'warning');
+      }
+      event.target.value = '';
+      return;
+    }
+
+    const textarea = document.getElementById('bulkInputImeis');
+    if (textarea) {
+      const currentVal = textarea.value.trim();
+      const existingList = currentVal ? currentVal.split(/[\n,;\t\r]+/).map(s => s.trim()).filter(Boolean) : [];
+      const newlyAdded = uniqueImeis.filter(x => !existingList.includes(x)).length;
+      const duplicateCount = uniqueImeis.length - newlyAdded;
+      const combined = [...new Set([...existingList, ...uniqueImeis])];
+      textarea.value = combined.join('\n');
+
+      if (newlyAdded === 0) {
+        if (typeof api !== 'undefined' && api.showToast) {
+          api.showToast(`Tất cả ${uniqueImeis.length} mã IMEI trong file "${safeFileName}" đã tồn tại trong danh sách!`, 'info');
+        } else if (typeof showToast === 'function') {
+          showToast(`Tất cả ${uniqueImeis.length} mã IMEI trong file "${safeFileName}" đã tồn tại trong danh sách!`, 'info');
+        }
+      } else {
+        let msg = `Đã đọc và nạp thành công ${newlyAdded} mã IMEI mới từ file "${safeFileName}"!`;
+        if (duplicateCount > 0) {
+          msg += ` (Bỏ qua ${duplicateCount} mã đã trùng)`;
+        }
+        if (typeof api !== 'undefined' && api.showToast) {
+          api.showToast(msg, 'success');
+        } else if (typeof showToast === 'function') {
+          showToast(msg, 'success');
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Lỗi khi đọc file Excel:', err);
+    const safeErrorMsg = typeof escapeHtml === 'function' ? escapeHtml(err.message || 'File không đúng định dạng') : (err.message || 'File không đúng định dạng');
+    if (typeof api !== 'undefined' && api.showToast) {
+      api.showToast(`Lỗi đọc file Excel: ${safeErrorMsg}`, 'danger');
+    } else if (typeof showToast === 'function') {
+      showToast(`Lỗi đọc file Excel: ${safeErrorMsg}`, 'danger');
+    }
+  } finally {
+    event.target.value = '';
+  }
+}
+window.handleExcelNhapKhoUpload = handleExcelNhapKhoUpload;

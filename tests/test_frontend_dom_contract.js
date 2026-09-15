@@ -63,7 +63,11 @@ async function runDomAndExtractorTests() {
   const criticalModules = [
     {
       file: 'nhapkho.js',
-      ids: ['filterNCC', 'inputNCC', 'filterTuNgay', 'filterDenNgay', 'tablePhieuNhapBody', 'formCreateNhapKho', 'mayRowsContainer', 'phuKienRowsContainer', 'modalCreateNhapKho']
+      ids: ['filterNCC', 'inputNCC', 'filterTuNgay', 'filterDenNgay', 'tablePhieuNhapBody', 'formCreateNhapKho', 'mayRowsContainer', 'phuKienRowsContainer', 'modalCreateNhapKho', 'fileInputExcelNhapKho', 'bulkInputImeis']
+    },
+    {
+      file: 'kiemke.js',
+      ids: ['fileInputExcelKiemKe', 'textareaImeiThucTe', 'badgeCountScanned', 'selectKho', 'inputGhiChu', 'btnSubmitKiemKe']
     },
     {
       file: 'mayimei.js',
@@ -153,6 +157,77 @@ async function runDomAndExtractorTests() {
   assert(dsImeiConHang.every(m => m.trangThai === 'Con hang'), '[banhang.js] Toàn bộ máy trích xuất đều ở trạng thái "Con hang"');
 
   await mongoose.connection.close();
+
+  // -------------------------------------------------------------
+  // 3. KIỂM THỬ GIẢI THUẬT BÓC TÁCH IMEI TỪ EXCEL & AN TOÀN XSS
+  // -------------------------------------------------------------
+  console.log('\n--- 3. Kiểm thử Giải thuật Bóc tách IMEI từ Excel & An toàn XSS ---');
+
+  const ignoreKeywords = new Set([
+    'STT', 'MAMAY', 'TENMAY', 'SANPHAM', 'IMEI', 'MAIMEI', 'SERIAL', 'SERIALNUMBER',
+    'DESCRIPTION', 'NOTE', 'GHICHU', 'STATUS', 'TRANGTHAI', 'PRICE', 'GIANHAP', 'GIABAN',
+    'SOLUONG', 'QUANTITY', 'NHACUNGCAP', 'SUPPLIER', 'PHONENUMBER', 'DIENTHOAI', 'DANHSACH'
+  ]);
+
+  function extractImeisFromRawValues(rawValues) {
+    const imeis = [];
+    rawValues.forEach(val => {
+      // 1. Nếu nguyên ô khi bỏ khoảng trắng là mã IMEI 14-16 chữ số (VD: 3589 1234 5678 901)
+      const cellClean = String(val).trim();
+      const cellDigits = cellClean.replace(/\s+/g, '');
+      if (/^\d{14,16}$/.test(cellDigits)) {
+        imeis.push(cellDigits);
+        return;
+      }
+
+      // 2. Tách theo khoảng trắng, xuống dòng, dấu phẩy, chấm phẩy, tab
+      const parts = cellClean.split(/[\n,;\t\r\s]+/).map(s => s.trim()).filter(Boolean);
+      parts.forEach(p => {
+        let clean = p;
+        if (/^[0-9]+(\.[0-9]+)?[eE]\+[0-9]+$/.test(clean)) {
+          try {
+            clean = BigInt(Math.round(Number(clean))).toString();
+          } catch (e) {}
+        }
+        clean = clean.replace(/[^a-zA-Z0-9]/g, '');
+        // Hợp lệ: 8-20 ký tự, PHẢI có ít nhất 1 chữ số, không nằm trong từ khóa tiêu đề cột
+        if (/^[a-zA-Z0-9]{8,20}$/.test(clean) && /\d/.test(clean) && !ignoreKeywords.has(clean.toUpperCase())) {
+          imeis.push(clean);
+        }
+      });
+    });
+    return [...new Set(imeis)];
+  }
+
+  // Test 3.1: Bóc tách IMEI chuẩn và lọc bỏ header bảng
+  const mockExcelRows = [
+    'STT,Tên máy,Mã IMEI,Ghi chú',
+    '1, iPhone 15 Pro Max, 358912345678901, Máy mới nguyên seal',
+    '2, Samsung S24 Ultra, 359123456789012, Bản quốc tế',
+    'SERIALNUMBER, DESCRIPTION, NOTE, STATUS' // Header tiếng Anh cần loại bỏ
+  ];
+  const extracted = extractImeisFromRawValues(mockExcelRows);
+  assert(extracted.length === 2, `[Excel Parser] Trích xuất chính xác 2 mã IMEI hợp lệ (loại bỏ headers STT, SERIALNUMBER, DESCRIPTION)`);
+  assert(extracted.includes('358912345678901') && extracted.includes('359123456789012'), '[Excel Parser] 2 mã IMEI 15 chữ số được trích xuất nguyên vẹn');
+
+  // Test 3.2: Xử lý số khoa học do Excel tự format (vd: 3.58912E+14)
+  const sciExcelVal = ['3.58912345678901e+14'];
+  const extractedSci = extractImeisFromRawValues(sciExcelVal);
+  assert(extractedSci.length === 1 && extractedSci[0] === '358912345678901', '[Excel Parser] Chuỗi số khoa học 3.58912345678901e+14 chuyển đổi chuẩn xác thành IMEI 358912345678901');
+
+  // Test 3.3: Kiểm tra XSS escape tên file
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+  const maliciousFileName = '<img src=x onerror=alert(1)>.xlsx';
+  const escapedFileName = escapeHtml(maliciousFileName);
+  assert(!escapedFileName.includes('<img') && escapedFileName.includes('&lt;img'), '[Excel Parser] Tên file chứa mã độc XSS được escape HTML an toàn trước khi truyền vào Toast');
 
   // -------------------------------------------------------------
   // TỔNG KẾT

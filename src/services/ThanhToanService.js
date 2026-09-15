@@ -40,6 +40,8 @@ class ThanhToanService extends BaseService {
     const validHinhThuc = ['Tien mat', 'Chuyen khoan', 'Quet the', 'Vi dien tu'];
     const selectedHinhThuc = validHinhThuc.includes(hinhThuc) ? hinhThuc : 'Tien mat';
 
+    const parsedNgayThu = (ngayThu && !isNaN(new Date(ngayThu).getTime())) ? new Date(ngayThu) : new Date();
+
     const phieuThu = await PhieuThu.create({
       hoaDon: hoaDon || null,
       donDatHang: donDatHang || null,
@@ -47,9 +49,9 @@ class ThanhToanService extends BaseService {
       phieuDoiTra: phieuDoiTra || null,
       soTien: amount,
       hinhThuc: selectedHinhThuc,
-      ngayThu: ngayThu ? new Date(ngayThu) : new Date(),
-      nguoiNop: nguoiNop || '',
-      chungTuLienQuan: chungTuLienQuan || '',
+      ngayThu: parsedNgayThu,
+      nguoiNop: String(nguoiNop || '').trim(),
+      chungTuLienQuan: String(chungTuLienQuan || '').trim(),
       ghiChu: ghiChu || ''
     });
 
@@ -82,6 +84,8 @@ class ThanhToanService extends BaseService {
     const validHinhThuc = ['Tien mat', 'Chuyen khoan', 'Quet the', 'Vi dien tu'];
     const selectedHinhThuc = validHinhThuc.includes(hinhThuc) ? hinhThuc : 'Tien mat';
 
+    const parsedNgayChi = (ngayChi && !isNaN(new Date(ngayChi).getTime())) ? new Date(ngayChi) : new Date();
+
     const phieuChi = await PhieuChi.create({
       phieuNhap: phieuNhap || null,
       donDatHang: donDatHang || null,
@@ -89,9 +93,9 @@ class ThanhToanService extends BaseService {
       maDT: maDT || '',
       soTien: amount,
       hinhThuc: selectedHinhThuc,
-      ngayChi: ngayChi ? new Date(ngayChi) : new Date(),
-      nguoiNhan: nguoiNhan || '',
-      chungTuLienQuan: chungTuLienQuan || '',
+      ngayChi: parsedNgayChi,
+      nguoiNhan: String(nguoiNhan || '').trim(),
+      chungTuLienQuan: String(chungTuLienQuan || '').trim(),
       lyDo: lyDo || ''
     });
 
@@ -123,7 +127,12 @@ class ThanhToanService extends BaseService {
     }
 
     if (query.search) {
-      filter.ghiChu = { $regex: query.search.trim(), $options: 'i' };
+      const regex = { $regex: query.search.trim(), $options: 'i' };
+      filter.$or = [
+        { ghiChu: regex },
+        { nguoiNop: regex },
+        { chungTuLienQuan: regex }
+      ];
     }
 
     const { page, limit, skip } = this.getPaginationOptions(query);
@@ -185,9 +194,12 @@ class ThanhToanService extends BaseService {
     }
 
     if (query.search) {
+      const regex = { $regex: query.search.trim(), $options: 'i' };
       filter.$or = [
-        { lyDo: { $regex: query.search.trim(), $options: 'i' } },
-        { maDT: { $regex: query.search.trim(), $options: 'i' } }
+        { lyDo: regex },
+        { maDT: regex },
+        { nguoiNhan: regex },
+        { chungTuLienQuan: regex }
       ];
     }
 
@@ -300,7 +312,9 @@ class ThanhToanService extends BaseService {
         hinhThuc: pt.hinhThuc,
         ngay: pt.ngayThu,
         noiDung: pt.ghiChu || 'Thu tiền hệ thống',
-        lienKet: pt.hoaDon ? 'Hóa đơn' : (pt.donDatHang ? 'Đơn đặt trước' : (pt.congNo ? 'Công nợ' : 'Khác')),
+        lienKet: pt.hoaDon ? 'Hóa đơn' : (pt.donDatHang ? 'Đơn đặt trước' : (pt.congNo ? 'Công nợ' : (pt.chungTuLienQuan || 'Khác'))),
+        nguoiNop: pt.nguoiNop || '',
+        chungTuLienQuan: pt.chungTuLienQuan || '',
         hoaDon: pt.hoaDon,
         donDatHang: pt.donDatHang,
         congNo: pt.congNo,
@@ -313,7 +327,9 @@ class ThanhToanService extends BaseService {
         hinhThuc: pc.hinhThuc,
         ngay: pc.ngayChi,
         noiDung: pc.lyDo || 'Chi tiền hệ thống',
-        lienKet: pc.phieuNhap ? 'Phiếu nhập' : (pc.donDatHang ? 'Hoàn cọc đặt trước' : (pc.maDT ? `Đối tượng ${pc.maDT}` : 'Khác')),
+        lienKet: pc.phieuNhap ? 'Phiếu nhập' : (pc.donDatHang ? 'Hoàn cọc đặt trước' : (pc.maDT ? `Đối tượng ${pc.maDT}` : (pc.chungTuLienQuan || 'Khác'))),
+        nguoiNhan: pc.nguoiNhan || '',
+        chungTuLienQuan: pc.chungTuLienQuan || '',
         phieuNhap: pc.phieuNhap,
         donDatHang: pc.donDatHang,
         maDT: pc.maDT,

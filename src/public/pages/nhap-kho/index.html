@@ -275,11 +275,17 @@
           </div>
         </div>
         <div class="mb-3">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <label class="form-label fw-semibold mb-0">Danh sách IMEI (cách nhau bởi dấu phẩy hoặc xuống dòng)</label>
-            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" onclick="openNhapKhoCameraScanner()" title="Bật camera điện thoại/laptop để quét liên tục các hộp máy">
-              <i class="bi bi-camera-fill me-1"></i> Quét Camera Liên Tục
-            </button>
+          <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+            <label class="form-label fw-semibold mb-0">Danh sách IMEI (dán, quét hoặc tải từ Excel)</label>
+            <div class="d-flex gap-1">
+              <input type="file" id="fileInputExcelNhapKho" accept=".xlsx, .xls, .csv" class="d-none" onchange="handleExcelNhapKhoUpload(event)">
+              <button type="button" class="btn btn-outline-success btn-sm py-0 px-2" onclick="document.getElementById('fileInputExcelNhapKho').click()" title="Tải file Excel (.xlsx, .xls, .csv) chứa danh sách IMEI từ máy tính">
+                <i class="bi bi-file-earmark-excel me-1"></i> Tải File Excel
+              </button>
+              <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" onclick="openNhapKhoCameraScanner()" title="Bật camera điện thoại/laptop để quét liên tục các hộp máy">
+                <i class="bi bi-camera-fill me-1"></i> Quét Camera
+              </button>
+            </div>
           </div>
           <textarea id="bulkInputImeis" class="form-control font-monospace" rows="6" placeholder="IMEI1&#10;IMEI2&#10;..."></textarea>
         </div>
@@ -293,6 +299,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/layout.js"></script>
 <script src="/js/camera-scanner.js"></script>
