@@ -9,6 +9,6 @@ router.get('/', sanPhamController.index);
 router.get('/:id', sanPhamController.getDetail);
 router.post('/', requireRole('Quản lý', 'Thủ kho'), sanPhamController.postCreate);
 router.put('/:id', requireRole('Quản lý', 'Thủ kho'), sanPhamController.postEdit);
-router.delete('/:id', requireRole('Quản lý'), sanPhamController.delete);
+router.put('/:id/toggle-status', requireRole('Quản lý'), sanPhamController.toggleStatus);
 
 module.exports = router;

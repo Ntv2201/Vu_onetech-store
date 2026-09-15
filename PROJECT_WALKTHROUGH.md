@@ -70,7 +70,7 @@ Hệ thống được tổ chức theo mô hình **Layered MVC kết hợp OOP S
   - **Ràng buộc nghiệp vụ Giá bán:** `SanPhamService` bắt buộc `giaBan > giaGoc` khi tạo mới và cập nhật, chống rủi ro bán lỗ.
   - **Tự động điền Giá gốc & Dung lượng:** Khi lập phiếu nhập kho, việc chọn model sẽ tự động điền đơn giá và dung lượng.
   - **Nhập Hàng Loạt IMEI (Bulk Import Modal):** Cho phép thủ kho quét mã vạch hoặc dán danh sách hàng chục IMEI cùng lúc để sinh các dòng nhập kho tự động.
-* **Modal Xác nhận Xóa & Soft Delete Model Sản Phẩm (`src/public/pages/san-pham/`):** Tích hợp Modal Bootstrap `modalXacNhanXoa` phong cách hiện đại thay thế confirm thô sơ, hiệu ứng fade-out dòng tr sau khi ẩn và chuyển sang cơ chế Soft Delete (`status: false`) để bảo toàn lịch sử hóa đơn/IMEI.
+* **Cơ chế Khóa/Mở (Soft Delete Toggle) Toàn Diện:** Chuyển đổi toàn bộ hành động xóa (`DELETE`) cứng sang cơ chế Khóa/Mở (Soft Delete qua `status`) cho Khách hàng, Nhà cung cấp, Sản phẩm, và Phụ kiện. Đảm bảo toàn vẹn dữ liệu cho các báo cáo lịch sử và bảng liên quan.
 * **Màn hình Đăng nhập Trực quan (`src/public/pages/login.html`):**
   - Hiệu ứng floating background orbs, logo chuyển động xoay tròn nhẹ khi tương tác, form focus nổi bật.
   - Hàng badge tài khoản demo tương tác cao giúp đăng nhập nhanh 1-click cho 6 vai trò.

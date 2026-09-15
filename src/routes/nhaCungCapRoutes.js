@@ -10,6 +10,6 @@ router.get('/:id', nhaCungCapController.getDetail);
 router.get('/:id/lich-su-nhap', requireRole('Quản lý', 'Thủ kho', 'Kế toán'), nhaCungCapController.getLichSuNhap);
 router.post('/', requireRole('Quản lý', 'Thủ kho', 'Kế toán'), nhaCungCapController.postCreate);
 router.put('/:id', requireRole('Quản lý', 'Thủ kho', 'Kế toán'), nhaCungCapController.postEdit);
-router.delete('/:id', requireRole('Quản lý'), nhaCungCapController.delete);
+router.put('/:id/toggle-status', requireRole('Quản lý'), nhaCungCapController.toggleStatus);
 
 module.exports = router;

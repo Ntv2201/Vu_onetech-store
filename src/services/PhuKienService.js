@@ -9,6 +9,9 @@ class PhuKienService extends BaseService {
   async getAllPhuKiens(query = {}) {
     const { search, danhMucId } = query;
     const filter = {};
+    if (query.status !== 'all') {
+      filter.status = { $ne: false };
+    }
 
     if (search && search.trim()) {
       filter.tenPK = { $regex: search.trim(), $options: 'i' };
@@ -73,12 +76,14 @@ class PhuKienService extends BaseService {
     return updated;
   }
 
-  async deletePhuKien(id) {
-    const deleted = await PhuKien.findByIdAndDelete(id);
-    if (!deleted) {
+  async toggleStatusPhuKien(id) {
+    const pk = await PhuKien.findById(id);
+    if (!pk) {
       throw this.createError('Không tìm thấy phụ kiện', 404);
     }
-    return { success: true, id };
+    pk.status = !pk.status;
+    await pk.save();
+    return { success: true, id, status: pk.status };
   }
 }
 

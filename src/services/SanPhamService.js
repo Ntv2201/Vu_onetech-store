@@ -9,7 +9,10 @@ class SanPhamService extends BaseService {
 
   async getAllSanPhams(query = {}) {
     const { search, danhMucId, hang } = query;
-    const filter = { status: { $ne: false } };
+    const filter = {};
+    if (query.status !== 'all') {
+      filter.status = { $ne: false };
+    }
 
     if (search && search.trim()) {
       filter.tenMay = { $regex: search.trim(), $options: 'i' };
@@ -44,13 +47,22 @@ class SanPhamService extends BaseService {
       totalMap[c._id.toString()] = c.tongImei;
     });
 
-    const enriched = sanPhams.map(sp => {
+    let enriched = sanPhams.map(sp => {
       const spObj = sp.toObject ? sp.toObject() : { ...sp };
       spObj.soLuongTon = countMap[sp._id.toString()] || 0;
       spObj.soLuongCon = spObj.soLuongTon;
       spObj.tongImei = totalMap[sp._id.toString()] || 0;
       return spObj;
     });
+
+    if (query.status !== 'all') {
+      enriched = enriched.filter(sp => {
+        if (sp.status === false || sp.status === 0 || sp.status === '0' || sp.status === 'false') {
+          return false;
+        }
+        return true;
+      });
+    }
 
     return { sanPhams: enriched, danhMucs, allHangs };
   }
@@ -138,20 +150,19 @@ class SanPhamService extends BaseService {
     return updated;
   }
 
-  async deleteSanPham(id) {
+  async toggleStatusSanPham(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw this.createError('ID sản phẩm không hợp lệ', 400);
     }
 
-    const updated = await SanPham.findByIdAndUpdate(
-      id,
-      { status: false },
-      { new: true }
-    );
-    if (!updated) {
+    const sp = await SanPham.findById(id);
+    if (!sp) {
       throw this.createError('Không tìm thấy sản phẩm', 404);
     }
-    return { success: true, id };
+
+    sp.status = (sp.status === false) ? true : false;
+    await sp.save();
+    return { success: true, id, status: sp.status };
   }
 }
 

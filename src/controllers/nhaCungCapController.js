@@ -8,7 +8,7 @@ class NhaCungCapController extends BaseController {
     this.getDetail = this.getDetail.bind(this);
     this.postCreate = this.postCreate.bind(this);
     this.postEdit = this.postEdit.bind(this);
-    this.delete = this.delete.bind(this);
+    this.toggleStatus = this.toggleStatus.bind(this);
     this.getLichSuNhap = this.getLichSuNhap.bind(this);
   }
 
@@ -52,13 +52,14 @@ class NhaCungCapController extends BaseController {
     }
   }
 
-  // DELETE /api/nha-cung-cap/:id
-  async delete(req, res) {
+  // PUT /api/nha-cung-cap/:id/toggle-status
+  async toggleStatus(req, res) {
     try {
-      const result = await NhaCungCapService.deleteNhaCungCap(req.params.id);
-      return this.sendSuccess(res, result, 'Xóa nhà cung cấp thành công');
+      const result = await NhaCungCapService.toggleStatusNhaCungCap(req.params.id);
+      const action = result.status ? 'Mở khóa' : 'Khóa';
+      return this.sendSuccess(res, result, `${action} nhà cung cấp thành công`);
     } catch (error) {
-      return this.handleError(res, error, 'Lỗi khi xóa nhà cung cấp');
+      return this.handleError(res, error, 'Lỗi khi thay đổi trạng thái nhà cung cấp');
     }
   }
 

@@ -9,6 +9,6 @@ router.get('/', phuKienController.index);
 router.get('/:id', phuKienController.getDetail);
 router.post('/', requireRole('Quản lý', 'Thủ kho'), phuKienController.postCreate);
 router.put('/:id', requireRole('Quản lý', 'Thủ kho'), phuKienController.postEdit);
-router.delete('/:id', requireRole('Quản lý'), phuKienController.delete);
+router.put('/:id/toggle-status', requireRole('Quản lý'), phuKienController.toggleStatus);
 
 module.exports = router;

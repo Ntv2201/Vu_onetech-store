@@ -18,6 +18,9 @@ class KhachHangService extends BaseService {
   async getAllKhachHangs(query = {}) {
     const { search } = query;
     const filter = {};
+    if (query.status !== 'all') {
+      filter.status = { $ne: false };
+    }
 
     if (search && search.trim()) {
       filter.$or = [
@@ -34,7 +37,9 @@ class KhachHangService extends BaseService {
       if (query.tongChiTieuMax) filter.tongChiTieu.$lte = Number(query.tongChiTieuMax);
     }
     if (query.status !== undefined) {
-      filter.status = query.status === 'true' || query.status === true;
+      if (query.status !== 'all') {
+        filter.status = query.status === 'true' || query.status === true;
+      }
     } else {
       filter.status = true; // mặc định chỉ lấy khách hàng còn hoạt động
     }
@@ -150,14 +155,14 @@ class KhachHangService extends BaseService {
     return updated;
   }
 
-  async deleteKhachHang(id) {
-    // Soft delete instead of hard delete
-    const deleted = await KhachHang.findByIdAndUpdate(id, { status: false }, { new: true });
-    if (!deleted) {
+  async toggleStatusKhachHang(id) {
+    const khachHang = await KhachHang.findById(id);
+    if (!khachHang) {
       throw this.createError('Không tìm thấy khách hàng', 404);
     }
-
-    return { success: true, id };
+    khachHang.status = !khachHang.status;
+    await khachHang.save();
+    return { success: true, id, status: khachHang.status };
   }
 }
 

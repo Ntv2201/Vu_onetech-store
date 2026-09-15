@@ -9,6 +9,9 @@ class NhaCungCapService extends BaseService {
   async getAllNhaCungCaps(query = {}) {
     const { search } = query;
     const filter = {};
+    if (query.status !== 'all') {
+      filter.status = { $ne: false };
+    }
 
     if (search && search.trim()) {
       filter.$or = [
@@ -101,12 +104,14 @@ class NhaCungCapService extends BaseService {
     return updated;
   }
 
-  async deleteNhaCungCap(id) {
-    const deleted = await NhaCungCap.findByIdAndDelete(id);
-    if (!deleted) {
+  async toggleStatusNhaCungCap(id) {
+    const ncc = await NhaCungCap.findById(id);
+    if (!ncc) {
       throw this.createError('Không tìm thấy nhà cung cấp', 404);
     }
-    return { success: true, id };
+    ncc.status = !ncc.status;
+    await ncc.save();
+    return { success: true, id, status: ncc.status };
   }
 
   /**

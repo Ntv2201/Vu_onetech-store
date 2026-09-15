@@ -30,7 +30,12 @@ class MayImeiService extends BaseService {
       SanPham.find().sort({ tenMay: 1 })
     ]);
 
-    return { imeis, sanPhams };
+    let finalImeis = imeis;
+    if (query.status !== 'all') {
+      finalImeis = imeis.filter(m => m.sanPham && m.sanPham.status !== false);
+    }
+
+    return { imeis: finalImeis, sanPhams };
   }
 
   async getImeiDetail(imei) {

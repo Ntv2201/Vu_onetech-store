@@ -11,6 +11,6 @@ router.get('/', nhanVienController.index);
 router.get('/:id', nhanVienController.getDetail);
 router.post('/', nhanVienController.postCreate);
 router.put('/:id', nhanVienController.postEdit);
-router.delete('/:id', nhanVienController.delete);
+router.put('/:id/toggle-status', nhanVienController.toggleStatus);
 
 module.exports = router;

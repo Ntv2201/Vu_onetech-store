@@ -110,12 +110,23 @@ class CongNoService extends BaseService {
    * Lọc theo loaiDoiTuong / khachHang / nhaCungCap / trangThai.
    */
   async layDanhSachCongNo(query = {}) {
-    const { loaiDoiTuong, maKH, maNCC, trangThai } = query;
+    const { loaiDoiTuong, maKH, maNCC, trangThai, search } = query;
     const filter = {};
     if (loaiDoiTuong) filter.loaiDoiTuong = loaiDoiTuong;
     if (maKH) filter.khachHang = maKH;
     if (maNCC) filter.nhaCungCap = maNCC;
     if (trangThai) filter.trangThai = trangThai;
+
+    if (search && search.trim()) {
+      const keyword = search.trim();
+      const khachHangs = await KhachHang.find({ $or: [{ hoTen: { $regex: keyword, $options: 'i' } }, { sdt: { $regex: keyword, $options: 'i' } }] }, '_id');
+      const nhaCungCaps = await NhaCungCap.find({ $or: [{ tenNCC: { $regex: keyword, $options: 'i' } }, { sdt: { $regex: keyword, $options: 'i' } }] }, '_id');
+      
+      filter.$or = [
+        { khachHang: { $in: khachHangs.map(kh => kh._id) } },
+        { nhaCungCap: { $in: nhaCungCaps.map(ncc => ncc._id) } }
+      ];
+    }
 
     const { page, limit, skip } = this.getPaginationOptions(query);
     const [items, total] = await Promise.all([

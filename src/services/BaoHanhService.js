@@ -402,7 +402,7 @@ class BaoHanhService extends BaseService {
    * Lấy danh sách toàn bộ Linh kiện sửa chữa
    */
   async getAllLinhKien() {
-    return await LinhKien.find().sort({ tenLK: 1 });
+    return await LinhKien.find({ status: { $ne: false } }).sort({ tenLK: 1 });
   }
 }
 

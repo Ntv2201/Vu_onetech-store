@@ -8,7 +8,7 @@ class SanPhamController extends BaseController {
     this.getDetail = this.getDetail.bind(this);
     this.postCreate = this.postCreate.bind(this);
     this.postEdit = this.postEdit.bind(this);
-    this.delete = this.delete.bind(this);
+    this.toggleStatus = this.toggleStatus.bind(this);
   }
 
   // GET /api/san-pham
@@ -51,13 +51,14 @@ class SanPhamController extends BaseController {
     }
   }
 
-  // DELETE /api/san-pham/:id
-  async delete(req, res) {
+  // PUT /api/san-pham/:id/toggle-status
+  async toggleStatus(req, res) {
     try {
-      const result = await SanPhamService.deleteSanPham(req.params.id);
-      return this.sendSuccess(res, result, 'Xóa sản phẩm thành công');
+      const result = await SanPhamService.toggleStatusSanPham(req.params.id);
+      const action = result.status ? 'Mở khóa' : 'Khóa';
+      return this.sendSuccess(res, result, `${action} sản phẩm thành công`);
     } catch (error) {
-      return this.handleError(res, error, 'Lỗi khi xóa sản phẩm');
+      return this.handleError(res, error, 'Lỗi khi thay đổi trạng thái sản phẩm');
     }
   }
 }

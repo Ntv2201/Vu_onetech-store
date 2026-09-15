@@ -8,7 +8,7 @@ class NhanVienController extends BaseController {
     this.getDetail = this.getDetail.bind(this);
     this.postCreate = this.postCreate.bind(this);
     this.postEdit = this.postEdit.bind(this);
-    this.delete = this.delete.bind(this);
+    this.toggleStatus = this.toggleStatus.bind(this);
   }
 
   // GET /api/nhan-vien
@@ -52,14 +52,14 @@ class NhanVienController extends BaseController {
     }
   }
 
-  // DELETE /api/nhan-vien/:id
-  async delete(req, res) {
+  // PUT /api/nhan-vien/:id/toggle-status
+  async toggleStatus(req, res) {
     try {
-      const currentUserId = req.session && req.session.user ? req.session.user._id : null;
-      const result = await NhanVienService.deleteNhanVien(req.params.id, currentUserId);
-      return this.sendSuccess(res, result, 'Xóa tài khoản nhân viên thành công');
+      const result = await NhanVienService.toggleStatusNhanVien(req.params.id);
+      const actionName = result.trangThai === 'Khóa' ? 'Khóa' : 'Mở khóa';
+      return this.sendSuccess(res, result, `${actionName} tài khoản nhân viên thành công`);
     } catch (error) {
-      return this.handleError(res, error, 'Lỗi khi xóa nhân viên');
+      return this.handleError(res, error, 'Lỗi khi thay đổi trạng thái nhân viên');
     }
   }
 }

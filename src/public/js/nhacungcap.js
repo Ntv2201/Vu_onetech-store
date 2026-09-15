@@ -25,6 +25,17 @@ async function initNhaCungCapIndex() {
     });
   }
 
+  const searchInput = document.getElementById('filterSearch');
+  if (searchInput) {
+    let timeout;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        loadNhaCungCapList();
+      }, 300);
+    });
+  }
+
   if (btnReset) {
     btnReset.addEventListener('click', () => {
       document.getElementById('filterSearch').value = '';
@@ -36,7 +47,7 @@ async function initNhaCungCapIndex() {
 async function loadNhaCungCapList() {
   const search = document.getElementById('filterSearch')?.value.trim() || '';
 
-  const res = await api.get('/nha-cung-cap', { search });
+  const res = await api.get('/nha-cung-cap', { search, status: 'all' });
   if (!res.success) {
     showToast(res.message || 'Không thể tải danh sách nhà cung cấp', 'danger');
     return;
@@ -56,6 +67,11 @@ async function loadNhaCungCapList() {
         <td><span class="font-monospace text-primary">${escapeHtml(ncc.sdt || 'Chưa cập nhật')}</span></td>
         <td>${escapeHtml(ncc.diaChi || 'Chưa cập nhật')}</td>
         <td>${formatDate(ncc.createdAt)}</td>
+        <td>
+          ${ncc.status !== false 
+            ? '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Hoạt động</span>' 
+            : '<span class="badge bg-danger-subtle text-danger"><i class="bi bi-lock me-1"></i>Đã khóa</span>'}
+        </td>
         <td class="text-end pe-3">
           <div class="d-inline-flex justify-content-end align-items-center" style="gap: 6px;">
             ${isStoreOrAccountantOrManager ? `
@@ -64,8 +80,8 @@ async function loadNhaCungCapList() {
               </a>
             ` : ''}
             ${isManager ? `
-              <button type="button" class="btn-action btn-action-cancel" title="Xóa" onclick="deleteNhaCungCap('${ncc._id}', '${escapeHtml(ncc.tenNCC)}')">
-                <i class="bi bi-trash"></i>
+              <button type="button" class="btn-action ${ncc.status !== false ? 'btn-action-cancel' : 'btn-action-success'}" title="${ncc.status !== false ? 'Khóa' : 'Mở khóa'}" onclick="toggleStatusNhaCungCap('${ncc._id}', '${escapeHtml(ncc.tenNCC)}', ${ncc.status !== false})">
+                <i class="bi ${ncc.status !== false ? 'bi-lock-fill' : 'bi-unlock-fill'}"></i>
               </button>
             ` : ''}
           </div>
@@ -77,15 +93,16 @@ async function loadNhaCungCapList() {
   }
 }
 
-async function deleteNhaCungCap(id, tenNCC) {
-  if (!confirm(`Bạn có chắc chắn muốn xóa nhà cung cấp "${tenNCC}"?`)) return;
+async function toggleStatusNhaCungCap(id, tenNCC, currentStatus) {
+  const actionName = currentStatus ? 'khóa' : 'mở khóa';
+  if (!confirm(`Bạn có chắc chắn muốn ${actionName} nhà cung cấp "${tenNCC}"?`)) return;
 
-  const res = await api.delete(`/nha-cung-cap/${id}`);
+  const res = await api.put(`/nha-cung-cap/${id}/toggle-status`);
   if (res.success) {
-    showToast(res.message || 'Xóa nhà cung cấp thành công', 'success');
+    showToast(res.message || `${actionName} nhà cung cấp thành công`, 'success');
     loadNhaCungCapList();
   } else {
-    showToast(res.message || 'Lỗi khi xóa nhà cung cấp', 'danger');
+    showToast(res.message || `Lỗi khi ${actionName} nhà cung cấp`, 'danger');
   }
 }
 

@@ -8,7 +8,7 @@ class PhuKienController extends BaseController {
     this.getDetail = this.getDetail.bind(this);
     this.postCreate = this.postCreate.bind(this);
     this.postEdit = this.postEdit.bind(this);
-    this.delete = this.delete.bind(this);
+    this.toggleStatus = this.toggleStatus.bind(this);
   }
 
   // GET /api/phu-kien
@@ -51,13 +51,14 @@ class PhuKienController extends BaseController {
     }
   }
 
-  // DELETE /api/phu-kien/:id
-  async delete(req, res) {
+  // PUT /api/phu-kien/:id/toggle-status
+  async toggleStatus(req, res) {
     try {
-      const result = await PhuKienService.deletePhuKien(req.params.id);
-      return this.sendSuccess(res, result, 'Xóa phụ kiện thành công');
+      const result = await PhuKienService.toggleStatusPhuKien(req.params.id);
+      const action = result.status ? 'Mở khóa' : 'Khóa';
+      return this.sendSuccess(res, result, `${action} phụ kiện thành công`);
     } catch (error) {
-      return this.handleError(res, error, 'Lỗi khi xóa phụ kiện');
+      return this.handleError(res, error, 'Lỗi khi thay đổi trạng thái phụ kiện');
     }
   }
 }
