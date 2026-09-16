@@ -8,6 +8,7 @@ class BaoCaoController extends BaseController {
     this.getTopSanPham = this.getTopSanPham.bind(this);
     this.getHangTonLauNgay = this.getHangTonLauNgay.bind(this);
     this.getBaoCaoTaiChinhTongHop = this.getBaoCaoTaiChinhTongHop.bind(this);
+    this.getSanPhamSapHetHang = this.getSanPhamSapHetHang.bind(this);
   }
 
   /**
@@ -55,6 +56,18 @@ class BaoCaoController extends BaseController {
       return this.sendSuccess(res, data, 'Lấy báo cáo tổng hợp tài chính thành công');
     } catch (err) {
       return this.handleError(res, err, 'Lỗi khi lấy báo cáo tổng hợp tài chính');
+    }
+  }
+
+  /**
+   * GET /api/bao-cao/sap-het-hang
+   */
+  async getSanPhamSapHetHang(req, res) {
+    try {
+      const data = await BaoCaoService.getSanPhamSapHetHang(req.query);
+      return this.sendSuccess(res, data, 'Lấy danh sách sản phẩm sắp hết hàng thành công');
+    } catch (err) {
+      return this.handleError(res, err, 'Lỗi khi lấy danh sách sản phẩm sắp hết hàng');
     }
   }
 }

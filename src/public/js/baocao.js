@@ -41,7 +41,8 @@ async function loadAllReports() {
     loadTongHopTaiChinh(),
     loadDoanhThuChart(),
     loadTopSanPham(),
-    loadTonLauNgay()
+    loadTonLauNgay(),
+    loadSapHetHang()
   ]);
 }
 
@@ -151,7 +152,7 @@ async function loadTopSanPham() {
         <div class="d-flex align-items-center gap-3">
           <span class="badge ${badgeColor} rounded-circle p-2" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">${index + 1}</span>
           <div>
-            <h6 class="mb-0 fw-semibold text-truncate" style="max-width: 200px;">${item.tenSanPham}</h6>
+            <h6 class="mb-0 fw-semibold text-truncate" style="max-width: 200px;">${item.tenMay || item.tenSanPham}</h6>
             <small class="text-muted">Đã bán: ${item.soLuongBan} máy</small>
           </div>
         </div>
@@ -197,3 +198,46 @@ async function loadTonLauNgay() {
   
   tbody.innerHTML = html;
 }
+
+async function loadSapHetHang() {
+  const tbody = document.getElementById('sapHetHangBody');
+  const badge = document.getElementById('badgeSapHetHang');
+  if (!tbody) return;
+
+  const res = await api.get('/bao-cao/sap-het-hang');
+  if (!res.success || !res.data || !res.data.danhSach) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3 text-muted">Không tải được dữ liệu</td></tr>';
+    if (badge) badge.textContent = '0 máy';
+    return;
+  }
+  
+  if (badge) badge.textContent = `${res.data.danhSach.length} máy`;
+  
+  if (res.data.danhSach.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-success"><i class="bi bi-check-circle fs-4 d-block mb-1"></i> Kho đang đầy đủ, không có sản phẩm sắp hết hàng</td></tr>';
+    return;
+  }
+  
+  let html = '';
+  res.data.danhSach.forEach(item => {
+    const badgeColor = item.trangThai === 'Hết hàng' ? 'bg-danger' : 'bg-warning text-dark';
+    html += `
+      <tr>
+        <td class="fw-bold">${item.tenMay}</td>
+        <td>${item.hang}</td>
+        <td class="text-end">${item.giaBan.toLocaleString('vi-VN')} đ</td>
+        <td>${item.tenKho}</td>
+        <td class="text-center"><span class="badge rounded-pill ${item.soLuongTon === 0 ? 'bg-danger' : 'bg-secondary'}">${item.soLuongTon}</span></td>
+        <td><span class="badge ${badgeColor}">${item.trangThai}</span></td>
+        <td class="text-end">
+          <a href="/pages/nhap-kho/index.html?sanPhamId=${item.sanPhamId}" class="btn btn-sm btn-primary">
+            <i class="bi bi-box-arrow-in-down me-1"></i>Nhập thêm
+          </a>
+        </td>
+      </tr>
+    `;
+  });
+  
+  tbody.innerHTML = html;
+}
+

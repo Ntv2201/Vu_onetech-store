@@ -14,6 +14,9 @@ router.get('/top-san-pham', requireRole('Quản lý', 'Kế toán', 'NV bán hà
 // Danh sách máy IMEI tồn kho lâu ngày (> 60 ngày)
 router.get('/ton-lau-ngay', requireRole('Quản lý', 'Thủ kho', 'Kế toán', 'NV bán hàng', 'Thu ngân', 'Kỹ thuật'), baoCaoController.getHangTonLauNgay);
 
+// Danh sách sản phẩm sắp hết hàng
+router.get('/sap-het-hang', requireRole('Quản lý', 'Thủ kho'), baoCaoController.getSanPhamSapHetHang);
+
 // Báo cáo đối soát tài chính tổng hợp
 router.get('/tong-hop-tai-chinh', requireRole('Quản lý', 'Kế toán'), baoCaoController.getBaoCaoTaiChinhTongHop);
 

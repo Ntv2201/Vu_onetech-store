@@ -414,6 +414,52 @@ class BaoCaoService extends BaseService {
       kinhDoanh: { tongDoanhThuBanHang, tongHoaDon }
     };
   }
+
+  /**
+   * GET /api/bao-cao/sap-het-hang
+   * Danh sách các sản phẩm (máy) sắp hết hàng trong kho (<= mucBaoDong)
+   * @param {Object} query
+   * @param {Number} [query.mucBaoDong=5]
+   * @param {Number} [query.limit=50]
+   */
+  async getSanPhamSapHetHang(query = {}) {
+    const mucBaoDong = Math.max(0, parseInt(query.mucBaoDong) || 5);
+    const limit = Math.max(1, Math.min(100, parseInt(query.limit) || 50));
+
+    // Lọc trên TonKho
+    const filter = { soLuong: { $lte: mucBaoDong } };
+
+    const [items, total] = await Promise.all([
+      TonKho.find(filter)
+        .populate('sanPham', 'tenMay hang giaBan status')
+        .populate('kho', 'tenKho')
+        .sort({ soLuong: 1 }) // Hết hàng (0) sẽ lên đầu
+        .limit(limit)
+        .lean(),
+      TonKho.countDocuments(filter)
+    ]);
+
+    const formattedList = items
+      .filter(item => item.sanPham && item.sanPham.status !== false) // Chỉ lấy các sản phẩm đang còn kinh doanh
+      .map(item => {
+        return {
+          sanPhamId: item.sanPham._id,
+          tenMay: item.sanPham.tenMay || 'N/A',
+          hang: item.sanPham.hang || 'N/A',
+          giaBan: item.sanPham.giaBan || 0,
+          khoId: item.kho ? item.kho._id : null,
+          tenKho: item.kho ? item.kho.tenKho : 'N/A',
+          soLuongTon: item.soLuong,
+          trangThai: item.soLuong === 0 ? 'Hết hàng' : 'Sắp hết'
+        };
+      });
+
+    return {
+      tieuChi: `Tồn kho <= ${mucBaoDong} máy`,
+      tongSoLuong: total,
+      danhSach: formattedList
+    };
+  }
 }
 
 module.exports = new BaoCaoService();
