@@ -16,6 +16,7 @@ const {
 const TonKhoService = require('./TonKhoService');
 const ThanhToanService = require('./ThanhToanService');
 const CongNoService = require('./CongNoService');
+const KhuyenMaiService = require('./KhuyenMaiService');
 
 class HoaDonService extends BaseService {
   constructor() {
@@ -305,7 +306,7 @@ class HoaDonService extends BaseService {
       danhSachPhuKien = [],
       hinhThucThanhToan = 'Tien mat',
       ghiChu = '',
-      soTienGiam = 0,
+      maKM = null,
       donDatHangId,
       donDatHang,
       maDat,
@@ -470,7 +471,12 @@ class HoaDonService extends BaseService {
 
     // Giới hạn tiền cọc tối đa bằng tổng tiền hóa đơn
     const actualTienCocDaTru = Math.min(tienCocDaTru, tongTien);
-    const discount = Math.max(0, Number(soTienGiam) || 0);
+
+    // Áp dụng khuyến mãi
+    const kmResult = await KhuyenMaiService.apDungKhuyenMai(maKM, tongTien);
+    const discount = kmResult.soTienGiam;
+    const khuyenMaiObj = kmResult.khuyenMai;
+
     const soTienThanhToan = Math.max(0, tongTien - actualTienCocDaTru - discount);
 
     // 5. Cập nhật MayImei -> 'Da ban' (Dùng atomic update với kiểm tra trangThai === 'Con hang' để chống race condition)
@@ -539,7 +545,9 @@ class HoaDonService extends BaseService {
       nhanVien: maNV,
       donDatHang: donDatHangDoc ? donDatHangDoc._id : null,
       tienCocDaTru: actualTienCocDaTru,
-      soTienGiam: discount,
+      khuyenMai: khuyenMaiObj ? khuyenMaiObj._id : null,
+      khuyenMaiGiam: discount,
+      soTienGiam: discount, // Quan trọng: Lưu vào soTienGiam để các module Báo Cáo và Giao Diện không bị lệch
       soTienThanhToan,
       ngayLap: new Date(),
       tongTien,

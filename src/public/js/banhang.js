@@ -9,6 +9,7 @@ let cart = {
 };
 
 let selectedPreOrder = null; // Đơn đặt hàng trước được chọn để cấn trừ cọc
+let appliedKhuyenMai = null;
 
 let allAvailableImeis = [];
 let allPhuKiens = [];
@@ -289,10 +290,21 @@ async function initPosPage() {
   initPreOrderModal();
   renderCart();
 
-  // Discount input change
-  const inputDiscount = document.getElementById('inputSoTienGiam');
-  if (inputDiscount) {
-    inputDiscount.addEventListener('input', () => renderCart());
+  // Setup Mã Khuyến Mãi events
+  const btnApplyKM = document.getElementById('btnApplyKM');
+  const btnRemoveKM = document.getElementById('btnRemoveKM');
+  const inputMaKM = document.getElementById('inputMaKM');
+  
+  if (btnApplyKM) {
+    btnApplyKM.addEventListener('click', applyPromoCode);
+  }
+  if (btnRemoveKM) {
+    btnRemoveKM.addEventListener('click', removePromoCode);
+  }
+  if (inputMaKM) {
+    inputMaKM.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') applyPromoCode();
+    });
   }
 
   // Search & Filter IMEI (hỗ trợ nhập hoặc quét Barcode + Enter)
@@ -445,6 +457,72 @@ function renderPhuKienList() {
   }).join('');
 }
 
+// ==================== KHUYEN MAI / PROMO CODE ==================== //
+async function applyPromoCode() {
+  const inputMaKM = document.getElementById('inputMaKM');
+  const msgEl = document.getElementById('kmMessage');
+  const maKM = inputMaKM.value.trim();
+  
+  if (!maKM) {
+    showToast('Vui lòng nhập mã khuyến mãi', 'warning');
+    return;
+  }
+
+  // Tính rawGrandTotal
+  let totalMay = 0;
+  cart.imeis.forEach(m => totalMay += m.giaBan);
+  let totalPk = 0;
+  cart.phuKiens.forEach(pk => totalPk += (pk.giaBan * pk.soLuong));
+  const rawGrandTotal = totalMay + totalPk;
+
+  try {
+    const res = await api.post('/khuyen-mai/check', { maKM, tongTien: rawGrandTotal });
+    if (res.success && res.data) {
+      appliedKhuyenMai = {
+        maKM: res.data.khuyenMai.maKM,
+        soTienGiam: res.data.soTienGiam
+      };
+      
+      document.getElementById('btnApplyKM').classList.add('d-none');
+      document.getElementById('btnRemoveKM').classList.remove('d-none');
+      inputMaKM.disabled = true;
+
+      msgEl.classList.remove('d-none', 'text-danger');
+      msgEl.classList.add('text-success');
+      msgEl.innerHTML = `<i class="bi bi-check-circle"></i> Đã áp dụng mã <strong>${appliedKhuyenMai.maKM}</strong> (Giảm ${formatCurrency(appliedKhuyenMai.soTienGiam)})`;
+      
+      playBeep('success');
+      renderCart();
+    } else {
+      msgEl.classList.remove('d-none', 'text-success');
+      msgEl.classList.add('text-danger');
+      msgEl.innerHTML = `<i class="bi bi-x-circle"></i> ${res.message || 'Mã không hợp lệ'}`;
+    }
+  } catch (error) {
+    console.error('Error applying KM:', error);
+    showToast('Có lỗi xảy ra khi áp dụng mã', 'danger');
+  }
+}
+
+function removePromoCode() {
+  appliedKhuyenMai = null;
+  const inputMaKM = document.getElementById('inputMaKM');
+  const msgEl = document.getElementById('kmMessage');
+  
+  if (inputMaKM) {
+    inputMaKM.value = '';
+    inputMaKM.disabled = false;
+  }
+  document.getElementById('btnApplyKM').classList.remove('d-none');
+  document.getElementById('btnRemoveKM').classList.add('d-none');
+  if (msgEl) {
+    msgEl.classList.add('d-none');
+    msgEl.innerText = '';
+  }
+  
+  renderCart();
+}
+
 function addImeiToCart(imei) {
   const may = allAvailableImeis.find(m => m.imei === imei);
   if (!may) return;
@@ -595,8 +673,12 @@ function renderCart() {
   document.getElementById('totalAccessoryPrice').innerText = formatCurrency(totalPk);
 
   const rawGrandTotal = totalMay + totalPk;
-  const inputDiscount = document.getElementById('inputSoTienGiam');
-  const discount = Math.max(0, parseInt(inputDiscount ? inputDiscount.value : 0) || 0);
+  
+  let discount = 0;
+  if (appliedKhuyenMai) {
+    discount = appliedKhuyenMai.soTienGiam;
+    discount = Math.min(discount, rawGrandTotal);
+  }
 
   // Hiển thị giảm giá
   const discountRow = document.getElementById('discountDeductionRow');
@@ -789,8 +871,7 @@ async function handleCreateOrder() {
   }
   const hinhThucThanhToan = document.getElementById('selectPaymentMethod')?.value || 'Da thanh toan';
   const ghiChu = document.getElementById('inputGhiChu')?.value || '';
-  const inputDiscount = document.getElementById('inputSoTienGiam');
-  const soTienGiam = Math.max(0, parseInt(inputDiscount ? inputDiscount.value : 0) || 0);
+  const maKM = appliedKhuyenMai ? appliedKhuyenMai.maKM : null;
 
   const payload = {
     khachHang,
@@ -805,7 +886,7 @@ async function handleCreateOrder() {
     })),
     hinhThucThanhToan,
     ghiChu,
-    soTienGiam,
+    maKM,
     donDatHangId: selectedPreOrder ? selectedPreOrder._id : null
   };
 
@@ -829,7 +910,22 @@ async function handleCreateOrder() {
 
   // Reset giỏ, giảm giá và đơn cọc
   cart = { imeis: [], phuKiens: [] };
-  if (inputDiscount) inputDiscount.value = '0';
+  appliedKhuyenMai = null;
+  soTienGiam = 0;
+  const inputMaKM = document.getElementById('inputMaKM');
+  if (inputMaKM) inputMaKM.value = '';
+  const msgEl = document.getElementById('kmMessage');
+  if (msgEl) {
+    msgEl.innerHTML = '';
+    msgEl.classList.add('d-none');
+  }
+  
+  const btnApplyKM = document.getElementById('btnApplyKM');
+  if (btnApplyKM) btnApplyKM.classList.remove('d-none');
+  const btnRemoveKM = document.getElementById('btnRemoveKM');
+  if (btnRemoveKM) btnRemoveKM.classList.add('d-none');
+  if (inputMaKM) inputMaKM.disabled = false;
+
   clearPreOrder();
   renderCart();
 
