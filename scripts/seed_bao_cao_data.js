@@ -25,6 +25,17 @@ function randomDate(year, month) {
 
 const DANH_MUC_DATA = ['iPhone', 'Samsung', 'Xiaomi / Redmi', 'OPPO / Realme', 'Vivo', 'May Cu / Refurbished'];
 
+// NCC phan chia theo hang may
+const NCC_SEED = [
+  { tenNCC: 'Apple Distribution Vietnam', sdt: '0901234001', diaChi: 'Ha Noi', hang: 'Apple' },
+  { tenNCC: 'Samsung Electronics VN', sdt: '0901234002', diaChi: 'TP.HCM', hang: 'Samsung' },
+  { tenNCC: 'Xiaomi Vietnam', sdt: '0901234003', diaChi: 'Ha Noi', hang: 'Xiaomi' },
+  { tenNCC: 'OPPO Viet Nam', sdt: '0901234004', diaChi: 'TP.HCM', hang: 'OPPO' },
+  { tenNCC: 'Vivo Vietnam', sdt: '0901234005', diaChi: 'Da Nang', hang: 'Vivo' },
+  { tenNCC: 'Realme Vietnam', sdt: '0901234006', diaChi: 'TP.HCM', hang: 'Realme' },
+  { tenNCC: 'May Cu Refurbished VN', sdt: '0901234007', diaChi: 'TP.HCM', hang: 'Refurbished' },
+];
+
 const SANPHAM_SEED = [
   { tenMay: 'iPhone 14 Pro Max', hang: 'Apple', giaBan: 27990000, giaGoc: 23000000, dungLuong: '256GB', soThangBH: 12, dm: 'iPhone' },
   { tenMay: 'iPhone 14', hang: 'Apple', giaBan: 18990000, giaGoc: 15000000, dungLuong: '128GB', soThangBH: 12, dm: 'iPhone' },
@@ -93,10 +104,23 @@ async function main() {
   if (!nv) { console.error('ERROR: Khong tim thay NV banhang'); process.exit(1); }
   const kh = await KhachHang.findOne();
   if (!kh) { console.error('ERROR: Khong tim thay khach hang'); process.exit(1); }
-  const ncc = await NhaCungCap.findOne();
-  if (!ncc) { console.error('ERROR: Khong tim thay NCC'); process.exit(1); }
   const kho = await Kho.findOne();
   if (!kho) { console.error('ERROR: Khong tim thay Kho'); process.exit(1); }
+
+  // Tao NCC theo tung hang (neu chua co)
+  console.log('\n[0] Tao nha cung cap theo hang...');
+  const nccMap = {}; // hang -> NCC doc
+  const nccDefault = await NhaCungCap.findOne(); // fallback
+  for (const nccData of NCC_SEED) {
+    let nccDoc = await NhaCungCap.findOne({ tenNCC: nccData.tenNCC });
+    if (!nccDoc) {
+      nccDoc = await NhaCungCap.create({ tenNCC: nccData.tenNCC, sdt: nccData.sdt, diaChi: nccData.diaChi, status: true });
+      console.log('  + ' + nccData.tenNCC);
+    } else {
+      console.log('  = ' + nccData.tenNCC + ' (da co)');
+    }
+    nccMap[nccData.hang] = nccDoc;
+  }
 
   // 1. Danh muc
   console.log('\n[1] Tao danh muc...');
@@ -184,9 +208,15 @@ async function main() {
         if (imeiExists) continue;
         await MayImei.create({ imei, sanPham: sp._id, giaNhap: sp.giaGoc, mauSac: ['Den','Trang','Xanh','Tim','Vang'][i%5], dungLuong: sp.dungLuong, ngayNhap: ngayNhapImei, trangThai: 'Da ban' });
 
-        // PhieuNhap + PhieuChi
-        const pn = await PhieuNhap.create({ nhaCungCap: ncc._id, nhanVien: nv._id, ngayNhap: ngayNhapImei, tongTien: sp.giaGoc, ghiChu: 'Nhap ' + sp.tenMay });
-        await PhieuChi.create({ phieuNhap: pn._id, soTien: sp.giaGoc, ngayChi: ngayNhapImei, nguoiNhan: ncc.tenNCC || 'NCC', hinhThuc: 'Chuyen khoan', lyDo: 'TT nhap ' + sp.tenMay });
+        // PhieuNhap + PhieuChi - dung NCC theo hang may
+        const hangSp = sp.hang || '';
+        const nccForHang = nccMap[hangSp] ||
+          (hangSp === 'Xiaomi' ? nccMap['Xiaomi'] : null) ||
+          (hangSp === 'OPPO' ? nccMap['OPPO'] : null) ||
+          (hangSp === 'Realme' ? nccMap['Realme'] : null) ||
+          nccMap['Refurbished'] || nccDefault;
+        const pn = await PhieuNhap.create({ nhaCungCap: nccForHang._id, nhanVien: nv._id, ngayNhap: ngayNhapImei, tongTien: sp.giaGoc, ghiChu: 'Nhap ' + sp.tenMay + ' tu ' + nccForHang.tenNCC });
+        await PhieuChi.create({ phieuNhap: pn._id, soTien: sp.giaGoc, ngayChi: ngayNhapImei, nguoiNhan: nccForHang.tenNCC, hinhThuc: 'Chuyen khoan', lyDo: 'Thanh toan nhap ' + sp.tenMay });
 
         // HoaDon
         const soHD = 'HD' + YEAR + String(month).padStart(2,'0') + suffix;
