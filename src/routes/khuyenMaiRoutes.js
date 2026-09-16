@@ -9,6 +9,9 @@ router.use(requireAuth);
 // GET /api/khuyen-mai - Danh sách khuyến mãi (NV bán hàng, Thu ngân cũng xem được)
 router.get('/', requireRole('Quản lý', 'Admin', 'NV bán hàng', 'Thu ngân', 'Kế toán'), khuyenMaiController.index);
 
+// POST /api/khuyen-mai/check - Kiểm tra & tính tiền giảm của mã KM (NV bán hàng, Thu ngân gọi từ POS)
+router.post('/check', requireRole('Quản lý', 'Admin', 'NV bán hàng', 'Thu ngân'), khuyenMaiController.checkCode);
+
 // GET /api/khuyen-mai/:id - Chi tiết khuyến mãi
 router.get('/:id', requireRole('Quản lý', 'Admin', 'NV bán hàng', 'Thu ngân', 'Kế toán'), khuyenMaiController.getDetail);
 
