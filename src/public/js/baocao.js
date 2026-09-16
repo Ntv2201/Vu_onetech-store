@@ -227,7 +227,7 @@ async function loadSapHetHang() {
         <td>${item.hang}</td>
         <td class="text-end">${item.giaBan.toLocaleString('vi-VN')} đ</td>
         <td>${item.tenKho}</td>
-        <td class="text-center"><span class="badge rounded-pill ${item.soLuongTon === 0 ? 'bg-danger' : 'bg-secondary'}">${item.soLuongTon}</span></td>
+        <td class="text-center"><span class="badge rounded-pill ${item.soLuongTon <= 0 ? 'bg-danger' : 'bg-secondary'}">${item.soLuongTon}</span></td>
         <td><span class="badge ${badgeColor}">${item.trangThai}</span></td>
         <td class="text-end">
           <a href="/pages/nhap-kho/index.html?sanPhamId=${item.sanPhamId}" class="btn btn-sm btn-primary">

@@ -450,7 +450,7 @@ class BaoCaoService extends BaseService {
           khoId: item.kho ? item.kho._id : null,
           tenKho: item.kho ? item.kho.tenKho : 'N/A',
           soLuongTon: item.soLuong,
-          trangThai: item.soLuong === 0 ? 'Hết hàng' : 'Sắp hết'
+          trangThai: item.soLuong <= 0 ? 'Hết hàng' : 'Sắp hết'
         };
       });
 
