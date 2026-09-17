@@ -29,7 +29,43 @@ async function loadInitialData() {
   if (resPK.success) {
     dsPhuKien = Array.isArray(resPK.data) ? resPK.data : (resPK.data?.phuKiens || resPK.data?.list || []);
   }
+
+  // Check URL cho trường hợp Nhập từ Đơn Đặt Hàng
+  const urlParams = new URLSearchParams(window.location.search);
+  const donId = urlParams.get('donDatHangId');
+  if (donId) {
+    await autoFillTuDonDatHang(donId);
+  }
 }
+
+async function autoFillTuDonDatHang(donId) {
+  try {
+    const res = await api.get(`/don-dat-hang-ncc/${donId}`);
+    if (res.success) {
+      const don = res.data.donDatHangNCC || res.data;
+      
+      openCreateNhapKhoModal();
+      
+      document.getElementById('inputDonDatHang').value = don._id;
+      document.getElementById('inputDonDatHangId').value = don._id;
+      
+      const nccSelect = document.getElementById('inputNCC');
+      if (nccSelect && don.nhaCungCap) {
+        nccSelect.value = don.nhaCungCap._id || don.nhaCungCap;
+        // Khóa không cho đổi NCC
+        nccSelect.disabled = true;
+      }
+      
+      if (document.getElementById('inputTienChietKhau')) document.getElementById('inputTienChietKhau').value = don.chietKhau || 0;
+      if (document.getElementById('inputPhiVanChuyen')) document.getElementById('inputPhiVanChuyen').value = don.phiVanChuyen || 0;
+      if (document.getElementById('inputSdtNguoiGiao')) document.getElementById('inputSdtNguoiGiao').value = don.sdtNguoiGiao || '';
+      if (document.getElementById('inputCccdNguoiGiao')) document.getElementById('inputCccdNguoiGiao').value = don.cccdNguoiGiao || '';
+      
+      api.showToast(`Đã tự động điền thông tin từ Đơn Đặt Hàng #${don._id}`, 'info');
+    }
+  } catch (error) {
+    console.error('Lỗi load đơn đặt hàng:', error);
+  }}
 
 function renderNccOptions() {
   const filterSelect = document.getElementById('filterNCC');
@@ -122,6 +158,8 @@ function resetFilters() {
  */
 async function openCreateNhapKhoModal() {
   document.getElementById('formCreateNhapKho').reset();
+  const nccSelect = document.getElementById('inputNCC');
+  if (nccSelect) nccSelect.disabled = false;
   document.getElementById('mayRowsContainer').innerHTML = '';
   document.getElementById('phuKienRowsContainer').innerHTML = '';
   if (dsSanPham.length === 0 || dsNhaCungCap.length === 0 || dsPhuKien.length === 0) {
@@ -361,6 +399,12 @@ async function handleCreatePhieuNhap(e) {
   
   const hinhThucThanhToan = document.getElementById('inputHinhThuc').value;
   const ghiChu = document.getElementById('inputGhiChu').value.trim();
+  const donDatHangNCC = document.getElementById('inputDonDatHangId')?.value || undefined;
+  const tienChietKhau = parseCurrencyValue(document.getElementById('inputTienChietKhau')?.value || '0');
+  const phiVanChuyen = parseCurrencyValue(document.getElementById('inputPhiVanChuyen')?.value || '0');
+  const tenNguoiGiao = document.getElementById('inputTenNguoiGiao')?.value.trim();
+  const sdtNguoiGiao = document.getElementById('inputSdtNguoiGiao')?.value.trim();
+  const cccdNguoiGiao = document.getElementById('inputCccdNguoiGiao')?.value.trim();
 
   const danhSachMay = [];
   document.querySelectorAll('#mayRowsContainer > div').forEach(row => {
@@ -395,6 +439,12 @@ async function handleCreatePhieuNhap(e) {
     maNCC,
     hinhThucThanhToan,
     ghiChu,
+    donDatHangNCC,
+    tienChietKhau,
+    phiVanChuyen,
+    tenNguoiGiao,
+    sdtNguoiGiao,
+    cccdNguoiGiao,
     danhSachMay,
     danhSachPhuKien
   };

@@ -20,7 +20,13 @@ class PhieuNhapService extends BaseService {
       danhSachMay = [], 
       danhSachPhuKien = [], 
       hinhThucThanhToan = 'Tien mat', 
-      ghiChu = '' 
+      ghiChu = '',
+      donDatHangNCC = null,
+      tienChietKhau = 0,
+      phiVanChuyen = 0,
+      tenNguoiGiao = '',
+      sdtNguoiGiao = '',
+      cccdNguoiGiao = ''
     } = payload;
 
     if (!maNCC || !maNV) {
@@ -51,10 +57,19 @@ class PhieuNhapService extends BaseService {
     danhSachMay.forEach(item => { tongTien += Number(item.giaNhap) || 0; });
     danhSachPhuKien.forEach(item => { tongTien += (Number(item.giaNhap) * Number(item.soLuong)) || 0; });
 
+    // Tính cả chi phí/chiết khấu vào tổng tiền thực tế phiếu nhập
+    tongTien = tongTien - Number(tienChietKhau) + Number(phiVanChuyen);
+
     // 3. Tạo phiếu nhập
     const phieuNhap = await PhieuNhap.create({
       nhaCungCap: maNCC,
       nhanVien: maNV,
+      donDatHangNCC: donDatHangNCC || undefined,
+      tienChietKhau,
+      phiVanChuyen,
+      tenNguoiGiao,
+      sdtNguoiGiao,
+      cccdNguoiGiao,
       tongTien,
       ghiChu
     });
@@ -128,6 +143,46 @@ class PhieuNhapService extends BaseService {
         hinhThuc: hinhThucThanhToan,
         lyDo: 'Thanh toán tiền nhập hàng phiếu ' + (phieuNhap.maPN || phieuNhap._id)
       });
+    }
+
+    // 7. Cập nhật Đơn Đặt Hàng NCC (nếu có)
+    if (donDatHangNCC) {
+      const ddh = await DonDatHangNCC.findById(donDatHangNCC);
+      if (ddh) {
+        // Cập nhật số lượng đã nhận trong CT_DonDatHangNCC
+        if (danhSachMay.length > 0) {
+          for (const item of danhSachMay) {
+            await CT_DonDatHangNCC.findOneAndUpdate(
+              { donDatHangNCC: ddh._id, sanPham: item.maSP },
+              { $inc: { soLuongDaNhan: 1 } }
+            );
+          }
+        }
+        if (danhSachPhuKien.length > 0) {
+          for (const item of danhSachPhuKien) {
+            await CT_DonDatHangNCC.findOneAndUpdate(
+              { donDatHangNCC: ddh._id, phuKien: item.maPK },
+              { $inc: { soLuongDaNhan: Number(item.soLuong) } }
+            );
+          }
+        }
+
+        // Đổi trạng thái đơn đặt hàng
+        // Vì user nhập 1 lần đủ luôn nên chuyển thẳng sang 'Da nhan hang'
+        ddh.trangThai = 'Da nhan hang';
+        
+        // Trừ tiền cọc (nếu có) khỏi công nợ
+        if (ddh.tienDaTamUng > 0 && hinhThucThanhToan === 'Ghi no') {
+           const congNo = await CongNo.findOne({ phieuNhap: phieuNhap._id });
+           if(congNo) {
+             congNo.soTienNo = Math.max(0, congNo.soTienNo - ddh.tienDaTamUng);
+             congNo.soTienDaTra += ddh.tienDaTamUng;
+             await congNo.save();
+           }
+        }
+
+        await ddh.save();
+      }
     }
 
     return phieuNhap;

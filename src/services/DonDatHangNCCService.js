@@ -13,12 +13,23 @@ class DonDatHangNCCService extends BaseService {
   /**
    * Lấy danh sách đơn đặt hàng NCC (lọc, phân trang)
    */
-  async getDanhSach(query = {}) {
+  async getDanhSach(query = {}, user = null) {
     const { trangThai, nhaCungCap, search } = query;
     const filter = {};
 
     if (trangThai) filter.trangThai = trangThai;
     if (nhaCungCap) filter.nhaCungCap = nhaCungCap;
+    
+    // Phân quyền dữ liệu
+    if (user && user.vaiTro === 'Thủ kho') {
+      if (!trangThai) {
+        // Thủ kho mặc định chỉ thấy đơn đã duyệt trở đi
+        filter.trangThai = { $in: ['Da duyet', 'Dang giao', 'Da nhan hang'] };
+      } else if (['Cho duyet', 'Da huy'].includes(trangThai)) {
+        // Nếu cố tình lọc thì trả về rỗng (hoặc có thể chặn luôn)
+        filter.trangThai = 'NOT_ALLOWED';
+      }
+    }
     if (search && search.trim()) {
       filter.$or = [
         { maDDH: { $regex: search.trim(), $options: 'i' } },
@@ -77,7 +88,7 @@ class DonDatHangNCCService extends BaseService {
    * @param {Object} payload { maNCC, maNV, danhSachSanPham: [{ maSP, soLuong, donGiaDuKien }], ngayDuKienGiao, ghiChu }
    */
   async taoDonDatHang(payload = {}, sessionUser = null) {
-    const { maNCC, nhaCungCapId, maNV, danhSachSanPham = [], chiTiet = [], ngayDuKienGiao, ngayHenGiao, ghiChu = '', diaChiGiao = '', sdtNguoiGiao = '', cccdNguoiGiao = '' } = payload;
+    const { maNCC, nhaCungCapId, maNV, danhSachSanPham = [], chiTiet = [], ngayDuKienGiao, ngayHenGiao, ghiChu = '', diaChiNhanHang = '', chietKhau = 0, phiVanChuyen = 0, tienDaTamUng = 0 } = payload;
     const finalNCC = maNCC || nhaCungCapId;
     const finalNgayHenGiao = ngayDuKienGiao || ngayHenGiao;
     const itemsList = danhSachSanPham.length > 0 ? danhSachSanPham : chiTiet;
@@ -126,16 +137,20 @@ class DonDatHangNCCService extends BaseService {
       });
     }
 
+    tongTien = tongTien - Number(chietKhau) + Number(phiVanChuyen);
+
     // Tạo đơn đặt hàng
     const ddhArray = await DonDatHangNCC.create([{
       nhaCungCap: finalNCC,
       nhanVien: nhanVienId,
       ngayDuKienGiao: finalNgayHenGiao ? new Date(finalNgayHenGiao) : undefined,
-      diaChiGiao: diaChiGiao.trim(),
-      sdtNguoiGiao: sdtNguoiGiao.trim(),
-      cccdNguoiGiao: cccdNguoiGiao.trim(),
+      diaChiNhanHang: diaChiNhanHang.trim(),
+      chietKhau: Number(chietKhau) || 0,
+      phiVanChuyen: Number(phiVanChuyen) || 0,
+      tienDaTamUng: Number(tienDaTamUng) || 0,
+      tienConNo: Math.max(0, tongTien - (Number(tienDaTamUng) || 0)),
       tongTien,
-      trangThai: 'Cho duyet',
+      trangThai: 'Da duyet', // Vì Quản lý/Admin tự tạo nên duyệt luôn
       ghiChu
     }]);
     const ddh = ddhArray[0];

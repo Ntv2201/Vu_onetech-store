@@ -13,12 +13,12 @@ router.get('/', requireRole('Quản lý', 'Admin', 'Thủ kho', 'Kế toán'), d
 router.get('/:id', requireRole('Quản lý', 'Admin', 'Thủ kho', 'Kế toán'), donDatHangNCCController.getDetail);
 
 // POST /api/don-dat-hang-ncc - Tạo đơn đặt hàng NCC
-router.post('/', requireRole('Quản lý', 'Admin', 'Thủ kho'), donDatHangNCCController.create);
+router.post('/', requireRole('Quản lý', 'Admin'), donDatHangNCCController.create);
 
 // PUT /api/don-dat-hang-ncc/:id/duyet - Duyệt đơn đặt hàng NCC (chỉ Quản lý / Admin)
 router.put('/:id/duyet', requireRole('Quản lý', 'Admin'), donDatHangNCCController.approve);
 
 // PUT /api/don-dat-hang-ncc/:id/trang-thai - Cập nhật trạng thái
-router.put('/:id/trang-thai', requireRole('Quản lý', 'Admin', 'Thủ kho'), donDatHangNCCController.updateStatus);
+router.put('/:id/trang-thai', requireRole('Quản lý', 'Admin'), donDatHangNCCController.updateStatus);
 
 module.exports = router;

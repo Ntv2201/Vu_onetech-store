@@ -66,6 +66,18 @@ async function loadDanhSachDon(page = 1, search = '') {
     const tenNCC = don.nhaCungCap ? (don.nhaCungCap.tenNCC || don.nhaCungCap) : 'N/A';
     const tenNV = don.nhanVien ? (don.nhanVien.hoTen || don.nhanVien.tenDangNhap) : (don.nguoiLap?.hoTen || 'Hệ thống');
     
+    let actionHtml = `<button class="btn btn-sm btn-light" title="Chi tiết" onclick="xemChiTiet('${don._id}')"><i class="bi bi-eye"></i></button>`;
+    
+    const role = typeof currentUser !== 'undefined' ? currentUser?.vaiTro : '';
+    if (['Quản lý', 'Admin'].includes(role)) {
+      if (don.trangThai === 'Cho duyet') {
+        actionHtml += `<button class="btn btn-sm btn-success ms-1" title="Duyệt đơn" onclick="duyetDon('${don._id}')"><i class="bi bi-check-lg"></i></button>`;
+        actionHtml += `<button class="btn btn-sm btn-danger ms-1" title="Từ chối" onclick="updateTrangThai('${don._id}', 'Da huy')"><i class="bi bi-x-lg"></i></button>`;
+      } else if (don.trangThai === 'Da duyet') {
+        actionHtml += `<button class="btn btn-sm btn-info text-white ms-1" title="Chuyển Đang Giao" onclick="updateTrangThai('${don._id}', 'Dang giao')"><i class="bi bi-truck"></i></button>`;
+      }
+    }
+
     html += `
       <tr>
         <td><span class="fw-bold text-primary">${escapeHtml(maHienThi)}</span></td>
@@ -76,8 +88,8 @@ async function loadDanhSachDon(page = 1, search = '') {
         <td>${strNgayGiao}</td>
         <td class="text-danger fw-bold">${(don.tongTien || 0).toLocaleString('vi-VN')} đ</td>
         <td><span class="badge ${badgeClass}">${textTrangThai}</span></td>
-        <td class="text-end">
-          <button class="btn btn-sm btn-light" onclick="xemChiTiet('${don._id}')"><i class="bi bi-eye"></i> Chi tiết</button>
+        <td class="text-end text-nowrap">
+          ${actionHtml}
         </td>
       </tr>
     `;
@@ -102,9 +114,10 @@ function filterByStatus(trangThai) {
 // -----------------------------------
 async function openTaoDonModal() {
   document.getElementById('ngayHenGiao').value = '';
-  if (document.getElementById('diaChiGiao')) document.getElementById('diaChiGiao').value = '';
-  if (document.getElementById('sdtNguoiGiao')) document.getElementById('sdtNguoiGiao').value = '';
-  if (document.getElementById('cccdNguoiGiao')) document.getElementById('cccdNguoiGiao').value = '';
+  if (document.getElementById('diaChiNhanHang')) document.getElementById('diaChiNhanHang').value = '';
+  if (document.getElementById('chietKhau')) document.getElementById('chietKhau').value = '0';
+  if (document.getElementById('phiVanChuyen')) document.getElementById('phiVanChuyen').value = '0';
+  if (document.getElementById('tienDaTamUng')) document.getElementById('tienDaTamUng').value = '0';
   document.getElementById('ghiChu').value = '';
   document.querySelector('#tableChiTietLap tbody').innerHTML = '';
   updateTongTienLapDon();
@@ -198,10 +211,10 @@ function updateTongTienLapDon() {
 async function submitTaoDon(btn) {
   const nccId = document.getElementById('nccSelect')?.value;
   let ngayHenGiao = document.getElementById('ngayHenGiao')?.value;
-  const diaChiGiao = document.getElementById('diaChiGiao')?.value || '';
-  const sdtNguoiGiao = document.getElementById('sdtNguoiGiao')?.value || '';
-  const rawCCCD = document.getElementById('cccdNguoiGiao')?.value.trim() || '';
-  const cccdNguoiGiao = rawCCCD.replace(/\D/g, '');
+  const diaChiNhanHang = document.getElementById('diaChiNhanHang')?.value || '';
+  const chietKhau = parseCurrencyValue(document.getElementById('chietKhau')?.value || '0');
+  const phiVanChuyen = parseCurrencyValue(document.getElementById('phiVanChuyen')?.value || '0');
+  const tienDaTamUng = parseCurrencyValue(document.getElementById('tienDaTamUng')?.value || '0');
   const ghiChu = document.getElementById('ghiChu')?.value || '';
   
   if (!nccId) {
@@ -217,12 +230,7 @@ async function submitTaoDon(btn) {
     if (ngayInput) ngayInput.value = today;
   }
 
-  // Kiểm tra CCCD: Nếu có nhập thì phải đủ 12 chữ số
-  if (cccdNguoiGiao && cccdNguoiGiao.length !== 12) {
-    api.showToast('Nếu nhập CCCD người giao, vui lòng gõ đúng 12 chữ số!', 'warning');
-    return;
-  }
-  
+
   const chiTiet = [];
   document.querySelectorAll('#tableChiTietLap tbody tr').forEach(tr => {
     const spSelect = tr.querySelector('.sp-select');
@@ -252,7 +260,7 @@ async function submitTaoDon(btn) {
   }
 
   try {
-    const payload = { nhaCungCapId: nccId, ngayHenGiao, diaChiGiao, sdtNguoiGiao, cccdNguoiGiao, ghiChu, chiTiet };
+    const payload = { nhaCungCapId: nccId, ngayHenGiao, diaChiNhanHang, chietKhau, phiVanChuyen, tienDaTamUng, ghiChu, chiTiet };
     const res = await api.post('/don-dat-hang-ncc', payload);
     
     if (res.success) {
@@ -453,9 +461,11 @@ async function xemChiTiet(id) {
           <tr><td class="text-muted">Người Lập:</td><td>${don.nhanVien?.hoTen || don.nguoiLap?.hoTen || 'N/A'}</td></tr>
           <tr><td class="text-muted">Ngày Lập:</td><td>${new Date(don.createdAt).toLocaleString('vi-VN')}</td></tr>
           <tr><td class="text-muted">Ngày Hẹn Giao:</td><td>${don.ngayDuKienGiao || don.ngayHenGiao ? new Date(don.ngayDuKienGiao || don.ngayHenGiao).toLocaleDateString('vi-VN') : 'N/A'}</td></tr>
-          <tr><td class="text-muted">Địa Chỉ Giao:</td><td class="fw-semibold">${escapeHtml(don.diaChiGiao || 'Chưa nhập')}</td></tr>
-          <tr><td class="text-muted">SĐT Người Giao:</td><td class="fw-semibold">${escapeHtml(don.sdtNguoiGiao || 'Chưa nhập')}</td></tr>
-          <tr><td class="text-muted">CCCD Người Giao:</td><td class="fw-semibold">${escapeHtml(don.cccdNguoiGiao || 'Chưa nhập')}</td></tr>
+          <tr><td class="text-muted">Địa Chỉ Nhận:</td><td class="fw-semibold">${escapeHtml(don.diaChiNhanHang || 'Chưa nhập')}</td></tr>
+          <tr><td class="text-muted">Chiết Khấu:</td><td class="fw-semibold text-success">-${(don.chietKhau || 0).toLocaleString('vi-VN')} đ</td></tr>
+          <tr><td class="text-muted">Phí Vận Chuyển:</td><td class="fw-semibold">${(don.phiVanChuyen || 0).toLocaleString('vi-VN')} đ</td></tr>
+          <tr><td class="text-muted">Đã Tạm Ứng:</td><td class="fw-semibold text-primary">${(don.tienDaTamUng || 0).toLocaleString('vi-VN')} đ</td></tr>
+          <tr><td class="text-muted">Còn Nợ NCC:</td><td class="fw-semibold text-danger">${(don.tienConNo || 0).toLocaleString('vi-VN')} đ</td></tr>
           <tr><td class="text-muted">Ghi Chú:</td><td>${escapeHtml(don.ghiChu || '')}</td></tr>
         </table>
       </div>
@@ -515,9 +525,13 @@ async function xemChiTiet(id) {
   } else if (don.trangThai === 'Da duyet' && isQuanLy) {
     footerHtml += `
       <button type="button" class="btn btn-info text-white" onclick="updateTrangThai('${don._id}', 'Dang giao')"><i class="bi bi-truck"></i> Chuyển Đang Giao</button>
+      <a href="/nhap-kho/index.html?donDatHangId=${don._id}" class="btn btn-success"><i class="bi bi-box-seam"></i> Nhập Kho Từ Đơn Này</a>
+    `;
+  } else if (don.trangThai === 'Dang giao') {
+    footerHtml += `
+      <a href="/nhap-kho/index.html?donDatHangId=${don._id}" class="btn btn-success"><i class="bi bi-box-seam"></i> Nhập Kho Từ Đơn Này</a>
     `;
   }
-  // Việc nhập kho hoàn thành đơn sẽ do thủ kho nhập kho bằng phiếu nhập và chọn đơn NCC.
   
   footer.innerHTML = footerHtml;
 }

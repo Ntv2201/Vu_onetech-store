@@ -6,10 +6,12 @@ const donDatHangNCCSchema = new mongoose.Schema({
   nhanVien: { type: mongoose.Schema.Types.ObjectId, ref: 'NhanVien', required: true },
   ngayDat: { type: Date, default: Date.now },
   ngayDuKienGiao: { type: Date },
-  diaChiGiao: { type: String, default: '' },
-  sdtNguoiGiao: { type: String, default: '' },
-  cccdNguoiGiao: { type: String, default: '' },
+  diaChiNhanHang: { type: String, default: '' }, // Thay diaChiGiao bằng diaChiNhanHang
   tongTien: { type: Number, default: 0, min: 0 },
+  chietKhau: { type: Number, default: 0, min: 0 }, // Tiền chiết khấu
+  phiVanChuyen: { type: Number, default: 0, min: 0 },
+  tienDaTamUng: { type: Number, default: 0, min: 0 },
+  tienConNo: { type: Number, default: 0, min: 0 },
   trangThai: {
     type: String,
     required: true,

@@ -396,3 +396,8 @@
 - [x] Da kiem tra va hop nhat PR #18 (sider fixed - Vu): Co dinh Sidebar (position: fixed) + co gian margin; Modal xac nhan & Soft Delete San pham; chuan hoa ObjectId, .lean(), va 20/20 Test Suites (785 assertions) PASS 100%.
 - [x] Đã kiểm tra và hợp nhất PR #22 (fix trùng lặp const trên form Nhân viên - Tuấn) & PR #23 (Đại tu đồng bộ UI Action Buttons, Nav Pills, Reset Filter và POS 60/40 - Vũ): Vá triệt để lỗi mất khối Khách mới POS do conflict nhánh, bảo đảm 20/20 Test Suites (799 assertions) PASS 100%.
 - [x] Vá triệt để lỗi kẹt backdrop overlay khi xử lý và hoàn tất bảo hành (Tuấn): Chuẩn hóa `getOrCreateInstance`, tự động dọn dẹp `.modal-backdrop` mồ côi khi modal đóng, tách hàm cập nhật nội dung sau xuất linh kiện tránh gọi `.show()` chồng lấn, và thiết lập cơ chế cứu hộ backdrop toàn cục trên `layout.js` (20/20 Test Suites PASS 100%).
+
+## C?p nh?t ti?n d? 17/09/2026: T?i uu Quy tr�nh PO & GR
+- **Nhi?m v?**: Chu?n h�a lu?ng �?t h�ng (PO) v� Nh?p kho (GR).
+- **Th?c hi?n**: B? sung ph�n quy?n (ch? Admin/Qu?n l� t?o PO, t? d?ng duy?t PO). B? sung logic auto-fill khi Nh?p kho t? PO. C?p nh?t Model v� giao di?n x? l� (?n n�t thao t�c th?a, th�m n�t thao t�c nhanh).
+- **Tr?ng th�i**: Ho�n th�nh.

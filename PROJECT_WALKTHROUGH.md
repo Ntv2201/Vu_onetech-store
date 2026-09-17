@@ -649,3 +649,8 @@ Khi c√°c th√†nh vi√™n ti·∫øp t·ª•c tri·ªÉn khai c√°c module ti·∫øp theo (stress 
 - **Hi·ªán ƒë·∫°i h√≥a Nav Pills & Giao di·ªán POS 60/40**: Thanh tab danh m·ª•c bo tr√≤n thanh tho√°t, ph√¢n chia t·ª∑ l·ªá 60% (ch·ªçn m√°y/ph·ª• ki·ªán) v√† 40% (gi·ªè h√†ng/thanh to√°n), b·∫£ng ph√≠m t·∫Øt POS tr·ª±c quan v·ªõi badge ph√≠m r√µ n√©t.
 - **Kh·∫Øc ph·ª•c l·ªói c√∫ ph√°p form Nh√¢n vi√™n (PR #22)**: Lo·∫°i b·ªè c√°c khai b√°o tr√πng l·∫∑p const g√¢y crash submit form nh√¢n vi√™n.
 - **B·∫£o to√†n t√≠nh nƒÉng Kh√°ch m·ªõi POS (Guest Checkout)**: Kh√¥i ph·ª•c v√† ƒë·ªìng b·ªô m∆∞·ª£t m√† kh·ªëi chuy·ªÉn ƒë·ªïi Kh√°ch m·ªõi / Th√†nh vi√™n, CCCD v√† s·ªë ƒëi·ªán tho·∫°i tr√™n giao di·ªán POS m·ªõi.
+
+### 9.5. Chu?n HÛa Quy TrÏnh –?t H‡ng & Nh?p Kho NCC
+- **Ph‚n quy?n ch?t ch? (RBAC)**: Ch? Qu?n l˝/Admin m?i cÛ quy?n t?o –on d?t h‡ng (PO). Th? kho ch? du?c phÈp xem danh s·ch –on d?t h‡ng (tr?ng th·i –„ duy?t, –ang giao) v‡ th?c hi?n nghi?p v? Nh?p kho (GR).
+- **T? d?ng hÛa tr?ng th·i & CÙng n?**: –on h‡ng do Qu?n l˝ t?o m?c d?nh mang tr?ng th·i –„ duy?t. Khi Th? kho l?p Phi?u nh?p t? m?t PO, h? th?ng t? d?ng c?p nh?t tr?ng th·i PO th‡nh –„ nh?n h‡ng v‡ d?i so·t c?n tr? Ti?n d„ t?m ?ng v‡o CÙng n? NCC.
+- **TÌch h?p ThÙng tin T‡i chÌnh & Giao v?n**: Ph‚n t·ch rı r‡ng thÙng tin (PO ch?a Ti?n c?c, Chi?t kh?u thuong m?i, PhÌ v?n chuy?n; GR ch?a thÙng tin th?c t? c?a ngu?i giao h‡ng: TÍn, S–T, CCCD).

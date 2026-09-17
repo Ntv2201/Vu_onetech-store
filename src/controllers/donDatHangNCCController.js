@@ -17,7 +17,7 @@ class DonDatHangNCCController extends BaseController {
   // GET /api/don-dat-hang-ncc
   async index(req, res) {
     try {
-      const result = await DonDatHangNCCService.getDanhSach(req.query);
+      const result = await DonDatHangNCCService.getDanhSach(req.query, req.user);
       return this.sendSuccess(res, result, 'Lấy danh sách đơn đặt hàng NCC thành công');
     } catch (error) {
       return this.handleError(res, error, 'Lỗi khi lấy danh sách đơn đặt hàng NCC');

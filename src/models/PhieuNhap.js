@@ -7,6 +7,11 @@ const phieuNhapSchema = new mongoose.Schema({
   donDatHangNCC: { type: mongoose.Schema.Types.ObjectId, ref: 'DonDatHangNCC' }, // Bổ sung khóa ngoại tới Đơn Đặt Hàng NCC
   ngayNhap: { type: Date, default: Date.now },
   tongTien: { type: Number, default: 0, min: 0 },
+  tienChietKhau: { type: Number, default: 0, min: 0 },
+  phiVanChuyen: { type: Number, default: 0, min: 0 },
+  tenNguoiGiao: { type: String, default: '' },
+  sdtNguoiGiao: { type: String, default: '' },
+  cccdNguoiGiao: { type: String, default: '' },
   ghiChu: { type: String, default: '' },
   status: { type: Boolean, default: true } // Trạng thái hiệu lực phiếu nhập (Bit: 1 - Hiệu lực, 0 - Đã hủy)
 }, {

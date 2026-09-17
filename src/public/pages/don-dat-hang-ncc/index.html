@@ -22,7 +22,7 @@
           <p class="text-muted small mb-0">Lập đơn đặt mua hàng hóa từ Nhà cung cấp, quản lý luồng duyệt và nhập hàng.</p>
         </div>
         <div id="btnCreateContainer">
-          <button class="btn btn-primary shadow-sm" onclick="openTaoDonModal()" data-allow-roles="Quản lý,Admin,Thủ kho">
+          <button class="btn btn-primary shadow-sm" onclick="openTaoDonModal()" data-allow-roles="Quản lý,Admin">
             <i class="bi bi-cart-plus me-1"></i> Lập Đơn Đặt Hàng
           </button>
         </div>
@@ -30,7 +30,7 @@
 
       <!-- Thống kê nhanh -->
       <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-md-3">
+        <div class="col-sm-6 col-md-3" data-allow-roles="Quản lý,Admin">
           <div class="card card-custom p-3 border-start border-4 border-warning h-100 card-interactive" onclick="filterByStatus('Cho duyet')" style="cursor: pointer;" title="Nhấp để xem các đơn Chờ Duyệt">
             <div class="d-flex justify-content-between align-items-center">
               <div class="text-muted small fw-semibold text-uppercase">Chờ Duyệt</div>
@@ -148,16 +148,20 @@
                   <input type="date" class="form-control" id="ngayHenGiao" required>
                 </div>
                 <div class="mb-3">
-                  <label class="form-label fw-semibold small">Địa chỉ giao</label>
-                  <input type="text" class="form-control" id="diaChiGiao" placeholder="Nhập địa chỉ giao hàng...">
+                  <label class="form-label fw-semibold small">Kho/Địa chỉ nhận hàng</label>
+                  <input type="text" class="form-control" id="diaChiNhanHang" placeholder="Nhập địa chỉ nhận hàng...">
                 </div>
                 <div class="mb-3">
-                  <label class="form-label fw-semibold small">SĐT người giao</label>
-                  <input type="text" class="form-control" id="sdtNguoiGiao" placeholder="Số điện thoại người giao hàng...">
+                  <label class="form-label fw-semibold small">Chiết khấu thương mại (VND)</label>
+                  <input type="number" class="form-control" id="chietKhau" value="0" min="0">
                 </div>
                 <div class="mb-3">
-                  <label class="form-label fw-semibold small">CCCD người giao <span class="text-danger">*</span> <span class="text-muted fw-normal">(Đúng 12 chữ số)</span></label>
-                  <input type="text" class="form-control" id="cccdNguoiGiao" placeholder="Nhập 12 chữ số CCCD..." maxlength="12">
+                  <label class="form-label fw-semibold small">Phí vận chuyển (VND)</label>
+                  <input type="number" class="form-control" id="phiVanChuyen" value="0" min="0">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small">Tiền đã cọc/tạm ứng (VND)</label>
+                  <input type="number" class="form-control" id="tienDaTamUng" value="0" min="0">
                 </div>
                 <div class="mb-3">
                   <label class="form-label fw-semibold small">Ghi chú</label>
