@@ -20,6 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginAlert = document.getElementById('loginAlert');
   const loginAlertText = document.getElementById('loginAlertText');
   const btnSubmit = document.getElementById('btnSubmit');
+  const btnTogglePassword = document.getElementById('btnTogglePassword');
+  const inputPassword = document.getElementById('inputPassword');
+  const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+
+  if (btnTogglePassword && inputPassword) {
+    btnTogglePassword.addEventListener('click', () => {
+      const isPassword = inputPassword.getAttribute('type') === 'password';
+      inputPassword.setAttribute('type', isPassword ? 'text' : 'password');
+      if (togglePasswordIcon) {
+        togglePasswordIcon.className = isPassword ? 'bi bi-eye-slash text-primary' : 'bi bi-eye';
+      }
+    });
+  }
 
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {

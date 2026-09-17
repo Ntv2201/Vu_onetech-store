@@ -1,14 +1,33 @@
 /**
  * Module Xử lý Bán hàng POS và Quản lý Hóa đơn phía Client (Nguyễn Quang Tuấn)
- * Cập nhật Tuần 3: Hỗ trợ cấn trừ tiền cọc từ đơn Đặt hàng trước (Pre-order) & Xử lý xung đột
+ * Cập nhật: Hỗ trợ Chế độ Toàn màn hình POS, Giữ đơn tạm (Multi-order tabs) & Mệnh giá tiền mặt nhanh
  */
 
-let cart = {
-  imeis: [], // [{ imei, tenMay, giaBan, mauSac, dungLuong }]
-  phuKiens: [] // [{ _id, tenPK, giaBan, soLuong, soLuongTon }]
-};
+// Quản lý nhiều đơn hàng giữ đơn tạm thời
+let orderCarts = [
+  {
+    id: 1,
+    name: 'Đơn 1',
+    imeis: [], // [{ imei, tenMay, giaBan, mauSac, dungLuong }]
+    phuKiens: [], // [{ _id, tenPK, giaBan, soLuong, soLuongTon }]
+    customerType: 'guest',
+    guestName: '',
+    guestPhone: '',
+    guestCccd: '',
+    memberId: '',
+    paymentMethod: 'Da thanh toan',
+    ghiChu: '',
+    appliedKhuyenMai: null,
+    selectedPreOrder: null,
+    tienKhachDua: 0
+  }
+];
+let activeOrderIndex = 0;
+let nextOrderId = 2;
 
-let selectedPreOrder = null; // Đơn đặt hàng trước được chọn để cấn trừ cọc
+// Con trỏ cart trỏ tới đơn hàng đang kích hoạt
+let cart = orderCarts[0];
+let selectedPreOrder = null;
 let appliedKhuyenMai = null;
 
 let allAvailableImeis = [];
@@ -46,6 +65,340 @@ window.toggleCustomerType = function() {
     document.getElementById('selectKhachHang').setAttribute('required', 'required');
   }
 };
+
+/* =========================================================================
+   CHỨC NĂNG 1: TOÀN MÀN HÌNH POS (FULLSCREEN POS)
+========================================================================= */
+function togglePosFullScreen(forceState) {
+  const isCurrentlyFull = document.body.classList.contains('pos-fullscreen-active');
+  const shouldBeFull = forceState !== undefined ? forceState : !isCurrentlyFull;
+
+  if (shouldBeFull) {
+    document.body.classList.add('pos-fullscreen-active');
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+    showToast('Đã bật chế độ Toàn màn hình POS [F11 hoặc Esc]', 'info');
+  } else {
+    document.body.classList.remove('pos-fullscreen-active');
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+}
+window.togglePosFullScreen = togglePosFullScreen;
+
+/* =========================================================================
+   CHỨC NĂNG 2: QUẢN LÝ NHIỀU ĐƠN HÀNG (MULTI-ORDER TABS / HOLD CARTS)
+========================================================================= */
+function syncCurrentOrderState() {
+  if (!orderCarts[activeOrderIndex]) return;
+  const current = orderCarts[activeOrderIndex];
+  
+  const customerType = document.querySelector('input[name="customerType"]:checked')?.value || 'guest';
+  current.customerType = customerType;
+  current.guestName = document.getElementById('inputGuestName')?.value || '';
+  current.guestPhone = document.getElementById('inputGuestPhone')?.value || '';
+  current.guestCccd = document.getElementById('inputGuestCccd')?.value || '';
+  current.memberId = document.getElementById('selectKhachHang')?.value || '';
+  current.paymentMethod = document.getElementById('selectPaymentMethod')?.value || 'Da thanh toan';
+  current.ghiChu = document.getElementById('inputGhiChu')?.value || '';
+  current.appliedKhuyenMai = appliedKhuyenMai;
+  current.selectedPreOrder = selectedPreOrder;
+}
+
+function loadOrderStateToUI(index) {
+  const order = orderCarts[index];
+  if (!order) return;
+
+  // 1. Loại khách hàng
+  if (order.customerType === 'member') {
+    const radioMember = document.getElementById('typeMember');
+    if (radioMember) radioMember.checked = true;
+  } else {
+    const radioGuest = document.getElementById('typeGuest');
+    if (radioGuest) radioGuest.checked = true;
+  }
+  window.toggleCustomerType();
+
+  // 2. Điền thông tin khách
+  const inputName = document.getElementById('inputGuestName');
+  const inputPhone = document.getElementById('inputGuestPhone');
+  const inputCccd = document.getElementById('inputGuestCccd');
+  const selectKh = document.getElementById('selectKhachHang');
+  if (inputName) inputName.value = order.guestName || '';
+  if (inputPhone) inputPhone.value = order.guestPhone || '';
+  if (inputCccd) inputCccd.value = order.guestCccd || '';
+  if (selectKh) selectKh.value = order.memberId || '';
+
+  // 3. Phương thức thanh toán & Ghi chú
+  const selectPay = document.getElementById('selectPaymentMethod');
+  const inputNote = document.getElementById('inputGhiChu');
+  if (selectPay) selectPay.value = order.paymentMethod || 'Da thanh toan';
+  if (inputNote) inputNote.value = order.ghiChu || '';
+
+  // 4. Mã khuyến mãi
+  const inputMaKM = document.getElementById('inputMaKM');
+  const msgEl = document.getElementById('kmMessage');
+  const btnApplyKM = document.getElementById('btnApplyKM');
+  const btnRemoveKM = document.getElementById('btnRemoveKM');
+  if (order.appliedKhuyenMai) {
+    if (inputMaKM) {
+      inputMaKM.value = order.appliedKhuyenMai.maKM;
+      inputMaKM.disabled = true;
+    }
+    if (btnApplyKM) btnApplyKM.classList.add('d-none');
+    if (btnRemoveKM) btnRemoveKM.classList.remove('d-none');
+    if (msgEl) {
+      msgEl.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>Đã áp dụng: Giảm ${formatCurrency(order.appliedKhuyenMai.soTienGiam)}</span>`;
+      msgEl.classList.remove('d-none');
+    }
+  } else {
+    if (inputMaKM) {
+      inputMaKM.value = '';
+      inputMaKM.disabled = false;
+    }
+    if (btnApplyKM) btnApplyKM.classList.remove('d-none');
+    if (btnRemoveKM) btnRemoveKM.classList.add('d-none');
+    if (msgEl) {
+      msgEl.innerHTML = '';
+      msgEl.classList.add('d-none');
+    }
+  }
+
+  // 5. Đơn đặt trước cọc
+  const preDisplay = document.getElementById('preOrderDisplayArea');
+  const btnClearPre = document.getElementById('btnClearPreOrder');
+  if (order.selectedPreOrder) {
+    if (preDisplay) {
+      preDisplay.innerHTML = `
+        <div class="fw-semibold text-primary font-monospace">${escapeHtml(order.selectedPreOrder.soDonDat)}</div>
+        <div>Cọc: <strong class="text-danger">${formatCurrency(order.selectedPreOrder.soTienCoc)}</strong> | KH: ${escapeHtml(order.selectedPreOrder.khachHang?.hoTen || 'Vãng lai')}</div>
+      `;
+    }
+    if (btnClearPre) btnClearPre.classList.remove('d-none');
+  } else {
+    if (preDisplay) preDisplay.innerHTML = `<em>Chưa liên kết đơn cọc</em>`;
+    if (btnClearPre) btnClearPre.classList.add('d-none');
+  }
+
+  // 6. Tiền khách đưa
+  const inputTienDua = document.getElementById('inputTienKhachDua');
+  if (inputTienDua) {
+    inputTienDua.value = order.tienKhachDua > 0 ? order.tienKhachDua.toLocaleString('vi-VN') : '';
+  }
+}
+
+function renderOrderTabs() {
+  const container = document.getElementById('posOrderTabsContainer');
+  if (!container) return;
+
+  container.innerHTML = orderCarts.map((o, idx) => {
+    const itemCount = (o.imeis ? o.imeis.length : 0) + (o.phuKiens ? o.phuKiens.reduce((s, p) => s + p.soLuong, 0) : 0);
+    const isActive = idx === activeOrderIndex;
+    return `
+      <div class="pos-order-tab-item ${isActive ? 'active' : ''}" onclick="switchOrderTab(${idx})">
+        <span>${escapeHtml(o.name)}</span>
+        <span class="badge-count">${itemCount}</span>
+        ${orderCarts.length > 1 ? `
+          <button type="button" class="btn-close-tab" onclick="closeOrderTab(${idx}, event)" title="Hủy đơn ${escapeHtml(o.name)}">&times;</button>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+window.renderOrderTabs = renderOrderTabs;
+
+function switchOrderTab(newIndex) {
+  if (newIndex === activeOrderIndex || newIndex < 0 || newIndex >= orderCarts.length) return;
+  syncCurrentOrderState();
+  activeOrderIndex = newIndex;
+  cart = orderCarts[activeOrderIndex];
+  appliedKhuyenMai = cart.appliedKhuyenMai;
+  selectedPreOrder = cart.selectedPreOrder;
+
+  loadOrderStateToUI(activeOrderIndex);
+  renderOrderTabs();
+  renderCart();
+  filterImeiDisplay();
+}
+window.switchOrderTab = switchOrderTab;
+
+function addNewOrderTab() {
+  if (orderCarts.length >= 6) {
+    showToast('Chỉ có thể mở tối đa 6 đơn hàng tạm cùng lúc', 'warning');
+    return;
+  }
+  syncCurrentOrderState();
+  const newOrder = {
+    id: nextOrderId,
+    name: `Đơn ${nextOrderId}`,
+    imeis: [],
+    phuKiens: [],
+    customerType: 'guest',
+    guestName: '',
+    guestPhone: '',
+    guestCccd: '',
+    memberId: '',
+    paymentMethod: 'Da thanh toan',
+    ghiChu: '',
+    appliedKhuyenMai: null,
+    selectedPreOrder: null,
+    tienKhachDua: 0
+  };
+  nextOrderId++;
+  orderCarts.push(newOrder);
+  activeOrderIndex = orderCarts.length - 1;
+  cart = orderCarts[activeOrderIndex];
+  appliedKhuyenMai = null;
+  selectedPreOrder = null;
+
+  loadOrderStateToUI(activeOrderIndex);
+  renderOrderTabs();
+  renderCart();
+  filterImeiDisplay();
+  playBeep('success');
+  showToast(`Đã mở ${newOrder.name} mới (Đơn trước đã được giữ lại)`, 'info');
+}
+window.addNewOrderTab = addNewOrderTab;
+
+function holdCurrentOrder() {
+  const current = orderCarts[activeOrderIndex];
+  const itemCount = (current.imeis ? current.imeis.length : 0) + (current.phuKiens ? current.phuKiens.length : 0);
+  if (itemCount === 0) {
+    showToast('Đơn hiện tại đang trống, không cần lưu tạm!', 'warning');
+    return;
+  }
+  addNewOrderTab();
+}
+window.holdCurrentOrder = holdCurrentOrder;
+
+async function closeOrderTab(index, e) {
+  if (e) e.stopPropagation();
+  if (orderCarts.length <= 1) {
+    showToast('Không thể xóa đơn hàng duy nhất!', 'warning');
+    return;
+  }
+  const target = orderCarts[index];
+  const itemCount = (target.imeis ? target.imeis.length : 0) + (target.phuKiens ? target.phuKiens.length : 0);
+  if (itemCount > 0) {
+    const ok = typeof showConfirm === 'function'
+      ? await showConfirm({
+          title: 'Hủy đơn hàng tạm',
+          message: `Bạn có chắc chắn muốn hủy <strong>${escapeHtml(target.name)}</strong> đang có <strong>${itemCount}</strong> sản phẩm trong giỏ?`,
+          confirmText: 'Hủy đơn',
+          cancelText: 'Giữ lại',
+          type: 'warning'
+        })
+      : confirm(`Bạn có chắc muốn hủy ${target.name} đang có ${itemCount} sản phẩm?`);
+    if (!ok) return;
+  }
+
+  orderCarts.splice(index, 1);
+  if (activeOrderIndex >= orderCarts.length) {
+    activeOrderIndex = orderCarts.length - 1;
+  }
+  cart = orderCarts[activeOrderIndex];
+  appliedKhuyenMai = cart.appliedKhuyenMai;
+  selectedPreOrder = cart.selectedPreOrder;
+
+  loadOrderStateToUI(activeOrderIndex);
+  renderOrderTabs();
+  renderCart();
+  filterImeiDisplay();
+  showToast('Đã đóng tab đơn hàng', 'info');
+}
+window.closeOrderTab = closeOrderTab;
+
+/* =========================================================================
+   CHỨC NĂNG 3: MỆNH GIÁ TIỀN MẶT NHANH & TÍNH TIỀN THỐI LẠI
+========================================================================= */
+function getGrandTotalAmount() {
+  const grandEl = document.getElementById('totalGrandPrice');
+  if (!grandEl) return 0;
+  const rawText = grandEl.innerText || '0';
+  return Number(rawText.replace(/\D/g, '')) || 0;
+}
+
+function handleTienKhachDuaInput(el) {
+  if (!el) return;
+  let rawVal = el.value.replace(/\D/g, '');
+  if (!rawVal) {
+    el.value = '';
+    cart.tienKhachDua = 0;
+  } else {
+    const num = Number(rawVal);
+    el.value = num.toLocaleString('vi-VN');
+    cart.tienKhachDua = num;
+  }
+  updateChangeReturnUI();
+}
+window.handleTienKhachDuaInput = handleTienKhachDuaInput;
+
+function setExactCash() {
+  const thucThu = getGrandTotalAmount();
+  const input = document.getElementById('inputTienKhachDua');
+  if (input) {
+    input.value = thucThu > 0 ? thucThu.toLocaleString('vi-VN') : '0';
+  }
+  cart.tienKhachDua = thucThu;
+  updateChangeReturnUI();
+}
+window.setExactCash = setExactCash;
+
+function addQuickCash(amount) {
+  let current = cart.tienKhachDua || 0;
+  current += amount;
+  cart.tienKhachDua = current;
+  const input = document.getElementById('inputTienKhachDua');
+  if (input) {
+    input.value = current.toLocaleString('vi-VN');
+  }
+  updateChangeReturnUI();
+}
+window.addQuickCash = addQuickCash;
+
+function setQuickCash(amount) {
+  cart.tienKhachDua = amount;
+  const input = document.getElementById('inputTienKhachDua');
+  if (input) {
+    input.value = amount.toLocaleString('vi-VN');
+  }
+  updateChangeReturnUI();
+}
+window.setQuickCash = setQuickCash;
+
+function updateChangeReturnUI() {
+  const thucThu = getGrandTotalAmount();
+  const tienKhachDua = cart.tienKhachDua || 0;
+  const box = document.getElementById('boxChangeReturn');
+  const label = document.getElementById('labelChangeReturn');
+  const val = document.getElementById('valueChangeReturn');
+  if (!box || !label || !val) return;
+
+  if (tienKhachDua === 0) {
+    box.className = 'change-return-box mt-1';
+    label.innerHTML = '<i class="bi bi-arrow-return-right me-1"></i>Tiền thừa trả khách:';
+    val.className = 'fw-bold font-monospace text-muted fs-6';
+    val.innerText = '0 đ';
+    return;
+  }
+
+  if (tienKhachDua >= thucThu) {
+    const change = tienKhachDua - thucThu;
+    box.className = 'change-return-box has-change mt-1';
+    label.innerHTML = '<i class="bi bi-check-circle me-1 text-success"></i>Tiền thừa trả khách:';
+    val.className = 'fw-bold font-monospace text-success fs-6';
+    val.innerText = formatCurrency(change);
+  } else {
+    const missing = thucThu - tienKhachDua;
+    box.className = 'change-return-box underpaid mt-1';
+    label.innerHTML = '<i class="bi bi-exclamation-circle me-1 text-danger"></i>Khách còn thiếu:';
+    val.className = 'fw-bold font-monospace text-danger fs-6';
+    val.innerText = formatCurrency(missing);
+  }
+}
+window.updateChangeReturnUI = updateChangeReturnUI;
 
 /**
  * Hiệu ứng âm thanh POS khi quét mã vạch Barcode IMEI
@@ -265,11 +618,17 @@ function shortcutAction(key) {
 
 function initKeyboardShortcuts() {
   window.addEventListener('keydown', (e) => {
-    // Phím chức năng F1 -> F9 (capture phase để chặn hành vi mặc định trình duyệt)
+    // Phím chức năng F1 -> F9 và F11
     if (['F1', 'F2', 'F3', 'F4', 'F7', 'F8', 'F9'].includes(e.key)) {
       e.preventDefault();
       e.stopPropagation();
       shortcutAction(e.key);
+      return;
+    }
+    if (e.key === 'F11') {
+      e.preventDefault();
+      e.stopPropagation();
+      togglePosFullScreen();
       return;
     }
     // Phím Escape
@@ -288,6 +647,7 @@ function initKeyboardShortcuts() {
 async function initPosPage() {
   await loadPosData();
   initPreOrderModal();
+  renderOrderTabs();
   renderCart();
 
   // Setup Mã Khuyến Mãi events
@@ -304,6 +664,19 @@ async function initPosPage() {
   if (inputMaKM) {
     inputMaKM.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') applyPromoCode();
+    });
+  }
+
+  // Lắng nghe đổi hình thức thanh toán (Ẩn/Hiện khối tính tiền mặt)
+  const selectPay = document.getElementById('selectPaymentMethod');
+  const cashArea = document.getElementById('cashPaymentArea');
+  if (selectPay && cashArea) {
+    selectPay.addEventListener('change', () => {
+      if (selectPay.value === 'Da thanh toan') {
+        cashArea.classList.remove('d-none');
+      } else {
+        cashArea.classList.add('d-none');
+      }
     });
   }
 
@@ -327,7 +700,11 @@ async function initPosPage() {
   const btnClear = document.getElementById('btnClearCart');
   if (btnClear) {
     btnClear.addEventListener('click', () => {
-      cart = { imeis: [], phuKiens: [] };
+      cart.imeis = [];
+      cart.phuKiens = [];
+      cart.tienKhachDua = 0;
+      const inputTienDua = document.getElementById('inputTienKhachDua');
+      if (inputTienDua) inputTienDua.value = '';
       clearPreOrder();
       renderCart();
       filterImeiDisplay();
@@ -614,6 +991,9 @@ function renderCart() {
     if (depRow) depRow.classList.add('d-none');
     const discRow = document.getElementById('discountDeductionRow');
     if (discRow) discRow.classList.add('d-none');
+
+    updateChangeReturnUI();
+    renderOrderTabs();
     return;
   }
 
@@ -704,6 +1084,9 @@ function renderCart() {
 
   const finalPayment = Math.max(0, rawGrandTotal - tienCocDaTru - discount);
   document.getElementById('totalGrandPrice').innerText = formatCurrency(finalPayment);
+
+  updateChangeReturnUI();
+  renderOrderTabs();
 }
 
 /* =========================================================================
@@ -908,8 +1291,12 @@ async function handleCreateOrder() {
   playBeep('success');
   showToast(res.message || 'Bán hàng thành công!', 'success');
 
-  // Reset giỏ, giảm giá và đơn cọc
-  cart = { imeis: [], phuKiens: [] };
+  // Reset giỏ, giảm giá, đơn cọc và tiền khách đưa
+  cart.imeis = [];
+  cart.phuKiens = [];
+  cart.tienKhachDua = 0;
+  const inputTienDua = document.getElementById('inputTienKhachDua');
+  if (inputTienDua) inputTienDua.value = '';
   appliedKhuyenMai = null;
   const inputMaKM = document.getElementById('inputMaKM');
   if (inputMaKM) inputMaKM.value = '';
@@ -966,6 +1353,10 @@ async function initInvoiceListPage() {
   }
 }
 
+let allInvoicesData = [];
+let invoiceCurrentPage = 1;
+let invoicePageSize = 10;
+
 async function loadInvoiceList() {
   const tbody = document.getElementById('tableInvoiceBody');
   if (!tbody) return;
@@ -981,13 +1372,42 @@ async function loadInvoiceList() {
     return;
   }
 
-  const hoaDons = res.hoaDons || res.data || [];
-  if (hoaDons.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-muted">Không tìm thấy hóa đơn nào</td></tr>`;
+  allInvoicesData = res.hoaDons || res.data || [];
+  invoiceCurrentPage = 1;
+  renderInvoiceTablePage();
+}
+
+function renderInvoiceTablePage() {
+  const tbody = document.getElementById('tableInvoiceBody');
+  const paginationContainer = document.getElementById('invoicePaginationContainer');
+  if (!tbody) return;
+
+  if (!allInvoicesData || allInvoicesData.length === 0) {
+    tbody.innerHTML = DataTableHelper.renderEmptyState(7, {
+      icon: 'bi-receipt',
+      title: 'Không tìm thấy hóa đơn nào',
+      message: 'Không có hóa đơn nào khớp với khoảng thời gian hoặc điều kiện lọc đã chọn.',
+      resetText: 'Đặt lại bộ lọc tìm kiếm',
+      onReset: () => {
+        document.getElementById('filterInvSearch').value = '';
+        document.getElementById('filterInvTuNgay').value = '';
+        document.getElementById('filterInvDenNgay').value = '';
+        document.getElementById('filterInvTrangThai').value = '';
+        loadInvoiceList();
+      }
+    });
+    if (paginationContainer) paginationContainer.innerHTML = '';
     return;
   }
 
-  tbody.innerHTML = hoaDons.map(hd => {
+  const totalItems = allInvoicesData.length;
+  const totalPages = Math.ceil(totalItems / invoicePageSize) || 1;
+  if (invoiceCurrentPage > totalPages) invoiceCurrentPage = totalPages;
+
+  const startIdx = (invoiceCurrentPage - 1) * invoicePageSize;
+  const pageItems = allInvoicesData.slice(startIdx, startIdx + invoicePageSize);
+
+  tbody.innerHTML = pageItems.map(hd => {
     const khName = hd.khachHang ? hd.khachHang.hoTen : 'Khách vãng lai';
     const nvName = hd.nhanVien ? hd.nhanVien.hoTen : 'Hệ thống';
     const tienThucThu = hd.soTienThanhToan !== undefined ? hd.soTienThanhToan : (hd.tongTien - (hd.tienCocDaTru || 0) - (hd.soTienGiam || 0));
@@ -1004,8 +1424,8 @@ async function loadInvoiceList() {
               (Gốc: ${formatCurrency(hd.tongTien)}${hd.soTienGiam > 0 ? ` - Giảm: ${formatCurrency(hd.soTienGiam)}` : ''}${hd.tienCocDaTru > 0 ? ` - Cọc: ${formatCurrency(hd.tienCocDaTru)}` : ''})
             </div>` : ''}
         </td>
-        <td><span class="badge bg-success">${escapeHtml(hd.trangThai)}</span></td>
-        <td class="text-end">
+        <td><span class="badge bg-success-subtle text-success border border-success-subtle">${escapeHtml(hd.trangThai)}</span></td>
+        <td class="text-end pe-3">
           <button class="btn btn-sm btn-outline-primary" onclick="viewInvoiceDetail('${hd._id}')">
             <i class="bi bi-eye me-1"></i> Chi tiết / In
           </button>
@@ -1013,7 +1433,45 @@ async function loadInvoiceList() {
       </tr>
     `;
   }).join('');
+
+  DataTableHelper.renderPagination('invoicePaginationContainer', {
+    totalItems,
+    currentPage: invoiceCurrentPage,
+    pageSize: invoicePageSize,
+    onPageChange: (newPage) => {
+      invoiceCurrentPage = newPage;
+      renderInvoiceTablePage();
+    },
+    onPageSizeChange: (newSize) => {
+      invoicePageSize = newSize;
+      invoiceCurrentPage = 1;
+      renderInvoiceTablePage();
+    }
+  });
 }
+
+function exportInvoiceListExcel() {
+  if (!allInvoicesData || allInvoicesData.length === 0) {
+    showToast('Không có hóa đơn nào để xuất Excel', 'warning');
+    return;
+  }
+
+  const columns = [
+    { title: 'Số Hóa Đơn', key: 'soHD' },
+    { title: 'Khách Hàng', render: (hd) => hd.khachHang ? hd.khachHang.hoTen : 'Khách vãng lai' },
+    { title: 'Nhân Viên Lập', render: (hd) => hd.nhanVien ? hd.nhanVien.hoTen : 'Hệ thống' },
+    { title: 'Ngày Lập', render: (hd) => formatDate(hd.ngayLap) },
+    { title: 'Tổng Tiền Gốc (VNĐ)', key: 'tongTien' },
+    { title: 'Đã Trừ Cọc (VNĐ)', render: (hd) => hd.tienCocDaTru || 0 },
+    { title: 'Giảm Giá (VNĐ)', render: (hd) => hd.soTienGiam || 0 },
+    { title: 'Thực Thu (VNĐ)', render: (hd) => hd.soTienThanhToan !== undefined ? hd.soTienThanhToan : (hd.tongTien - (hd.tienCocDaTru || 0) - (hd.soTienGiam || 0)) },
+    { title: 'Trạng Thái', key: 'trangThai' }
+  ];
+
+  const nowStr = new Date().toISOString().slice(0, 10);
+  DataTableHelper.exportToExcel(columns, allInvoicesData, `DanhSach_HoaDon_${nowStr}.csv`);
+}
+window.exportInvoiceListExcel = exportInvoiceListExcel;
 
 async function viewInvoiceDetail(id) {
   const res = await api.get(`/hoa-don/${id}`);

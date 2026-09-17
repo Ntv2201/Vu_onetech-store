@@ -449,13 +449,30 @@ async function handleCreatePhieuNhap(e) {
     danhSachPhuKien
   };
 
-  const res = await api.post('/phieu-nhap', payload);
-  if (res.success) {
-    showToast('Tạo phiếu nhập kho thành công!', 'success');
-    bootstrap.Modal.getInstance(document.getElementById('modalCreateNhapKho')).hide();
-    loadDanhSachPhieuNhap();
-  } else {
-    showToast(res.message || 'Lỗi khi tạo phiếu nhập', 'danger');
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  if (typeof setButtonLoading === 'function') {
+    setButtonLoading(submitBtn, true, 'Đang ghi sổ nhập kho...');
+  }
+
+  try {
+    const res = await api.post('/phieu-nhap', payload);
+    if (res.success) {
+      showToast('Tạo phiếu nhập kho thành công!', 'success');
+      const modalEl = document.getElementById('modalCreateNhapKho');
+      if (modalEl) {
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
+      }
+      loadDanhSachPhieuNhap();
+    } else {
+      showToast(res.message || 'Lỗi khi tạo phiếu nhập', 'danger');
+    }
+  } catch (err) {
+    showToast(err.message || 'Lỗi kết nối máy chủ', 'danger');
+  } finally {
+    if (typeof setButtonLoading === 'function') {
+      setButtonLoading(submitBtn, false);
+    }
   }
 }
 
@@ -558,86 +575,243 @@ function formatDateTime(dateStr) {
 }
 
 /**
- * Đọc file Excel (.xlsx, .xls, .csv) và dán danh sách IMEI vào modal nhập hàng loạt
+ * Tìm kiếm sản phẩm khớp nhất trong dsSanPham theo tên/model
+ */
+function findMatchingSanPham(targetName) {
+  if (!targetName || !Array.isArray(dsSanPham) || dsSanPham.length === 0) return null;
+  const raw = String(targetName).trim().toLowerCase();
+  
+  // 1. Khớp chính xác hoàn toàn (case-insensitive)
+  let found = dsSanPham.find(sp => sp.tenMay && sp.tenMay.trim().toLowerCase() === raw);
+  if (found) return found;
+
+  // 2. Tên trong hệ thống chứa tên tìm kiếm hoặc ngược lại
+  found = dsSanPham.find(sp => {
+    const dbName = (sp.tenMay || '').toLowerCase();
+    return dbName.includes(raw) || raw.includes(dbName);
+  });
+  if (found) return found;
+
+  // 3. Khớp tất cả các từ khóa chính (e.g. "iPhone 15 Pro Max", "S24 Ultra")
+  const keywords = raw.split(/\s+/).filter(w => w.length > 1);
+  if (keywords.length > 0) {
+    found = dsSanPham.find(sp => {
+      const dbName = (sp.tenMay || '').toLowerCase();
+      return keywords.every(k => dbName.includes(k));
+    });
+    if (found) return found;
+  }
+
+  return null;
+}
+
+/**
+ * Xóa dòng máy trống ban đầu nếu chưa nhập gì
+ */
+function cleanEmptyFirstMayRow() {
+  const rows = document.querySelectorAll('#mayRowsContainer > div');
+  if (rows.length === 1) {
+    const spVal = rows[0].querySelector('.select-may-sp')?.value;
+    const imeiVal = rows[0].querySelector('.input-may-imei')?.value?.trim();
+    if (!spVal && !imeiVal) {
+      rows[0].remove();
+    }
+  }
+}
+
+/**
+ * Bộ phân tích dữ liệu Workbook Excel / CSV thông minh
+ */
+function parseExcelWorkbookData(workbook) {
+  const ignoreKeywords = new Set([
+    'STT', 'MAMAY', 'TENMAY', 'SANPHAM', 'IMEI', 'MAIMEI', 'SERIAL', 'SERIALNUMBER',
+    'DESCRIPTION', 'NOTE', 'GHICHU', 'STATUS', 'TRANGTHAI', 'PRICE', 'GIANHAP', 'GIABAN',
+    'SOLUONG', 'QUANTITY', 'NHACUNGCAP', 'SUPPLIER', 'PHONENUMBER', 'DIENTHOAI', 'DANHSACH', 'TENMODEL'
+  ]);
+
+  let multiProductRows = [];
+  let fallbackImeis = [];
+
+  workbook.SheetNames.forEach(sheetName => {
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet) return;
+
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+    if (!rows || rows.length < 2) return;
+
+    // Quét tìm dòng tiêu đề
+    let headerRowIdx = -1;
+    let colImei = -1;
+    let colModel = -1;
+    let colColor = -1;
+    let colDL = -1;
+    let colGia = -1;
+
+    for (let r = 0; r < Math.min(6, rows.length); r++) {
+      const row = rows[r];
+      if (!Array.isArray(row)) continue;
+      
+      const foundImei = row.findIndex(c => /(imei|serial|mã imei|số imei)/i.test(String(c).trim()));
+      if (foundImei !== -1) {
+        headerRowIdx = r;
+        colImei = foundImei;
+        colModel = row.findIndex(c => /(model|tên model|tên máy|ten may|tên sản phẩm|ten san pham|sản phẩm|san pham)/i.test(String(c).trim()));
+        colColor = row.findIndex(c => /(màu sắc|mau sac|màu|mau|color)/i.test(String(c).trim()));
+        colDL = row.findIndex(c => /(dung lượng|dung luong|bộ nhớ|bo nho|storage|rom|ram)/i.test(String(c).trim()));
+        colGia = row.findIndex(c => /(giá nhập|gia nhap|giá gốc|gia goc|đơn giá|don gia|giá|gia|price|cost)/i.test(String(c).trim()));
+        break;
+      }
+    }
+
+    if (colImei !== -1 && colModel !== -1 && headerRowIdx !== -1) {
+      // Nhận diện bảng chứa nhiều Model khác nhau
+      for (let r = headerRowIdx + 1; r < rows.length; r++) {
+        const row = rows[r];
+        if (!Array.isArray(row)) continue;
+
+        let imeiRaw = String(row[colImei] || '').trim().replace(/\s+/g, '');
+        if (/^[0-9]+(\.[0-9]+)?[eE]\+[0-9]+$/.test(imeiRaw)) {
+          try { imeiRaw = BigInt(Math.round(Number(imeiRaw))).toString(); } catch(e) {}
+        }
+        imeiRaw = imeiRaw.replace(/[^a-zA-Z0-9]/g, '');
+
+        if (/^[a-zA-Z0-9]{8,20}$/.test(imeiRaw) && /\d/.test(imeiRaw) && !ignoreKeywords.has(imeiRaw.toUpperCase())) {
+          const modelRaw = colModel !== -1 ? String(row[colModel] || '').trim() : '';
+          const colorRaw = colColor !== -1 ? String(row[colColor] || '').trim() : '';
+          const dlRaw = colDL !== -1 ? String(row[colDL] || '').trim() : '';
+          let giaRaw = colGia !== -1 ? parseCurrencyValue(row[colGia]) : 0;
+
+          const matchedSP = findMatchingSanPham(modelRaw);
+          multiProductRows.push({
+            imei: imeiRaw,
+            modelName: modelRaw,
+            maSP: matchedSP ? matchedSP._id : '',
+            tenMay: matchedSP ? matchedSP.tenMay : modelRaw,
+            mauSac: colorRaw || (matchedSP ? matchedSP.mauSac || '' : ''),
+            dungLuong: dlRaw || (matchedSP ? matchedSP.dungLuong || '' : ''),
+            giaNhap: giaRaw || (matchedSP ? matchedSP.giaGoc || 0 : 0)
+          });
+        }
+      }
+    } else {
+      // Fallback: Quét toàn bộ ô để lấy danh sách IMEI
+      rows.forEach(row => {
+        if (!Array.isArray(row)) return;
+        row.forEach(cell => {
+          if (cell == null) return;
+          let cellClean = String(cell).trim().replace(/\s+/g, '');
+          if (/^[0-9]+(\.[0-9]+)?[eE]\+[0-9]+$/.test(cellClean)) {
+            try { cellClean = BigInt(Math.round(Number(cellClean))).toString(); } catch(e) {}
+          }
+          cellClean = cellClean.replace(/[^a-zA-Z0-9]/g, '');
+          if (/^[a-zA-Z0-9]{8,20}$/.test(cellClean) && /\d/.test(cellClean) && !ignoreKeywords.has(cellClean.toUpperCase())) {
+            fallbackImeis.push(cellClean);
+          }
+        });
+      });
+    }
+  });
+
+  if (multiProductRows.length > 0) {
+    const seen = new Set();
+    const uniqueRows = multiProductRows.filter(item => {
+      if (seen.has(item.imei)) return false;
+      seen.add(item.imei);
+      return true;
+    });
+    return { isMulti: true, rows: uniqueRows };
+  }
+
+  const uniqueImeis = [...new Set(fallbackImeis)];
+  return { isMulti: false, imeis: uniqueImeis };
+}
+
+/**
+ * Xử lý tải File Excel trực tiếp từ phần "1. Danh Sách Máy Theo IMEI (Vật lý)"
+ */
+async function handleExcelMultiMayUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  if (typeof XLSX === 'undefined') {
+    showToast('Thư viện SheetJS chưa sẵn sàng. Vui lòng làm mới trang!', 'danger');
+    return;
+  }
+
+  try {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
+    const result = parseExcelWorkbookData(workbook);
+    const safeFileName = typeof escapeHtml === 'function' ? escapeHtml(file.name) : file.name;
+
+    if (result.isMulti && result.rows.length > 0) {
+      cleanEmptyFirstMayRow();
+      result.rows.forEach(r => {
+        addMayRow(r.maSP, r.mauSac, r.dungLuong, r.giaNhap, r.imei);
+      });
+      recalcTotalPreview();
+
+      const matchedCount = result.rows.filter(r => Boolean(r.maSP)).length;
+      showToast(`Đã nạp thành công ${result.rows.length} máy (${matchedCount} máy khớp sẵn Model trong hệ thống) từ file "${safeFileName}"!`, 'success');
+    } else if (!result.isMulti && result.imeis && result.imeis.length > 0) {
+      // Mở modal nhập hàng loạt và điền sẵn danh sách IMEI
+      openBulkImportModal();
+      const textarea = document.getElementById('bulkInputImeis');
+      if (textarea) textarea.value = result.imeis.join('\n');
+      showToast(`Đã nhận diện ${result.imeis.length} mã IMEI từ file "${safeFileName}". Vui lòng chọn Model máy chung!`, 'info');
+    } else {
+      showToast(`Không tìm thấy dữ liệu máy hoặc IMEI hợp lệ trong file "${safeFileName}"`, 'warning');
+    }
+  } catch (err) {
+    console.error('Lỗi khi đọc file Excel:', err);
+    showToast(`Lỗi đọc file Excel: ${err.message || 'File không đúng định dạng'}`, 'danger');
+  } finally {
+    event.target.value = '';
+  }
+}
+window.handleExcelMultiMayUpload = handleExcelMultiMayUpload;
+
+/**
+ * Đọc file Excel (.xlsx, .xls, .csv) trong modal Nhập Hàng Loạt (Hỗ trợ thông minh cả đa model)
  */
 async function handleExcelNhapKhoUpload(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
 
   if (typeof XLSX === 'undefined') {
-    if (typeof api !== 'undefined' && api.showToast) {
-      api.showToast('Thư viện SheetJS chưa được tải. Vui lòng làm mới trang!', 'danger');
-    } else if (typeof showToast === 'function') {
-      showToast('Thư viện SheetJS chưa được tải. Vui lòng làm mới trang!', 'danger');
-    }
+    showToast('Thư viện SheetJS chưa được tải. Vui lòng làm mới trang!', 'danger');
     return;
   }
-
-  // Danh sách từ khóa tiêu đề cột thường gặp trong Excel cần bỏ qua
-  const ignoreKeywords = new Set([
-    'STT', 'MAMAY', 'TENMAY', 'SANPHAM', 'IMEI', 'MAIMEI', 'SERIAL', 'SERIALNUMBER',
-    'DESCRIPTION', 'NOTE', 'GHICHU', 'STATUS', 'TRANGTHAI', 'PRICE', 'GIANHAP', 'GIABAN',
-    'SOLUONG', 'QUANTITY', 'NHACUNGCAP', 'SUPPLIER', 'PHONENUMBER', 'DIENTHOAI', 'DANHSACH'
-  ]);
 
   try {
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data, { type: 'array' });
-
-    let rawValues = [];
-    workbook.SheetNames.forEach(sheetName => {
-      const sheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
-      json.forEach(row => {
-        if (Array.isArray(row)) {
-          row.forEach(cell => {
-            if (cell != null) {
-              const str = String(cell).trim();
-              if (str) rawValues.push(str);
-            }
-          });
-        }
-      });
-    });
-
-    const imeis = [];
-    rawValues.forEach(val => {
-      // Nếu nguyên ô khi bỏ khoảng trắng là mã IMEI 14-16 chữ số (VD: 3589 1234 5678 901)
-      const cellClean = String(val).trim();
-      const cellDigits = cellClean.replace(/\s+/g, '');
-      if (/^\d{14,16}$/.test(cellDigits)) {
-        imeis.push(cellDigits);
-        return;
-      }
-
-      // Tách theo khoảng trắng, xuống dòng, dấu phẩy, chấm phẩy, tab
-      const parts = cellClean.split(/[\n,;\t\r\s]+/).map(s => s.trim()).filter(Boolean);
-      parts.forEach(p => {
-        let clean = p;
-        // Chuyển đổi số khoa học (VD: 3.58912E+14) về dạng số nguyên đầy đủ
-        if (/^[0-9]+(\.[0-9]+)?[eE]\+[0-9]+$/.test(clean)) {
-          try {
-            clean = BigInt(Math.round(Number(clean))).toString();
-          } catch (e) {}
-        }
-        clean = clean.replace(/[^a-zA-Z0-9]/g, '');
-        // Kiểm tra hợp lệ: độ dài 8-20 alphanumeric, PHẢI có ít nhất 1 chữ số, không nằm trong danh sách tiêu đề cột
-        if (/^[a-zA-Z0-9]{8,20}$/.test(clean) && /\d/.test(clean) && !ignoreKeywords.has(clean.toUpperCase())) {
-          imeis.push(clean);
-        }
-      });
-    });
-
-    const uniqueImeis = [...new Set(imeis)];
+    const result = parseExcelWorkbookData(workbook);
     const safeFileName = typeof escapeHtml === 'function' ? escapeHtml(file.name) : file.name;
 
-    if (uniqueImeis.length === 0) {
-      if (typeof api !== 'undefined' && api.showToast) {
-        api.showToast(`Không tìm thấy mã IMEI hợp lệ nào trong file "${safeFileName}"`, 'warning');
-      } else if (typeof showToast === 'function') {
-        showToast(`Không tìm thấy mã IMEI hợp lệ nào trong file "${safeFileName}"`, 'warning');
+    // Nếu file chứa bảng đa Model: Tự động bung vào form chính
+    if (result.isMulti && result.rows.length > 0) {
+      const modalEl = document.getElementById('modalBulkImport');
+      if (modalEl) {
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
       }
-      event.target.value = '';
+
+      cleanEmptyFirstMayRow();
+      result.rows.forEach(r => {
+        addMayRow(r.maSP, r.mauSac, r.dungLuong, r.giaNhap, r.imei);
+      });
+      recalcTotalPreview();
+
+      const matchedCount = result.rows.filter(r => Boolean(r.maSP)).length;
+      showToast(`Phát hiện file đa Model! Đã nạp thành công ${result.rows.length} máy (${matchedCount} máy khớp Model) vào phiếu nhập!`, 'success');
+      return;
+    }
+
+    // Nếu là file chỉ có danh sách IMEI
+    const uniqueImeis = result.imeis || [];
+    if (uniqueImeis.length === 0) {
+      showToast(`Không tìm thấy mã IMEI hợp lệ nào trong file "${safeFileName}"`, 'warning');
       return;
     }
 
@@ -651,33 +825,21 @@ async function handleExcelNhapKhoUpload(event) {
       textarea.value = combined.join('\n');
 
       if (newlyAdded === 0) {
-        if (typeof api !== 'undefined' && api.showToast) {
-          api.showToast(`Tất cả ${uniqueImeis.length} mã IMEI trong file "${safeFileName}" đã tồn tại trong danh sách!`, 'info');
-        } else if (typeof showToast === 'function') {
-          showToast(`Tất cả ${uniqueImeis.length} mã IMEI trong file "${safeFileName}" đã tồn tại trong danh sách!`, 'info');
-        }
+        showToast(`Tất cả ${uniqueImeis.length} mã IMEI trong file "${safeFileName}" đã tồn tại trong danh sách!`, 'info');
       } else {
         let msg = `Đã đọc và nạp thành công ${newlyAdded} mã IMEI mới từ file "${safeFileName}"!`;
         if (duplicateCount > 0) {
           msg += ` (Bỏ qua ${duplicateCount} mã đã trùng)`;
         }
-        if (typeof api !== 'undefined' && api.showToast) {
-          api.showToast(msg, 'success');
-        } else if (typeof showToast === 'function') {
-          showToast(msg, 'success');
-        }
+        showToast(msg, 'success');
       }
     }
   } catch (err) {
     console.error('Lỗi khi đọc file Excel:', err);
-    const safeErrorMsg = typeof escapeHtml === 'function' ? escapeHtml(err.message || 'File không đúng định dạng') : (err.message || 'File không đúng định dạng');
-    if (typeof api !== 'undefined' && api.showToast) {
-      api.showToast(`Lỗi đọc file Excel: ${safeErrorMsg}`, 'danger');
-    } else if (typeof showToast === 'function') {
-      showToast(`Lỗi đọc file Excel: ${safeErrorMsg}`, 'danger');
-    }
+    showToast(`Lỗi đọc file Excel: ${err.message || 'File không đúng định dạng'}`, 'danger');
   } finally {
     event.target.value = '';
   }
 }
 window.handleExcelNhapKhoUpload = handleExcelNhapKhoUpload;
+

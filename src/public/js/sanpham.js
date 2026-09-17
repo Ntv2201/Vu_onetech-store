@@ -17,15 +17,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 /**
  * Trang danh sách sản phẩm
  */
+let allSanPhamsData = [];
+let currentPage = 1;
+let pageSize = 10;
+let currentSortKey = 'tenMay';
+let currentSortOrder = 'asc';
+
 async function initSanPhamIndex() {
   const filterForm = document.getElementById('filterForm');
   const btnReset = document.getElementById('btnResetFilter');
 
+  initSortableHeaders();
   await loadSanPhamList();
 
   if (filterForm) {
     filterForm.addEventListener('submit', (e) => {
       e.preventDefault();
+      currentPage = 1;
       loadSanPhamList();
     });
   }
@@ -36,6 +44,7 @@ async function initSanPhamIndex() {
     searchInput.addEventListener('input', () => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
+        currentPage = 1;
         loadSanPhamList();
       }, 300);
     });
@@ -46,9 +55,38 @@ async function initSanPhamIndex() {
       document.getElementById('filterSearch').value = '';
       document.getElementById('filterDanhMuc').value = '';
       document.getElementById('filterHang').value = '';
+      currentPage = 1;
       loadSanPhamList();
     });
   }
+}
+
+function initSortableHeaders() {
+  document.querySelectorAll('#tableSanPham th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const sortKey = th.getAttribute('data-sort');
+      if (currentSortKey === sortKey) {
+        currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSortKey = sortKey;
+        currentSortOrder = 'asc';
+      }
+
+      document.querySelectorAll('#tableSanPham th.sortable').forEach(el => {
+        el.classList.remove('sorted-asc', 'sorted-desc');
+        const icon = el.querySelector('.sort-icon');
+        if (icon) icon.className = 'bi bi-arrow-down-up sort-icon';
+      });
+
+      th.classList.add(currentSortOrder === 'asc' ? 'sorted-asc' : 'sorted-desc');
+      const curIcon = th.querySelector('.sort-icon');
+      if (curIcon) {
+        curIcon.className = currentSortOrder === 'asc' ? 'bi bi-sort-up sort-icon' : 'bi bi-sort-down sort-icon';
+      }
+
+      renderSanPhamTablePage();
+    });
+  });
 }
 
 async function loadSanPhamList() {
@@ -62,7 +100,7 @@ async function loadSanPhamList() {
     return;
   }
 
-  const sanPhams = Array.isArray(res.data) ? res.data : (res.sanPhams || res.data?.sanPhams || res.data?.data || []);
+  allSanPhamsData = Array.isArray(res.data) ? res.data : (res.sanPhams || res.data?.sanPhams || res.data?.data || []);
   const danhMucs = res.danhMucs || res.data?.danhMucs || [];
   const allHangs = res.allHangs || res.data?.allHangs || [];
 
@@ -87,71 +125,136 @@ async function loadSanPhamList() {
     });
   }
 
-  // 2. Render danh sách sản phẩm
+  // 2. Render bảng phân trang
+  renderSanPhamTablePage();
+}
+
+function renderSanPhamTablePage() {
   const tbody = document.getElementById('tableSanPhamBody');
+  const paginationContainer = document.getElementById('sanPhamPaginationContainer');
   if (!tbody) return;
 
-  if (sanPhams && sanPhams.length > 0) {
-    const isManagerOrStorekeeper = currentUser && ['Quản lý', 'Thủ kho'].includes(currentUser.vaiTro);
-    const isManager = currentUser && currentUser.vaiTro === 'Quản lý';
-
-    tbody.innerHTML = sanPhams.map(sp => {
-      const qtyCon = sp.soLuongTon !== undefined ? sp.soLuongTon : (sp.soLuongCon !== undefined ? sp.soLuongCon : 0);
-      const qtyTong = sp.tongImei !== undefined ? sp.tongImei : qtyCon;
-      const safeTenMay = escapeHtml((sp.tenMay || '').replace(/'/g, "\\'"));
-
-      return `
-      <tr>
-        <td>
-          <a href="/san-pham/detail.html?id=${sp._id}" class="fw-bold text-decoration-none text-dark">
-            ${escapeHtml(sp.tenMay)}
-          </a>
-          ${sp.moTa ? `<div class="text-muted small text-truncate" style="max-width: 280px;">${escapeHtml(sp.moTa)}</div>` : ''}
-        </td>
-        <td><span class="badge bg-light text-secondary border">${sp.danhMuc ? escapeHtml(sp.danhMuc.tenDanhMuc || sp.danhMuc) : 'Chưa phân loại'}</span></td>
-        <td><span class="fw-semibold text-secondary">${escapeHtml(sp.hang || 'Khác')}</span></td>
-        <td class="fw-bold text-primary">${formatCurrency(sp.giaBan || 0)}</td>
-        <td>${sp.soThangBH ? sp.soThangBH + ' tháng' : '12 tháng'}</td>
-        <td>
-          <a href="/may-imei/?sanPhamId=${sp._id}" class="text-decoration-none" title="Xem danh sách IMEI của máy này">
-            <span class="badge ${qtyCon > 0 ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'}">
-              ${qtyCon > 0 ? `<i class="bi bi-check-circle me-1"></i>Còn ${qtyCon} máy` : '<i class="bi bi-x-circle me-1"></i>Hết hàng'}
-            </span>
-            <span class="text-muted small ms-1">(Tổng: ${qtyTong})</span>
-          </a>
-        </td>
-        <td>
-          ${sp.status !== false 
-            ? '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Hoạt động</span>' 
-            : '<span class="badge bg-danger-subtle text-danger"><i class="bi bi-lock me-1"></i>Đã khóa</span>'}
-        </td>
-        <td class="text-end pe-3">
-          <div class="d-inline-flex justify-content-end align-items-center" style="gap: 6px;">
-            <a href="/may-imei/form.html?sanPhamId=${sp._id}" class="btn-action btn-action-deliver" title="Nhập thêm IMEI cho máy này">
-              <i class="bi bi-plus-circle"></i>
-            </a>
-            <a href="/san-pham/detail.html?id=${sp._id}" class="btn-action btn-action-view" title="Xem chi tiết & danh sách IMEI">
-              <i class="bi bi-eye"></i>
-            </a>
-            ${isManagerOrStorekeeper ? `
-              <a href="/san-pham/form.html?id=${sp._id}" class="btn-action btn-action-edit" title="Chỉnh sửa">
-                <i class="bi bi-pencil"></i>
-              </a>
-            ` : ''}
-            ${isManager ? `
-              <button type="button" class="btn-action ${sp.status !== false ? 'btn-action-cancel' : 'btn-action-success'}" title="${sp.status !== false ? 'Khóa' : 'Mở khóa'}" onclick="toggleStatusSanPham('${sp._id}', '${safeTenMay}')">
-                <i class="bi ${sp.status !== false ? 'bi-lock-fill' : 'bi-unlock-fill'}"></i>
-              </button>
-            ` : ''}
-          </div>
-        </td>
-      </tr>
-    `;
-    }).join('');
-  } else {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Không tìm thấy sản phẩm nào phù hợp</td></tr>';
+  if (!allSanPhamsData || allSanPhamsData.length === 0) {
+    tbody.innerHTML = DataTableHelper.renderEmptyState(8, {
+      icon: 'bi-phone',
+      title: 'Không tìm thấy sản phẩm nào',
+      message: 'Không có model sản phẩm nào phù hợp với từ khóa hoặc bộ lọc đã chọn.',
+      resetText: 'Xóa bộ lọc tìm kiếm',
+      onReset: () => {
+        document.getElementById('filterSearch').value = '';
+        document.getElementById('filterDanhMuc').value = '';
+        document.getElementById('filterHang').value = '';
+        currentPage = 1;
+        loadSanPhamList();
+      }
+    });
+    if (paginationContainer) paginationContainer.innerHTML = '';
+    return;
   }
+
+  const sortedData = DataTableHelper.sortList(allSanPhamsData, currentSortKey, currentSortOrder);
+
+  const totalItems = sortedData.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const startIdx = (currentPage - 1) * pageSize;
+  const pageItems = sortedData.slice(startIdx, startIdx + pageSize);
+
+  const isManagerOrStorekeeper = currentUser && ['Quản lý', 'Thủ kho'].includes(currentUser.vaiTro);
+  const isManager = currentUser && currentUser.vaiTro === 'Quản lý';
+
+  tbody.innerHTML = pageItems.map(sp => {
+    const qtyCon = sp.soLuongTon !== undefined ? sp.soLuongTon : (sp.soLuongCon !== undefined ? sp.soLuongCon : 0);
+    const qtyTong = sp.tongImei !== undefined ? sp.tongImei : qtyCon;
+    const safeTenMay = escapeHtml((sp.tenMay || '').replace(/'/g, "\\'"));
+
+    return `
+    <tr>
+      <td>
+        <a href="/san-pham/detail.html?id=${sp._id}" class="fw-bold text-decoration-none text-dark">
+          ${escapeHtml(sp.tenMay)}
+        </a>
+        ${sp.moTa ? `<div class="text-muted small text-truncate" style="max-width: 280px;">${escapeHtml(sp.moTa)}</div>` : ''}
+      </td>
+      <td><span class="badge bg-light text-secondary border">${sp.danhMuc ? escapeHtml(sp.danhMuc.tenDanhMuc || sp.danhMuc) : 'Chưa phân loại'}</span></td>
+      <td><span class="fw-semibold text-secondary">${escapeHtml(sp.hang || 'Khác')}</span></td>
+      <td class="fw-bold text-primary">${formatCurrency(sp.giaBan || 0)}</td>
+      <td>${sp.soThangBH ? sp.soThangBH + ' tháng' : '12 tháng'}</td>
+      <td>
+        <a href="/may-imei/?sanPhamId=${sp._id}" class="text-decoration-none" title="Xem danh sách IMEI của máy này">
+          <span class="badge ${qtyCon > 0 ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'}">
+            ${qtyCon > 0 ? `<i class="bi bi-check-circle me-1"></i>Còn ${qtyCon} máy` : '<i class="bi bi-x-circle me-1"></i>Hết hàng'}
+          </span>
+          <span class="text-muted small ms-1">(Tổng: ${qtyTong})</span>
+        </a>
+      </td>
+      <td>
+        ${sp.status !== false 
+          ? '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Hoạt động</span>' 
+          : '<span class="badge bg-danger-subtle text-danger"><i class="bi bi-lock me-1"></i>Đã khóa</span>'}
+      </td>
+      <td class="text-end pe-3">
+        <div class="d-inline-flex justify-content-end align-items-center" style="gap: 6px;">
+          <a href="/may-imei/form.html?sanPhamId=${sp._id}" class="btn-action btn-action-deliver" title="Nhập thêm IMEI cho máy này">
+            <i class="bi bi-plus-circle"></i>
+          </a>
+          <a href="/san-pham/detail.html?id=${sp._id}" class="btn-action btn-action-view" title="Xem chi tiết & danh sách IMEI">
+            <i class="bi bi-eye"></i>
+          </a>
+          ${isManagerOrStorekeeper ? `
+            <a href="/san-pham/form.html?id=${sp._id}" class="btn-action btn-action-edit" title="Chỉnh sửa">
+              <i class="bi bi-pencil"></i>
+            </a>
+          ` : ''}
+          ${isManager ? `
+            <button type="button" class="btn-action ${sp.status !== false ? 'btn-action-cancel' : 'btn-action-success'}" title="${sp.status !== false ? 'Khóa' : 'Mở khóa'}" onclick="toggleStatusSanPham('${sp._id}', '${safeTenMay}')">
+              <i class="bi ${sp.status !== false ? 'bi-lock-fill' : 'bi-unlock-fill'}"></i>
+            </button>
+          ` : ''}
+        </div>
+      </td>
+    </tr>
+  `;
+  }).join('');
+
+  DataTableHelper.renderPagination('sanPhamPaginationContainer', {
+    totalItems,
+    currentPage,
+    pageSize,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      renderSanPhamTablePage();
+    },
+    onPageSizeChange: (newSize) => {
+      pageSize = newSize;
+      currentPage = 1;
+      renderSanPhamTablePage();
+    }
+  });
 }
+
+function exportSanPhamExcel() {
+  if (!allSanPhamsData || allSanPhamsData.length === 0) {
+    showToast('Không có dữ liệu sản phẩm để xuất', 'warning');
+    return;
+  }
+
+  const columns = [
+    { title: 'Tên Sản Phẩm', key: 'tenMay' },
+    { title: 'Danh Mục', render: (item) => item.danhMuc ? (item.danhMuc.tenDanhMuc || item.danhMuc) : 'Chưa phân loại' },
+    { title: 'Hãng', key: 'hang' },
+    { title: 'Giá Niêm Yết (VNĐ)', key: 'giaBan' },
+    { title: 'Thời Hạn BH', render: (item) => item.soThangBH ? `${item.soThangBH} tháng` : '12 tháng' },
+    { title: 'Tồn Kho (Còn lại)', render: (item) => item.soLuongTon !== undefined ? item.soLuongTon : (item.soLuongCon || 0) },
+    { title: 'Tổng Nhập (IMEI)', render: (item) => item.tongImei || 0 },
+    { title: 'Trạng Thái', render: (item) => item.status !== false ? 'Đang kinh doanh' : 'Đã khóa' }
+  ];
+
+  const nowStr = new Date().toISOString().slice(0, 10);
+  DataTableHelper.exportToExcel(columns, allSanPhamsData, `DanhSach_SanPham_${nowStr}.csv`);
+}
+window.exportSanPhamExcel = exportSanPhamExcel;
 
 async function toggleStatusSanPham(id, tenMay) {
   // Hiện modal xác nhận

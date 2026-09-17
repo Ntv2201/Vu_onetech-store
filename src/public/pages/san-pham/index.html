@@ -29,7 +29,10 @@
           <h4 class="fw-bold mb-1">Quản lý Model Sản phẩm</h4>
           <p class="text-muted small mb-0">Quản lý danh sách model điện thoại, cấu hình giá bán và thời hạn bảo hành</p>
         </div>
-        <div id="btnCreateContainer">
+        <div id="btnCreateContainer" class="d-flex align-items-center gap-2">
+          <button type="button" id="btnExportExcel" class="btn btn-export-excel" onclick="exportSanPhamExcel()" title="Xuất danh sách sản phẩm ra Excel/CSV">
+            <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+          </button>
           <a href="/san-pham/form.html" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Thêm Sản phẩm
           </a>
@@ -65,28 +68,44 @@
       <!-- Table of SanPham -->
       <div class="card-custom">
         <div class="table-responsive">
-          <table class="table table-custom table-hover">
+          <table class="table table-custom table-hover align-middle mb-0" id="tableSanPham">
             <thead>
               <tr>
-                <th>Tên sản phẩm</th>
-                <th>Danh mục</th>
-                <th>Hãng</th>
-                <th>Giá niêm yết</th>
-                <th>Bảo hành</th>
-                <th>Tồn kho (IMEI)</th>
-                <th>Trạng thái</th>
+                <th class="sortable" data-sort="tenMay" title="Bấm để sắp xếp theo Tên máy">
+                  Tên sản phẩm <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
+                <th class="sortable" data-sort="danhMuc.tenDanhMuc" title="Bấm để sắp xếp theo Danh mục">
+                  Danh mục <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
+                <th class="sortable" data-sort="hang" title="Bấm để sắp xếp theo Hãng">
+                  Hãng <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
+                <th class="sortable" data-sort="giaBan" title="Bấm để sắp xếp theo Giá bán">
+                  Giá niêm yết <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
+                <th class="sortable" data-sort="soThangBH" title="Bấm để sắp xếp theo Bảo hành">
+                  Bảo hành <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
+                <th class="sortable" data-sort="soLuongTon" title="Bấm để sắp xếp theo Tồn kho">
+                  Tồn kho (IMEI) <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
+                <th class="sortable" data-sort="trangThai" title="Bấm để sắp xếp theo Trạng thái">
+                  Trạng thái <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
                 <th class="text-end">Hành động</th>
               </tr>
             </thead>
             <tbody id="tableSanPhamBody">
               <tr>
-                <td colspan="7" class="text-center py-4">
+                <td colspan="8" class="text-center py-4">
                   <div class="spinner-border spinner-border-sm text-primary"></div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+        <!-- Thanh phân trang động -->
+        <div id="sanPhamPaginationContainer"></div>
       </div>
     </main>
   </div>

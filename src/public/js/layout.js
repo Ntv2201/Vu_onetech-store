@@ -368,16 +368,37 @@ function renderSidebarAndNavbar(user) {
           </button>
         </div>
 
-        <div class="sidebar-nav">
-          ${filteredNav.map(cat => `
-            <div class="nav-category">${escapeHtml(cat.category)}</div>
-            ${cat.items.map(item => `
-              <a href="${item.path}" class="sidebar-link" data-path="${item.dataPath}" data-label="${escapeHtml(item.shortLabel || item.label)}">
-                <i class="bi ${item.icon}"></i>
-                <span>${escapeHtml(item.label)}</span>
-              </a>
-            `).join('')}
+        <!-- Ô Tìm Kiếm Menu Sidebar -->
+        <div class="sidebar-search-wrapper" id="sidebarSearchWrapper">
+          <div class="sidebar-search-inner" title="Tìm nhanh menu (phím tắt Ctrl + K)">
+            <i class="bi bi-search sidebar-search-icon"></i>
+            <input type="text" id="inputSearchSidebar" class="sidebar-search-input" placeholder="Tìm nhanh menu..." autocomplete="off" spellcheck="false">
+            <kbd class="sidebar-search-kbd" id="kbdSidebarShortcut">Ctrl K</kbd>
+            <button type="button" id="btnClearSidebarSearch" class="sidebar-search-clear d-none" title="Xóa tìm kiếm">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="sidebar-nav" id="sidebarNavContainer">
+          ${filteredNav.map((cat, catIdx) => `
+            <div class="sidebar-category-group" id="catGroup_${catIdx}">
+              <div class="nav-category">${escapeHtml(cat.category)}</div>
+              ${cat.items.map(item => `
+                <a href="${item.path}" class="sidebar-link" data-path="${item.dataPath}" data-label="${escapeHtml(item.shortLabel || item.label)}" data-keywords="${escapeHtml(((item.label || '') + ' ' + (item.shortLabel || '') + ' ' + (cat.category || '')).toLowerCase())}">
+                  <i class="bi ${item.icon}"></i>
+                  <span>${escapeHtml(item.label)}</span>
+                </a>
+              `).join('')}
+            </div>
           `).join('')}
+          <div id="sidebarSearchEmpty" class="d-none text-center py-4 px-2">
+            <i class="bi bi-search text-muted fs-4 d-block mb-1 opacity-50"></i>
+            <span class="small text-muted d-block" style="font-size: 0.8rem;">Không tìm thấy menu</span>
+            <button type="button" class="btn btn-link btn-sm text-info p-0 mt-1" onclick="clearSidebarSearch()" style="font-size: 0.75rem; text-decoration: none;">
+              Xóa tìm kiếm
+            </button>
+          </div>
         </div>
 
         <div class="sidebar-user">
@@ -462,7 +483,16 @@ function renderSidebarAndNavbar(user) {
   const btnLogout = document.getElementById('btnLogout');
   if (btnLogout) {
     btnLogout.addEventListener('click', async () => {
-      if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+      const ok = typeof showConfirm === 'function'
+        ? await showConfirm({
+            title: 'Đăng xuất tài khoản',
+            message: 'Bạn có chắc chắn muốn đăng xuất khỏi phiên làm việc hiện tại?',
+            confirmText: 'Đăng xuất',
+            cancelText: 'Ở lại',
+            type: 'warning'
+          })
+        : confirm('Bạn có chắc chắn muốn đăng xuất?');
+      if (ok) {
         await api.post('/auth/logout');
         window.location.href = '/login.html';
       }
@@ -527,6 +557,162 @@ function renderSidebarAndNavbar(user) {
     link.addEventListener('click', () => {
       if (window.innerWidth < 992) closeMobileSidebar();
     });
+  });
+
+  // ── Khởi tạo tìm kiếm menu Sidebar ─────────────────────
+  initSidebarSearch(sidebar);
+}
+
+/**
+ * Chuẩn hóa chuỗi tiếng Việt không dấu để tìm kiếm thông minh
+ */
+function removeVietnameseTones(str) {
+  if (!str) return '';
+  str = String(str).toLowerCase();
+  str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
+  str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
+  str = str.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
+  str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
+  str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
+  str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
+  str = str.replace(/đ/g, 'd');
+  str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, '');
+  str = str.replace(/\u02C6|\u0306|\u031B/g, '');
+  return str.trim();
+}
+
+/**
+ * Lọc các menu trên sidebar theo từ khóa
+ */
+function handleSidebarSearch(query) {
+  const rawQ = (query || '').trim();
+  const qClean = removeVietnameseTones(rawQ);
+  const btnClear = document.getElementById('btnClearSidebarSearch');
+  const kbdShortcut = document.getElementById('kbdSidebarShortcut');
+  if (btnClear) {
+    btnClear.classList.toggle('d-none', rawQ.length === 0);
+  }
+  if (kbdShortcut) {
+    kbdShortcut.classList.toggle('d-none', rawQ.length > 0);
+  }
+
+  const categoryGroups = document.querySelectorAll('.sidebar-category-group');
+  let totalVisible = 0;
+  let firstVisibleLink = null;
+
+  categoryGroups.forEach(group => {
+    let groupVisibleCount = 0;
+    const links = group.querySelectorAll('.sidebar-link');
+    links.forEach(link => {
+      if (!rawQ) {
+        link.style.display = '';
+        groupVisibleCount++;
+        totalVisible++;
+      } else {
+        const text = link.textContent || '';
+        const keywords = link.getAttribute('data-keywords') || '';
+        const textClean = removeVietnameseTones(text + ' ' + keywords);
+        const isMatch = textClean.includes(qClean) || (rawQ.length > 1 && keywords.includes(rawQ.toLowerCase()));
+        if (isMatch) {
+          link.style.display = '';
+          groupVisibleCount++;
+          totalVisible++;
+          if (!firstVisibleLink) firstVisibleLink = link;
+        } else {
+          link.style.display = 'none';
+        }
+      }
+    });
+
+    group.style.display = groupVisibleCount > 0 ? '' : 'none';
+  });
+
+  const emptyEl = document.getElementById('sidebarSearchEmpty');
+  if (emptyEl) {
+    emptyEl.classList.toggle('d-none', totalVisible > 0 || !rawQ);
+  }
+
+  return firstVisibleLink;
+}
+
+function clearSidebarSearch() {
+  const inputSearch = document.getElementById('inputSearchSidebar');
+  if (inputSearch) {
+    inputSearch.value = '';
+    inputSearch.focus();
+  }
+  handleSidebarSearch('');
+}
+window.clearSidebarSearch = clearSidebarSearch;
+
+function initSidebarSearch(sidebar) {
+  const inputSearch = document.getElementById('inputSearchSidebar');
+  const btnClearSearch = document.getElementById('btnClearSidebarSearch');
+  const searchWrapper = document.getElementById('sidebarSearchWrapper');
+
+  if (btnClearSearch) {
+    btnClearSearch.addEventListener('click', (e) => {
+      e.preventDefault();
+      clearSidebarSearch();
+    });
+  }
+
+  if (inputSearch) {
+    inputSearch.addEventListener('input', (e) => {
+      handleSidebarSearch(e.target.value);
+    });
+
+    inputSearch.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        clearSidebarSearch();
+        inputSearch.blur();
+      } else if (e.key === 'Enter') {
+        const firstLink = handleSidebarSearch(inputSearch.value);
+        if (firstLink && firstLink.getAttribute('href')) {
+          window.location.href = firstLink.getAttribute('href');
+        }
+      }
+    });
+  }
+
+  // Click vào thanh search khi collapsed để mở rộng sidebar
+  if (searchWrapper && sidebar) {
+    searchWrapper.addEventListener('click', () => {
+      if (sidebar.classList.contains('collapsed')) {
+        sidebar.classList.remove('collapsed');
+        document.body.classList.remove('sidebar-collapsed');
+        const btnCollapse = document.getElementById('btnCollapseSidebar');
+        if (btnCollapse) {
+          const icon = btnCollapse.querySelector('i');
+          if (icon) icon.className = 'bi bi-layout-sidebar-inset';
+        }
+        localStorage.setItem('sidebarCollapsed', false);
+        setTimeout(() => {
+          if (inputSearch) inputSearch.focus();
+        }, 200);
+      }
+    });
+  }
+
+  // Phím tắt toàn cục Ctrl + K hoặc Cmd + K
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (sidebar && sidebar.classList.contains('collapsed')) {
+        sidebar.classList.remove('collapsed');
+        document.body.classList.remove('sidebar-collapsed');
+        const btnCollapse = document.getElementById('btnCollapseSidebar');
+        if (btnCollapse) {
+          const icon = btnCollapse.querySelector('i');
+          if (icon) icon.className = 'bi bi-layout-sidebar-inset';
+        }
+        localStorage.setItem('sidebarCollapsed', false);
+      }
+      if (inputSearch) {
+        inputSearch.focus();
+        inputSearch.select();
+      }
+    }
   });
 }
 
@@ -807,4 +993,22 @@ document.addEventListener('hidden.bs.modal', function() {
       document.body.style.removeProperty('padding-right');
     }
   }, 200);
+});
+
+// =========================================
+// GLOBAL MODAL AUTO-FOCUS & MICRO-UX
+// =========================================
+document.addEventListener('shown.bs.modal', function(e) {
+  const modal = e.target;
+  if (!modal) return;
+  if (modal.id && modal.id.startsWith('confirmModal_')) return;
+
+  const firstInput = modal.querySelector(
+    'input:not([type=hidden]):not([disabled]):not([readonly]), select:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly])'
+  );
+  if (firstInput) {
+    try {
+      firstInput.focus();
+    } catch (err) {}
+  }
 });

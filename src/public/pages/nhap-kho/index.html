@@ -206,13 +206,17 @@
 
           <!-- Nhập Máy theo IMEI -->
           <div class="card p-3 mb-4 border shadow-none">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
               <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-phone me-1"></i> 1. Danh Sách Máy Theo IMEI (Vật lý)</h6>
-              <div>
-                <button type="button" class="btn btn-sm btn-outline-info me-2" onclick="openBulkImportModal()">
-                  <i class="bi bi-list-columns-reverse me-1"></i> Nhập Hàng Loạt
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <input type="file" id="fileInputExcelMultiMay" accept=".xlsx, .xls, .csv" class="d-none" onchange="handleExcelMultiMayUpload(event)">
+                <button type="button" class="btn btn-sm btn-action-excel" onclick="document.getElementById('fileInputExcelMultiMay').click()" title="Tải file Excel/CSV chứa danh sách nhiều Model, Màu, Giá và IMEI khác nhau">
+                  <i class="bi bi-file-earmark-excel me-1"></i> Nhập từ Excel
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addMayRow()">
+                <button type="button" class="btn btn-sm btn-action-bulk" onclick="openBulkImportModal()" title="Nhập hàng loạt máy cùng Model theo danh sách IMEI">
+                  <i class="bi bi-list-columns-reverse me-1"></i> Nhập Theo Lô
+                </button>
+                <button type="button" class="btn btn-sm btn-action-add-may" onclick="addMayRow()" title="Thêm một dòng nhập máy">
                   <i class="bi bi-plus-circle me-1"></i> Thêm Dòng Máy
                 </button>
               </div>
@@ -226,7 +230,7 @@
           <div class="card p-3 mb-3 border shadow-none">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h6 class="fw-bold mb-0 text-success"><i class="bi bi-headphones me-1"></i> 2. Danh Sách Phụ Kiện Đi Kèm (Tùy chọn)</h6>
-              <button type="button" class="btn btn-sm btn-outline-success" onclick="addPhuKienRow()">
+              <button type="button" class="btn btn-sm btn-action-add-pk" onclick="addPhuKienRow()" title="Thêm một dòng phụ kiện">
                 <i class="bi bi-plus-circle me-1"></i> Thêm Dòng Phụ Kiện
               </button>
             </div>

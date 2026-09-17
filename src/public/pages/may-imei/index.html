@@ -29,7 +29,10 @@
           <h4 class="fw-bold mb-1">Quản lý Máy theo từng IMEI / Serial</h4>
           <p class="text-muted small mb-0">Mỗi máy là 1 bản ghi riêng biệt với số IMEI duy nhất, theo dõi trạng thái và lịch sử</p>
         </div>
-        <div id="btnCreateContainer">
+        <div id="btnCreateContainer" class="d-flex align-items-center gap-2">
+          <button type="button" id="btnExportExcel" class="btn btn-export-excel" onclick="exportMayImeiExcel()" title="Xuất danh sách IMEI ra file Excel/CSV">
+            <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+          </button>
           <a href="/may-imei/form.html" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Nhập Máy / IMEI Mới
           </a>
@@ -69,15 +72,25 @@
       <!-- Table of MayImei -->
       <div class="card-custom">
         <div class="table-responsive">
-          <table class="table table-custom table-hover">
+          <table class="table table-custom table-hover align-middle mb-0" id="tableImei">
             <thead>
               <tr>
-                <th>Số IMEI / Serial</th>
-                <th>Model Sản phẩm</th>
+                <th class="sortable" data-sort="imei" title="Bấm để sắp xếp theo IMEI">
+                  Số IMEI / Serial <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
+                <th class="sortable" data-sort="sanPham.tenMay" title="Bấm để sắp xếp theo Model">
+                  Model Sản phẩm <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
                 <th>Phân loại</th>
-                <th>Giá nhập</th>
-                <th>Trạng thái</th>
-                <th>Ngày nhập</th>
+                <th class="sortable" data-sort="giaNhap" title="Bấm để sắp xếp theo Giá nhập">
+                  Giá nhập <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
+                <th class="sortable" data-sort="trangThai" title="Bấm để sắp xếp theo Trạng thái">
+                  Trạng thái <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
+                <th class="sortable" data-sort="ngayNhap" title="Bấm để sắp xếp theo Ngày nhập">
+                  Ngày nhập <i class="bi bi-arrow-down-up sort-icon"></i>
+                </th>
                 <th class="text-end">Hành động</th>
               </tr>
             </thead>
@@ -90,6 +103,8 @@
             </tbody>
           </table>
         </div>
+        <!-- Thanh phân trang động -->
+        <div id="imeiPaginationContainer"></div>
       </div>
     </main>
   </div>
