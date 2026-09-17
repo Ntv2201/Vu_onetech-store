@@ -764,7 +764,8 @@ async function handleExcelMultiMayUpload(event) {
     }
   } catch (err) {
     console.error('Lỗi khi đọc file Excel:', err);
-    showToast(`Lỗi đọc file Excel: ${err.message || 'File không đúng định dạng'}`, 'danger');
+    const safeError = typeof escapeHtml === 'function' ? escapeHtml(err.message || 'File không đúng định dạng') : (err.message || 'File không đúng định dạng');
+    showToast(`Lỗi đọc file Excel: ${safeError}`, 'danger');
   } finally {
     event.target.value = '';
   }
@@ -836,7 +837,8 @@ async function handleExcelNhapKhoUpload(event) {
     }
   } catch (err) {
     console.error('Lỗi khi đọc file Excel:', err);
-    showToast(`Lỗi đọc file Excel: ${err.message || 'File không đúng định dạng'}`, 'danger');
+    const safeError = typeof escapeHtml === 'function' ? escapeHtml(err.message || 'File không đúng định dạng') : (err.message || 'File không đúng định dạng');
+    showToast(`Lỗi đọc file Excel: ${safeError}`, 'danger');
   } finally {
     event.target.value = '';
   }
