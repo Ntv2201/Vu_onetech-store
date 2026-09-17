@@ -71,7 +71,8 @@ class DonDatHangNCCService extends BaseService {
   async getChiTiet(id) {
     const ddh = await DonDatHangNCC.findById(id)
       .populate('nhaCungCap', 'tenNCC sdt diaChi')
-      .populate('nhanVien', 'hoTen vaiTro tenDangNhap');
+      .populate('nhanVien', 'hoTen vaiTro tenDangNhap')
+      .lean();
 
     if (!ddh) {
       throw this.createError('Không tìm thấy đơn đặt hàng NCC', 404);

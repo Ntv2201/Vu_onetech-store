@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const BaseService = require('./BaseService');
-const { PhieuNhap, CT_PhieuNhap, MayImei, PhuKien, CongNo } = require('../models');
+const { PhieuNhap, CT_PhieuNhap, MayImei, PhuKien, CongNo, DonDatHangNCC, CT_DonDatHangNCC } = require('../models');
 const TonKhoService = require('./TonKhoService');
 const ThanhToanService = require('./ThanhToanService');
 
@@ -15,18 +15,10 @@ class PhieuNhapService extends BaseService {
    */
   async taoPhieuNhap(payload = {}) {
     const { 
-      maNCC, 
-      maNV, 
-      danhSachMay = [], 
-      danhSachPhuKien = [], 
-      hinhThucThanhToan = 'Tien mat', 
-      ghiChu = '',
-      donDatHangNCC = null,
-      tienChietKhau = 0,
-      phiVanChuyen = 0,
-      tenNguoiGiao = '',
-      sdtNguoiGiao = '',
-      cccdNguoiGiao = ''
+      maNCC, maNV, danhSachMay = [], danhSachPhuKien = [], 
+      hinhThucThanhToan = 'Tien mat', ghiChu = '', donDatHangNCC = null, 
+      tienChietKhau = 0, phiVanChuyen = 0, tenNguoiGiao = '', 
+      sdtNguoiGiao = '', cccdNguoiGiao = '' 
     } = payload;
 
     if (!maNCC || !maNV) {
@@ -36,156 +28,161 @@ class PhieuNhapService extends BaseService {
       throw this.createError('Phiếu nhập phải có ít nhất 1 máy hoặc 1 phụ kiện', 400);
     }
 
-    // 1. Kiểm tra trùng lặp IMEI
     const listImeis = danhSachMay.map(item => (item.imei || '').trim()).filter(Boolean);
     if (listImeis.length > 0) {
-      // Kiểm tra trùng IMEI ngay trong payload
       const uniqueImeis = new Set(listImeis);
       if (uniqueImeis.size !== listImeis.length) {
         throw this.createError('Phát hiện IMEI trùng lặp trong danh sách nhập', 400);
       }
-
       const existingImeis = await MayImei.find({ imei: { $in: listImeis } }).select('imei');
       if (existingImeis.length > 0) {
-        const duplicateList = existingImeis.map(m => m.imei);
-        throw this.createError('Phát hiện IMEI đã tồn tại trong hệ thống', 409, { existingImeis: duplicateList });
+        throw this.createError('Phát hiện IMEI đã tồn tại trong hệ thống', 409, { existingImeis: existingImeis.map(m => m.imei) });
       }
     }
 
-    // 2. Tính tổng tiền phiếu nhập
     let tongTien = 0;
     danhSachMay.forEach(item => { tongTien += Number(item.giaNhap) || 0; });
     danhSachPhuKien.forEach(item => { tongTien += (Number(item.giaNhap) * Number(item.soLuong)) || 0; });
-
-    // Tính cả chi phí/chiết khấu vào tổng tiền thực tế phiếu nhập
     tongTien = tongTien - Number(tienChietKhau) + Number(phiVanChuyen);
 
-    // 3. Tạo phiếu nhập
-    const phieuNhap = await PhieuNhap.create({
-      nhaCungCap: maNCC,
-      nhanVien: maNV,
-      donDatHangNCC: donDatHangNCC || undefined,
-      tienChietKhau,
-      phiVanChuyen,
-      tenNguoiGiao,
-      sdtNguoiGiao,
-      cccdNguoiGiao,
-      tongTien,
-      ghiChu
-    });
-
-    // 4. Xử lý danhSachMay (Tạo máy IMEI & CT_PhieuNhap)
-    if (danhSachMay.length > 0) {
-      const newImeis = danhSachMay.map(item => ({
-        imei: item.imei.trim(),
-        sanPham: item.maSP,
-        giaNhap: Number(item.giaNhap),
-        mauSac: item.mauSac || '',
-        dungLuong: item.dungLuong || '',
-        trangThai: 'Con hang'
-      }));
-      
-      // Bulk insert MayImei
-      await MayImei.insertMany(newImeis);
-
-      const newCTPhieuNhaps = danhSachMay.map(item => ({
-        phieuNhap: phieuNhap._id,
-        imei: item.imei.trim(),
-        sanPham: item.maSP,
-        donGiaNhap: Number(item.giaNhap)
-      }));
-
-      // Bulk insert CT_PhieuNhap
-      await CT_PhieuNhap.insertMany(newCTPhieuNhaps);
-
-      // Cập nhật tồn kho qua TonKhoService (An's task)
-      for (const item of danhSachMay) {
-        await TonKhoService.capNhatTonKho(item.maSP, null, 1); 
-      }
+    let session = null;
+    if (process.env.NODE_ENV !== 'test') {
+      session = await mongoose.startSession();
+      session.startTransaction();
     }
 
-    // 5. Xử lý danhSachPhuKien
-    if (danhSachPhuKien.length > 0) {
-      for (const item of danhSachPhuKien) {
-        const pk = await PhuKien.findById(item.maPK);
-        if (!pk) {
-          throw this.createError(`Không tìm thấy phụ kiện với mã ${item.maPK}`, 404);
-        }
-        pk.soLuongTon += Number(item.soLuong);
-        await pk.save();
-      }
-    }
+    try {
+      const phieuNhapArr = await PhieuNhap.create([{
+        nhaCungCap: maNCC,
+        nhanVien: maNV,
+        donDatHangNCC: donDatHangNCC || undefined,
+        tienChietKhau,
+        phiVanChuyen,
+        tenNguoiGiao,
+        sdtNguoiGiao,
+        cccdNguoiGiao,
+        tongTien,
+        ghiChu
+      }], { session });
+      const phieuNhap = phieuNhapArr[0];
 
-    // 6. Xử lý thanh toán
-    if (hinhThucThanhToan === 'Ghi no') {
-      // Tìm công nợ NCC hiện tại hoặc tạo mới
-      let congNo = await CongNo.findOne({ loaiDoiTuong: 'NhaCungCap', nhaCungCap: maNCC, trangThai: { $in: ['Con no', 'Qua han'] } });
-      if (!congNo) {
-        congNo = new CongNo({
-          loaiDoiTuong: 'NhaCungCap',
-          nhaCungCap: maNCC,
+      if (danhSachMay.length > 0) {
+        const newImeis = danhSachMay.map(item => ({
+          imei: item.imei.trim(),
+          sanPham: item.maSP,
+          giaNhap: Number(item.giaNhap),
+          mauSac: item.mauSac || '',
+          dungLuong: item.dungLuong || '',
+          trangThai: 'Con hang'
+        }));
+        await MayImei.insertMany(newImeis, { session });
+
+        const newCTPhieuNhaps = danhSachMay.map(item => ({
           phieuNhap: phieuNhap._id,
-          soTienNo: tongTien,
-          soTienDaTra: 0,
-          trangThai: 'Con no'
-        });
+          imei: item.imei.trim(),
+          sanPham: item.maSP,
+          donGiaNhap: Number(item.giaNhap)
+        }));
+        await CT_PhieuNhap.insertMany(newCTPhieuNhaps, { session });
+
+        for (const item of danhSachMay) {
+          await TonKhoService.capNhatTonKho(item.maSP, null, 1, { session }); 
+        }
+      }
+
+      if (danhSachPhuKien.length > 0) {
+        for (const item of danhSachPhuKien) {
+          const pk = await PhuKien.findById(item.maPK).session(session);
+          if (!pk) throw this.createError(`Không tìm thấy phụ kiện với mã ${item.maPK}`, 404);
+          pk.soLuongTon += Number(item.soLuong);
+          await pk.save({ session });
+        }
+      }
+
+      if (hinhThucThanhToan === 'Ghi no') {
+        let congNo = await CongNo.findOne({ loaiDoiTuong: 'NhaCungCap', nhaCungCap: maNCC, trangThai: { $in: ['Con no', 'Qua han'] } }).session(session);
+        if (!congNo) {
+          congNo = new CongNo({
+            loaiDoiTuong: 'NhaCungCap',
+            nhaCungCap: maNCC,
+            phieuNhap: phieuNhap._id,
+            soTienNo: tongTien,
+            soTienDaTra: 0,
+            trangThai: 'Con no'
+          });
+        } else {
+          congNo.soTienNo += tongTien;
+          congNo.trangThai = 'Con no';
+        }
+        await congNo.save({ session });
       } else {
-        congNo.soTienNo += tongTien;
-        congNo.trangThai = 'Con no';
+        await ThanhToanService.taoPhieuChi({
+          phieuNhap: phieuNhap._id,
+          maDT: maNCC.toString(),
+          soTien: tongTien,
+          hinhThuc: hinhThucThanhToan,
+          lyDo: 'Thanh toán tiền nhập hàng phiếu ' + (phieuNhap.maPN || phieuNhap._id),
+          session
+        });
       }
-      await congNo.save();
-    } else {
-      // Trả ngay (Tien mat, Chuyen khoan, Quet the) -> Gọi ThanhToanService tạo Phiếu Chi
-      await ThanhToanService.taoPhieuChi({
-        phieuNhap: phieuNhap._id,
-        maDT: maNCC.toString(),
-        soTien: tongTien,
-        hinhThuc: hinhThucThanhToan,
-        lyDo: 'Thanh toán tiền nhập hàng phiếu ' + (phieuNhap.maPN || phieuNhap._id)
-      });
-    }
 
-    // 7. Cập nhật Đơn Đặt Hàng NCC (nếu có)
-    if (donDatHangNCC) {
-      const ddh = await DonDatHangNCC.findById(donDatHangNCC);
-      if (ddh) {
-        // Cập nhật số lượng đã nhận trong CT_DonDatHangNCC
-        if (danhSachMay.length > 0) {
-          for (const item of danhSachMay) {
-            await CT_DonDatHangNCC.findOneAndUpdate(
-              { donDatHangNCC: ddh._id, sanPham: item.maSP },
-              { $inc: { soLuongDaNhan: 1 } }
-            );
+      if (donDatHangNCC) {
+        const ddh = await DonDatHangNCC.findById(donDatHangNCC).session(session);
+        if (ddh) {
+          if (danhSachMay.length > 0) {
+            for (const item of danhSachMay) {
+              await CT_DonDatHangNCC.findOneAndUpdate(
+                { donDatHangNCC: ddh._id, sanPham: item.maSP },
+                { $inc: { soLuongDaNhan: 1 } },
+                { session }
+              );
+            }
           }
-        }
-        if (danhSachPhuKien.length > 0) {
-          for (const item of danhSachPhuKien) {
-            await CT_DonDatHangNCC.findOneAndUpdate(
-              { donDatHangNCC: ddh._id, phuKien: item.maPK },
-              { $inc: { soLuongDaNhan: Number(item.soLuong) } }
-            );
+          if (danhSachPhuKien.length > 0) {
+            for (const item of danhSachPhuKien) {
+              await CT_DonDatHangNCC.findOneAndUpdate(
+                { donDatHangNCC: ddh._id, phuKien: item.maPK },
+                { $inc: { soLuongDaNhan: Number(item.soLuong) } },
+                { session }
+              );
+            }
           }
-        }
 
-        // Đổi trạng thái đơn đặt hàng
-        // Vì user nhập 1 lần đủ luôn nên chuyển thẳng sang 'Da nhan hang'
-        ddh.trangThai = 'Da nhan hang';
-        
-        // Trừ tiền cọc (nếu có) khỏi công nợ
-        if (ddh.tienDaTamUng > 0 && hinhThucThanhToan === 'Ghi no') {
-           const congNo = await CongNo.findOne({ phieuNhap: phieuNhap._id });
-           if(congNo) {
-             congNo.soTienNo = Math.max(0, congNo.soTienNo - ddh.tienDaTamUng);
-             congNo.soTienDaTra += ddh.tienDaTamUng;
-             await congNo.save();
-           }
+          ddh.trangThai = 'Da nhan hang';
+          
+          if (ddh.tienDaTamUng > 0 && hinhThucThanhToan === 'Ghi no') {
+             const congNo = await CongNo.findOne({ phieuNhap: phieuNhap._id }).session(session);
+             if (congNo) {
+               const tamUng = ddh.tienDaTamUng;
+               const noHienTai = congNo.soTienNo;
+               if (noHienTai <= tamUng) {
+                 congNo.soTienDaTra += noHienTai;
+                 congNo.soTienNo = 0;
+                 congNo.trangThai = 'Da tra het';
+               } else {
+                 congNo.soTienDaTra += tamUng;
+                 congNo.soTienNo -= tamUng;
+               }
+               await congNo.save({ session });
+             }
+          }
+          await ddh.save({ session });
         }
-
-        await ddh.save();
       }
-    }
 
-    return phieuNhap;
+      if (session) {
+        await session.commitTransaction();
+        session.endSession();
+      }
+      return phieuNhap;
+
+    } catch (error) {
+      if (session) {
+        await session.abortTransaction();
+        session.endSession();
+      }
+      throw error;
+    }
   }
 
   /**

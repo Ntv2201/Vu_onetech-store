@@ -58,7 +58,7 @@ for (let i = 0; i < TEST_SUITES.length; i++) {
 
   const proc = spawnSync('node', [filePath], {
     encoding: 'utf8',
-    env: process.env
+    env: { ...process.env, NODE_ENV: 'test' }
   });
 
   const duration = ((Date.now() - suiteStart) / 1000).toFixed(2);

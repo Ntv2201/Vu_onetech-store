@@ -29,7 +29,8 @@ class ThanhToanService extends BaseService {
       ghiChu = '',
       ngayThu,
       nguoiNop = '',
-      chungTuLienQuan = ''
+      chungTuLienQuan = '',
+      session
     } = payload;
 
     const amount = Number(soTien);
@@ -42,7 +43,7 @@ class ThanhToanService extends BaseService {
 
     const parsedNgayThu = (ngayThu && !isNaN(new Date(ngayThu).getTime())) ? new Date(ngayThu) : new Date();
 
-    const phieuThu = await PhieuThu.create({
+    const phieuThu = await PhieuThu.create([{
       hoaDon: hoaDon || null,
       donDatHang: donDatHang || null,
       congNo: congNo || null,
@@ -53,9 +54,9 @@ class ThanhToanService extends BaseService {
       nguoiNop: String(nguoiNop || '').trim(),
       chungTuLienQuan: String(chungTuLienQuan || '').trim(),
       ghiChu: ghiChu || ''
-    });
-
-    return phieuThu;
+    }], session ? { session } : {});
+    
+    return phieuThu[0];
   }
 
   /**
@@ -73,7 +74,8 @@ class ThanhToanService extends BaseService {
       lyDo = '',
       ngayChi,
       nguoiNhan = '',
-      chungTuLienQuan = ''
+      chungTuLienQuan = '',
+      session
     } = payload;
 
     const amount = Number(soTien);
@@ -86,7 +88,7 @@ class ThanhToanService extends BaseService {
 
     const parsedNgayChi = (ngayChi && !isNaN(new Date(ngayChi).getTime())) ? new Date(ngayChi) : new Date();
 
-    const phieuChi = await PhieuChi.create({
+    const phieuChi = await PhieuChi.create([{
       phieuNhap: phieuNhap || null,
       donDatHang: donDatHang || null,
       phieuDoiTra: phieuDoiTra || null,
@@ -97,9 +99,9 @@ class ThanhToanService extends BaseService {
       nguoiNhan: String(nguoiNhan || '').trim(),
       chungTuLienQuan: String(chungTuLienQuan || '').trim(),
       lyDo: lyDo || ''
-    });
+    }], session ? { session } : {});
 
-    return phieuChi;
+    return phieuChi[0];
   }
 
   /**
