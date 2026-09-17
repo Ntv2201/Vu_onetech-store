@@ -146,7 +146,8 @@ class NhaCungCapService extends BaseService {
         .populate('nhanVien', 'hoTen tenDangNhap vaiTro')
         .sort({ ngayNhap: -1, createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       PhieuNhap.countDocuments(filter)
     ]);
 

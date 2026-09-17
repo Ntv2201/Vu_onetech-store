@@ -15,6 +15,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 300);
     });
   }
+
+  // Tự động mở modal nếu có tham số từ trang Báo cáo
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('action') === 'taoDon') {
+    const sanPhamId = params.get('sanPhamId');
+    setTimeout(async () => {
+      await openTaoDonModal();
+      if (sanPhamId) {
+        const selectSP = document.querySelector('.sp-select');
+        if (selectSP) {
+          selectSP.value = sanPhamId;
+          selectSP.dispatchEvent(new Event('change'));
+          if (typeof calcDong === 'function') calcDong(selectSP);
+        }
+      }
+    }, 500);
+  }
 });
 
 async function loadDanhSachDon(page = 1, search = '') {

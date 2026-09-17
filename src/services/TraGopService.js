@@ -12,6 +12,10 @@ class TraGopService extends BaseService {
     super(HopDongTraGop);
   }
 
+  get runInTransaction() {
+    return require('../utils/transaction').runInTransaction;
+  }
+
   /**
    * Tạo hợp đồng trả góp mới từ Hóa đơn bán hàng
    * @param {Object} payload { hoaDonId, soTienTraTruoc, soKy, ghiChu, session }
@@ -219,45 +223,48 @@ class TraGopService extends BaseService {
   /**
    * Thu tiền 1 kỳ trả góp (tự động gọi ThanhToanService.taoPhieuThu)
    */
-  async thuTienKy(id, { hinhThuc = 'Tien mat', ghiChu = '', session = null } = {}) {
-    const hopDong = await HopDongTraGop.findById(id).session(session);
-    if (!hopDong) {
-      throw this.createError('Không tìm thấy hợp đồng trả góp', 404);
-    }
+  async thuTienKy(id, { hinhThuc = 'Tien mat', ghiChu = '' } = {}) {
+    return await this.runInTransaction(async (session) => {
+      const hopDong = await HopDongTraGop.findById(id).session(session);
+      if (!hopDong) {
+        throw this.createError('Không tìm thấy hợp đồng trả góp', 404);
+      }
 
-    if (hopDong.soKyDaThu >= hopDong.soKy || hopDong.trangThaiDuyet === 'Hoan tat') {
-      throw this.createError('Hợp đồng trả góp này đã hoàn tất tất toán đủ số kỳ', 400);
-    }
+      if (hopDong.soKyDaThu >= hopDong.soKy || hopDong.trangThaiDuyet === 'Hoan tat') {
+        throw this.createError('Hợp đồng trả góp này đã hoàn tất tất toán đủ số kỳ', 400);
+      }
 
-    const nextKy = hopDong.soKyDaThu + 1;
+      const nextKy = hopDong.soKyDaThu + 1;
 
-    // Tính chính xác số tiền cần thu cho kỳ này
-    let soTienThu = hopDong.soTienMoiKy;
-    if (nextKy === hopDong.soKy) {
-      soTienThu = hopDong.soTienTraGop - hopDong.soTienMoiKy * (hopDong.soKy - 1);
-    }
+      // Tính chính xác số tiền cần thu cho kỳ này
+      let soTienThu = hopDong.soTienMoiKy;
+      if (nextKy === hopDong.soKy) {
+        soTienThu = hopDong.soTienTraGop - hopDong.soTienMoiKy * (hopDong.soKy - 1);
+      }
 
-    // Tự động gọi ThanhToanService sinh Phiếu Thu trong Sổ quỹ
-    const phieuThu = await ThanhToanService.taoPhieuThu({
-      hoaDon: hopDong.hoaDon,
-      soTien: soTienThu,
-      hinhThuc,
-      ghiChu: ghiChu || `Thu tiền trả góp kỳ ${nextKy}/${hopDong.soKy}`
-    });
+      // Tự động gọi ThanhToanService sinh Phiếu Thu trong Sổ quỹ
+      const phieuThu = await ThanhToanService.taoPhieuThu({
+        hoaDon: hopDong.hoaDon,
+        soTien: soTienThu,
+        hinhThuc,
+        ghiChu: ghiChu || `Thu tiền trả góp kỳ ${nextKy}/${hopDong.soKy}`,
+        session
+      });
 
-    hopDong.soKyDaThu += 1;
-    if (hopDong.soKyDaThu >= hopDong.soKy) {
-      hopDong.trangThaiDuyet = 'Hoan tat';
-    }
+      hopDong.soKyDaThu += 1;
+      if (hopDong.soKyDaThu >= hopDong.soKy) {
+        hopDong.trangThaiDuyet = 'Hoan tat';
+      }
 
-    await hopDong.save({ session });
+      await hopDong.save({ session });
 
-    return {
-      hopDong,
-      phieuThu,
-      kyVuaThu: nextKy,
-      soTienThu
-    };
+      return {
+        hopDong,
+        phieuThu,
+        kyVuaThu: nextKy,
+        soTienThu
+      };
+    }); // End runInTransaction
   }
 }
 

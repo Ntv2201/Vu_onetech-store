@@ -39,7 +39,7 @@ class PhuKienService extends BaseService {
   async getPhuKienDetail(id) {
     const [phuKien, danhMucs] = await Promise.all([
       PhuKien.findById(id).populate('danhMuc'),
-      DanhMuc.find().sort({ tenDanhMuc: 1 })
+      DanhMuc.find().sort({ tenDanhMuc: 1 }).lean()
     ]);
 
     if (!phuKien) {

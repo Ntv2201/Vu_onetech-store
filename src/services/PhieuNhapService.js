@@ -9,49 +9,47 @@ class PhieuNhapService extends BaseService {
     super(PhieuNhap);
   }
 
+  get runInTransaction() {
+    return require('../utils/transaction').runInTransaction;
+  }
+
   /**
    * Tạo phiếu nhập kho và xử lý nghiệp vụ liên quan
    * @param {Object} payload 
    */
   async taoPhieuNhap(payload = {}) {
-    const { 
-      maNCC, maNV, danhSachMay = [], danhSachPhuKien = [], 
-      hinhThucThanhToan = 'Tien mat', ghiChu = '', donDatHangNCC = null, 
-      tienChietKhau = 0, phiVanChuyen = 0, tenNguoiGiao = '', 
-      sdtNguoiGiao = '', cccdNguoiGiao = '' 
-    } = payload;
+    return await this.runInTransaction(async (session) => {
+      const { 
+        maNCC, maNV, danhSachMay = [], danhSachPhuKien = [], 
+        hinhThucThanhToan = 'Tien mat', ghiChu = '', donDatHangNCC = null, 
+        tienChietKhau = 0, phiVanChuyen = 0, tenNguoiGiao = '', 
+        sdtNguoiGiao = '', cccdNguoiGiao = '' 
+      } = payload;
 
-    if (!maNCC || !maNV) {
-      throw this.createError('Thiếu thông tin Nhà Cung Cấp hoặc Nhân Viên lập phiếu', 400);
-    }
-    if (danhSachMay.length === 0 && danhSachPhuKien.length === 0) {
-      throw this.createError('Phiếu nhập phải có ít nhất 1 máy hoặc 1 phụ kiện', 400);
-    }
-
-    const listImeis = danhSachMay.map(item => (item.imei || '').trim()).filter(Boolean);
-    if (listImeis.length > 0) {
-      const uniqueImeis = new Set(listImeis);
-      if (uniqueImeis.size !== listImeis.length) {
-        throw this.createError('Phát hiện IMEI trùng lặp trong danh sách nhập', 400);
+      if (!maNCC || !maNV) {
+        throw this.createError('Thiếu thông tin Nhà Cung Cấp hoặc Nhân Viên lập phiếu', 400);
       }
-      const existingImeis = await MayImei.find({ imei: { $in: listImeis } }).select('imei');
-      if (existingImeis.length > 0) {
-        throw this.createError('Phát hiện IMEI đã tồn tại trong hệ thống', 409, { existingImeis: existingImeis.map(m => m.imei) });
+      if (danhSachMay.length === 0 && danhSachPhuKien.length === 0) {
+        throw this.createError('Phiếu nhập phải có ít nhất 1 máy hoặc 1 phụ kiện', 400);
       }
-    }
 
-    let tongTien = 0;
-    danhSachMay.forEach(item => { tongTien += Number(item.giaNhap) || 0; });
-    danhSachPhuKien.forEach(item => { tongTien += (Number(item.giaNhap) * Number(item.soLuong)) || 0; });
-    tongTien = tongTien - Number(tienChietKhau) + Number(phiVanChuyen);
+      const listImeis = danhSachMay.map(item => (item.imei || '').trim()).filter(Boolean);
+      if (listImeis.length > 0) {
+        const uniqueImeis = new Set(listImeis);
+        if (uniqueImeis.size !== listImeis.length) {
+          throw this.createError('Phát hiện IMEI trùng lặp trong danh sách nhập', 400);
+        }
+        const existingImeis = await MayImei.find({ imei: { $in: listImeis } }).select('imei').session(session);
+        if (existingImeis.length > 0) {
+          throw this.createError('Phát hiện IMEI đã tồn tại trong hệ thống', 409, { existingImeis: existingImeis.map(m => m.imei) });
+        }
+      }
 
-    let session = null;
-    if (process.env.NODE_ENV !== 'test') {
-      session = await mongoose.startSession();
-      session.startTransaction();
-    }
+      let tongTien = 0;
+      danhSachMay.forEach(item => { tongTien += Number(item.giaNhap) || 0; });
+      danhSachPhuKien.forEach(item => { tongTien += (Number(item.giaNhap) * Number(item.soLuong)) || 0; });
+      tongTien = tongTien - Number(tienChietKhau) + Number(phiVanChuyen);
 
-    try {
       const phieuNhapArr = await PhieuNhap.create([{
         nhaCungCap: maNCC,
         nhanVien: maNV,
@@ -170,19 +168,8 @@ class PhieuNhapService extends BaseService {
         }
       }
 
-      if (session) {
-        await session.commitTransaction();
-        session.endSession();
-      }
       return phieuNhap;
-
-    } catch (error) {
-      if (session) {
-        await session.abortTransaction();
-        session.endSession();
-      }
-      throw error;
-    }
+    }); // End runInTransaction
   }
 
   /**
@@ -214,7 +201,8 @@ class PhieuNhapService extends BaseService {
         .populate('nhanVien', 'hoTen tenDangNhap vaiTro')
         .sort({ ngayNhap: -1, createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       PhieuNhap.countDocuments(filter)
     ]);
 
@@ -237,7 +225,7 @@ class PhieuNhapService extends BaseService {
       throw this.createError('Không tìm thấy phiếu nhập', 404);
     }
 
-    const chiTiet = await CT_PhieuNhap.find({ phieuNhap: id }).populate('sanPham', 'tenMay hang giaBan');
+    const chiTiet = await CT_PhieuNhap.find({ phieuNhap: id }).populate('sanPham', 'tenMay hang giaBan').lean();
 
     return { phieuNhap, chiTiet };
   }

@@ -23,6 +23,11 @@ class HoaDonService extends BaseService {
     super(HoaDon);
   }
 
+  // Tích hợp Transaction helper
+  get runInTransaction() {
+    return require('../utils/transaction').runInTransaction;
+  }
+
   /**
    * Lấy danh sách hóa đơn có bộ lọc ngày, khách hàng, trạng thái, tìm kiếm
    */
@@ -93,7 +98,8 @@ class HoaDonService extends BaseService {
       .populate('khachHang', 'hoTen sdt diaChi')
       .populate('sanPham', 'tenMay hang giaBan')
       .sort({ createdAt: -1 })
-      .limit(20);
+      .limit(20)
+      .lean();
 
     if (search && search.trim()) {
       const q = search.trim().toLowerCase();
@@ -122,7 +128,8 @@ class HoaDonService extends BaseService {
     let imeis = await MayImei.find(filter)
       .populate('sanPham', 'tenMay hang giaBan soThangBH status')
       .sort({ createdAt: -1 })
-      .limit(50);
+      .limit(50)
+      .lean();
 
     if (query.search && query.search.trim()) {
       const q = query.search.trim().toLowerCase();
@@ -198,7 +205,7 @@ class HoaDonService extends BaseService {
     startOfDay.setHours(0, 0, 0, 0);
 
     const [hoaDonHomNay, tongMayDaBan, tongMayConHang] = await Promise.all([
-      HoaDon.find({ ngayLap: { $gte: startOfDay } }),
+      HoaDon.find({ ngayLap: { $gte: startOfDay } }).lean(),
       MayImei.countDocuments({ trangThai: 'Da ban' }),
       MayImei.countDocuments({ trangThai: 'Con hang' })
     ]);
@@ -299,48 +306,49 @@ class HoaDonService extends BaseService {
    * 11. Xử lý tài chính: Sinh PhieuThu vào Sổ quỹ (Vượng) hoặc tạo CongNo Khách hàng (An)
    */
   async taoHoaDonBanHang(payload = {}, sessionUser = null) {
-    let {
-      khachHang,
-      nhanVien,
-      danhSachIMEI = [],
-      danhSachPhuKien = [],
-      hinhThucThanhToan = 'Tien mat',
-      ghiChu = '',
-      maKM = null,
-      soTienGiam: soTienGiamThuCong = 0, // Backward-compatible: chiết khấu thủ công từ NV
-      donDatHangId,
-      donDatHang,
-      maDat,
-      guestName,
-      guestPhone,
-      guestCccd
-    } = payload;
+    return await this.runInTransaction(async (session) => {
+      let {
+        khachHang,
+        nhanVien,
+        danhSachIMEI = [],
+        danhSachPhuKien = [],
+        hinhThucThanhToan = 'Tien mat',
+        ghiChu = '',
+        maKM = null,
+        soTienGiam: soTienGiamThuCong = 0, // Backward-compatible: chiết khấu thủ công từ NV
+        donDatHangId,
+        donDatHang,
+        maDat,
+        guestName,
+        guestPhone,
+        guestCccd
+      } = payload;
 
-    const targetDatHangId = donDatHangId || donDatHang || maDat;
+      const targetDatHangId = donDatHangId || donDatHang || maDat;
 
-    // Xác định nhân viên lập đơn
-    const maNV = nhanVien || (sessionUser ? sessionUser._id : null);
-    if (!maNV) {
-      throw this.createError('Vui lòng cung cấp mã nhân viên lập hóa đơn', 400);
-    }
+      // Xác định nhân viên lập đơn
+      const maNV = nhanVien || (sessionUser ? sessionUser._id : null);
+      if (!maNV) {
+        throw this.createError('Vui lòng cung cấp mã nhân viên lập hóa đơn', 400);
+      }
 
     if ((!danhSachIMEI || danhSachIMEI.length === 0) && (!danhSachPhuKien || danhSachPhuKien.length === 0)) {
       throw this.createError('Hóa đơn phải có ít nhất 1 máy IMEI hoặc 1 phụ kiện', 400);
     }
 
     // 1. Kiểm tra đơn đặt hàng trước (nếu có yêu cầu cấn trừ cọc)
-    let donDatHangDoc = null;
-    let tienCocDaTru = 0;
-    if (targetDatHangId) {
-      if (mongoose.Types.ObjectId.isValid(targetDatHangId)) {
-        donDatHangDoc = await DonDatHangTruoc.findById(targetDatHangId).populate('khachHang sanPham');
-      } else {
-        donDatHangDoc = await DonDatHangTruoc.findOne({ _id: targetDatHangId }).populate('khachHang sanPham');
-      }
+      let donDatHangDoc = null;
+      let tienCocDaTru = 0;
+      if (targetDatHangId) {
+        if (mongoose.Types.ObjectId.isValid(targetDatHangId)) {
+          donDatHangDoc = await DonDatHangTruoc.findById(targetDatHangId).populate('khachHang sanPham').session(session);
+        } else {
+          donDatHangDoc = await DonDatHangTruoc.findOne({ _id: targetDatHangId }).populate('khachHang sanPham').session(session);
+        }
 
-      if (!donDatHangDoc) {
-        throw this.createError(`Không tìm thấy đơn đặt hàng trước với mã: ${targetDatHangId}`, 404);
-      }
+        if (!donDatHangDoc) {
+          throw this.createError(`Không tìm thấy đơn đặt hàng trước với mã: ${targetDatHangId}`, 404);
+        }
 
       if (donDatHangDoc.trangThai === 'Da huy') {
         throw this.createError('Đơn đặt hàng trước này đã bị hủy, không thể tiếp nhận bán máy', 400);
@@ -358,43 +366,44 @@ class HoaDonService extends BaseService {
       tienCocDaTru = donDatHangDoc.soTienCoc || 0;
     }
 
-    // 1.1 Xử lý tự động tạo Khách hàng vãng lai nếu chưa có
-    if (!khachHang && guestName && guestPhone) {
-      const sdtGuest = guestPhone.trim();
-      if (!/^[0-9]{10}$/.test(sdtGuest)) {
-        throw this.createError('Số điện thoại khách hàng không hợp lệ (yêu cầu 10 chữ số)', 400);
-      }
-      if (guestCccd && guestCccd.trim() && !/^[0-9]{12}$/.test(guestCccd.trim())) {
-        throw this.createError('Căn cước công dân không hợp lệ (yêu cầu 12 chữ số)', 400);
-      }
-      let existingCustomer = await KhachHang.findOne({ sdt: sdtGuest });
-      if (existingCustomer) {
-        khachHang = existingCustomer._id;
-        // Cập nhật CCCD nếu có nhập mà trước đó chưa có
-        if (guestCccd && !existingCustomer.cccd) {
-          existingCustomer.cccd = guestCccd.trim();
-          await existingCustomer.save();
+      // 1.1 Xử lý tự động tạo Khách hàng vãng lai nếu chưa có
+      if (!khachHang && guestName && guestPhone) {
+        const sdtGuest = guestPhone.trim();
+        if (!/^[0-9]{10}$/.test(sdtGuest)) {
+          throw this.createError('Số điện thoại khách hàng không hợp lệ (yêu cầu 10 chữ số)', 400);
         }
-      } else {
-        const newCustomer = await KhachHang.create({
-          hoTen: guestName.trim(),
-          sdt: sdtGuest,
-          cccd: guestCccd ? guestCccd.trim() : undefined,
-          hangThanhVien: 'Đồng'
-        });
-        khachHang = newCustomer._id;
+        if (guestCccd && guestCccd.trim() && !/^[0-9]{12}$/.test(guestCccd.trim())) {
+          throw this.createError('Căn cước công dân không hợp lệ (yêu cầu 12 chữ số)', 400);
+        }
+        let existingCustomer = await KhachHang.findOne({ sdt: sdtGuest }).session(session);
+        if (existingCustomer) {
+          khachHang = existingCustomer._id;
+          // Cập nhật CCCD nếu có nhập mà trước đó chưa có
+          if (guestCccd && !existingCustomer.cccd) {
+            existingCustomer.cccd = guestCccd.trim();
+            await existingCustomer.save({ session });
+          }
+        } else {
+          const newCustomer = new KhachHang({
+            hoTen: guestName.trim(),
+            sdt: sdtGuest,
+            cccd: guestCccd ? guestCccd.trim() : undefined,
+            hangThanhVien: 'Đồng'
+          });
+          await newCustomer.save({ session });
+          khachHang = newCustomer._id;
+        }
       }
-    }
 
     // Chuẩn hóa danh sách IMEI dạng string
     const imeis = (Array.isArray(danhSachIMEI) ? danhSachIMEI : [danhSachIMEI])
       .map(i => (typeof i === 'string' ? i.trim() : (i && i.imei ? i.imei.trim() : '')))
       .filter(Boolean);
 
-    // 2. Kiểm tra từng IMEI có tồn tại và trạng thái 'Con hang'
-    let mayList = [];
-    if (imeis.length > 0) {
-      mayList = await MayImei.find({ imei: { $in: imeis } }).populate('sanPham');
+      // 2. Kiểm tra từng IMEI có tồn tại và trạng thái 'Con hang'
+      let mayList = [];
+      if (imeis.length > 0) {
+        mayList = await MayImei.find({ imei: { $in: imeis } }).populate('sanPham').session(session);
 
       const foundImeis = new Set(mayList.map(m => m.imei));
       const missingImeis = imeis.filter(i => !foundImeis.has(i));
@@ -421,14 +430,14 @@ class HoaDonService extends BaseService {
       }
     }
 
-    // 3. Kiểm tra phụ kiện và số lượng tồn
-    const pkItems = [];
-    for (const item of danhSachPhuKien) {
-      const pkId = item.phuKien || item.maPK || item._id;
-      const soLuong = parseInt(item.soLuong) || 1;
-      if (!pkId) continue;
+      // 3. Kiểm tra phụ kiện và số lượng tồn
+      const pkItems = [];
+      for (const item of danhSachPhuKien) {
+        const pkId = item.phuKien || item.maPK || item._id;
+        const soLuong = parseInt(item.soLuong) || 1;
+        if (!pkId) continue;
 
-      const pk = await PhuKien.findById(pkId);
+        const pk = await PhuKien.findById(pkId).session(session);
       if (!pk) {
         throw this.createError(`Phụ kiện với ID ${pkId} không tồn tại`, 404);
       }
@@ -473,34 +482,35 @@ class HoaDonService extends BaseService {
     // Giới hạn tiền cọc tối đa bằng tổng tiền hóa đơn
     const actualTienCocDaTru = Math.min(tienCocDaTru, tongTien);
 
-    // Áp dụng khuyến mãi (nếu có)
-    const kmResult = await KhuyenMaiService.apDungKhuyenMai(maKM, tongTien);
-    const kmDiscount = kmResult.soTienGiam;
-    const khuyenMaiObj = kmResult.khuyenMai;
+      // Áp dụng khuyến mãi (nếu có)
+      const kmResult = await KhuyenMaiService.apDungKhuyenMai(maKM, tongTien, session);
+      const kmDiscount = kmResult.soTienGiam;
+      const khuyenMaiObj = kmResult.khuyenMai;
 
     // Tổng chiết khấu = KM hệ thống + chiết khấu thủ công (backward-compatible)
     const discount = Math.min(kmDiscount + Math.max(0, Number(soTienGiamThuCong) || 0), tongTien);
 
     const soTienThanhToan = Math.max(0, tongTien - actualTienCocDaTru - discount);
 
-    // 5. Cập nhật MayImei -> 'Da ban' (Dùng atomic update với kiểm tra trangThai === 'Con hang' để chống race condition)
-    if (imeis.length > 0) {
-      const updatedImeis = [];
-      for (const targetImei of imeis) {
-        const updatedDoc = await MayImei.findOneAndUpdate(
-          { imei: targetImei, trangThai: 'Con hang' },
-          { $set: { trangThai: 'Da ban' } },
-          { new: true }
-        );
+      // 5. Cập nhật MayImei -> 'Da ban' (Dùng atomic update với kiểm tra trangThai === 'Con hang' để chống race condition)
+      if (imeis.length > 0) {
+        const updatedImeis = [];
+        for (const targetImei of imeis) {
+          const updatedDoc = await MayImei.findOneAndUpdate(
+            { imei: targetImei, trangThai: 'Con hang' },
+            { $set: { trangThai: 'Da ban' } },
+            { new: true, session }
+          );
 
-        if (!updatedDoc) {
-          // Rollback chỉ những IMEI đã lỡ cập nhật trong mẻ này
-          if (updatedImeis.length > 0) {
-            await MayImei.updateMany(
-              { imei: { $in: updatedImeis } },
-              { $set: { trangThai: 'Con hang' } }
-            );
-          }
+          if (!updatedDoc) {
+            // Rollback chỉ những IMEI đã lỡ cập nhật trong mẻ này
+            if (updatedImeis.length > 0) {
+              await MayImei.updateMany(
+                { imei: { $in: updatedImeis } },
+                { $set: { trangThai: 'Con hang' } },
+                { session }
+              );
+            }
           throw this.createError(
             `Phát hiện xung đột đồng thời khi bán máy! Máy IMEI "${targetImei}" không còn ở trạng thái khả dụng hoặc vừa được bán ở quầy khác.`,
             409,
@@ -511,123 +521,131 @@ class HoaDonService extends BaseService {
       }
     }
 
-    // 6. Trừ số lượng tồn phụ kiện & Tồn kho Model qua TonKhoService
-    for (const pkItem of pkItems) {
-      await PhuKien.findByIdAndUpdate(
-        pkItem.phuKienId,
-        { $inc: { soLuongTon: -pkItem.soLuong } }
-      );
-    }
+      // 6. Trừ số lượng tồn phụ kiện & Tồn kho Model qua TonKhoService
+      for (const pkItem of pkItems) {
+        await PhuKien.findByIdAndUpdate(
+          pkItem.phuKienId,
+          { $inc: { soLuongTon: -pkItem.soLuong } },
+          { session }
+        );
+      }
 
-    // Cập nhật giảm tồn kho model sản phẩm qua TonKhoService (An & Tuân)
-    for (const mayDoc of ctMayDocs) {
-      if (mayDoc.sanPhamId) {
-        try {
-          await TonKhoService.capNhatTonKho(mayDoc.sanPhamId, null, -1, { choPhepAm: true });
-        } catch (e) {
-          // Bỏ qua lỗi nếu chưa khởi tạo kho chi tiết
+      // Cập nhật giảm tồn kho model sản phẩm qua TonKhoService (An & Tuân)
+      for (const mayDoc of ctMayDocs) {
+        if (mayDoc.sanPhamId) {
+          try {
+            await TonKhoService.capNhatTonKho(mayDoc.sanPhamId, null, -1, { choPhepAm: true, session });
+          } catch (e) {
+            // Bỏ qua lỗi nếu chưa khởi tạo kho chi tiết
+          }
         }
       }
-    }
 
-    // 7. Tạo HoaDon
-    const autoSoHD = 'HD' + Date.now().toString().slice(-8);
-    let noteText = ghiChu || '';
-    if (actualTienCocDaTru > 0) {
-      noteText = (noteText ? noteText + ' | ' : '') + `Đã cấn trừ tiền cọc đơn đặt trước: ${actualTienCocDaTru.toLocaleString('vi-VN')} đ`;
-    }
-    if (discount > 0) {
-      noteText = (noteText ? noteText + ' | ' : '') + `Chiết khấu giảm giá: ${discount.toLocaleString('vi-VN')} đ`;
-    }
+      // 7. Tạo HoaDon
+      const autoSoHD = 'HD' + Date.now().toString().slice(-8);
+      let noteText = ghiChu || '';
+      if (actualTienCocDaTru > 0) {
+        noteText = (noteText ? noteText + ' | ' : '') + `Đã cấn trừ tiền cọc đơn đặt trước: ${actualTienCocDaTru.toLocaleString('vi-VN')} đ`;
+      }
+      if (discount > 0) {
+        noteText = (noteText ? noteText + ' | ' : '') + `Chiết khấu giảm giá: ${discount.toLocaleString('vi-VN')} đ`;
+      }
 
-    const isDebt = hinhThucThanhToan === 'Cong no';
-    const hoaDonTrangThai = isDebt ? 'Cong no' : 'Da thanh toan';
+      const isDebt = hinhThucThanhToan === 'Cong no';
+      const hoaDonTrangThai = isDebt ? 'Cong no' : 'Da thanh toan';
 
-    const hoaDon = await HoaDon.create({
-      soHD: autoSoHD,
-      khachHang: khachHang || null,
-      nhanVien: maNV,
-      donDatHang: donDatHangDoc ? donDatHangDoc._id : null,
-      tienCocDaTru: actualTienCocDaTru,
-      khuyenMai: khuyenMaiObj ? khuyenMaiObj._id : null,
-      khuyenMaiGiam: discount,
-      soTienGiam: discount, // Quan trọng: Lưu vào soTienGiam để các module Báo Cáo và Giao Diện không bị lệch
-      soTienThanhToan,
-      ngayLap: new Date(),
-      tongTien,
-      trangThai: hoaDonTrangThai,
-      ghiChu: noteText
-    });
+      const hoaDon = new HoaDon({
+        soHD: autoSoHD,
+        khachHang: khachHang || null,
+        nhanVien: maNV,
+        donDatHang: donDatHangDoc ? donDatHangDoc._id : null,
+        tienCocDaTru: actualTienCocDaTru,
+        khuyenMai: khuyenMaiObj ? khuyenMaiObj._id : null,
+        khuyenMaiGiam: discount,
+        soTienGiam: discount, // Quan trọng: Lưu vào soTienGiam để các module Báo Cáo và Giao Diện không bị lệch
+        soTienThanhToan,
+        ngayLap: new Date(),
+        tongTien,
+        trangThai: hoaDonTrangThai,
+        ghiChu: noteText
+      });
+      await hoaDon.save({ session });
 
-    // 8. Tạo CT_HoaDon_May
-    if (ctMayDocs.length > 0) {
-      const ctMayWithHD = ctMayDocs.map(item => ({
-        imei: item.imei,
-        donGiaBan: item.donGiaBan,
-        hoaDon: hoaDon._id
-      }));
-      await CT_HoaDon_May.insertMany(ctMayWithHD);
-    }
+      // 8. Tạo CT_HoaDon_May
+      if (ctMayDocs.length > 0) {
+        const ctMayWithHD = ctMayDocs.map(item => ({
+          imei: item.imei,
+          donGiaBan: item.donGiaBan,
+          hoaDon: hoaDon._id
+        }));
+        await CT_HoaDon_May.insertMany(ctMayWithHD, { session });
+      }
 
-    // 9. Tạo CT_HoaDon_PhuKien
-    if (pkItems.length > 0) {
-      const ctPKWithHD = pkItems.map(item => ({
+      // 9. Tạo CT_HoaDon_PhuKien
+      if (pkItems.length > 0) {
+        const ctPKWithHD = pkItems.map(item => ({
+          hoaDon: hoaDon._id,
+          phuKien: item.phuKienId,
+          soLuong: item.soLuong,
+          donGiaBan: item.donGiaBan
+        }));
+        await CT_HoaDon_PhuKien.insertMany(ctPKWithHD, { session });
+      }
+
+      // 10. Tự sinh PhieuXuatKho
+      const pxk = new PhieuXuatKho({
         hoaDon: hoaDon._id,
-        phuKien: item.phuKienId,
-        soLuong: item.soLuong,
-        donGiaBan: item.donGiaBan
-      }));
-      await CT_HoaDon_PhuKien.insertMany(ctPKWithHD);
-    }
+        lyDoXuat: `Xuat ban hang theo hoa don ${hoaDon.soHD}`,
+        ngayXuat: new Date()
+      });
+      await pxk.save({ session });
 
-    // 10. Tự sinh PhieuXuatKho
-    await PhieuXuatKho.create({
-      hoaDon: hoaDon._id,
-      lyDoXuat: `Xuat ban hang theo hoa don ${hoaDon.soHD}`,
-      ngayXuat: new Date()
-    });
-
-    // 11. Cập nhật trạng thái DonDatHangTruoc -> 'Da nhan hang'
-    if (donDatHangDoc) {
-      donDatHangDoc.trangThai = 'Da nhan hang';
-      if (imeis.length > 0 && !donDatHangDoc.imei) {
-        donDatHangDoc.imei = imeis[0];
+      // 11. Cập nhật trạng thái DonDatHangTruoc -> 'Da nhan hang'
+      if (donDatHangDoc) {
+        donDatHangDoc.trangThai = 'Da nhan hang';
+        if (imeis.length > 0 && !donDatHangDoc.imei) {
+          donDatHangDoc.imei = imeis[0];
+        }
+        await donDatHangDoc.save({ session });
       }
-      await donDatHangDoc.save();
-    }
 
-    // 12. Xử lý tài chính liên Service (Sổ quỹ & Công nợ)
-    if (isDebt && khachHang) {
+      // 12. Xử lý tài chính liên Service (Sổ quỹ & Công nợ)
+      if (isDebt && khachHang) {
       // Mua ghi nợ -> Tự sinh hồ sơ Công Nợ Khách Hàng (An)
-      try {
-        await CongNoService.taoCongNo({
-          loaiDoiTuong: 'KhachHang',
-          khachHang,
-          hoaDon: hoaDon._id,
-          soTienNo: soTienThanhToan
-        });
-      } catch (err) {
-        console.warn('[HoaDonService] Không thể tự động tạo công nợ:', err.message);
+        try {
+          await CongNoService.taoCongNo({
+            loaiDoiTuong: 'KhachHang',
+            khachHang,
+            hoaDon: hoaDon._id,
+            soTienNo: soTienThanhToan,
+            session
+          });
+        } catch (err) {
+          console.warn('[HoaDonService] Không thể tự động tạo công nợ:', err.message);
+          throw err;
+        }
+      } else if (soTienThanhToan > 0) {
+        // Thanh toán ngay (Tiền mặt / Chuyển khoản / Quẹt thẻ) -> Sinh Phiếu Thu Sổ quỹ (Vượng)
+        try {
+          const paymentMethod = ['Tien mat', 'Chuyen khoan', 'Quet the', 'Vi dien tu'].includes(hinhThucThanhToan)
+            ? hinhThucThanhToan
+            : 'Tien mat';
+          await ThanhToanService.taoPhieuThu({
+            hoaDon: hoaDon._id,
+            soTien: soTienThanhToan,
+            hinhThuc: paymentMethod,
+            ghiChu: `Thu tiền bán hàng theo hóa đơn ${hoaDon.soHD}`,
+            session
+          }, sessionUser);
+        } catch (err) {
+          console.warn('[HoaDonService] Không thể tự động tạo phiếu thu:', err.message);
+          throw err;
+        }
       }
-    } else if (soTienThanhToan > 0) {
-      // Thanh toán ngay (Tiền mặt / Chuyển khoản / Quẹt thẻ) -> Sinh Phiếu Thu Sổ quỹ (Vượng)
-      try {
-        const paymentMethod = ['Tien mat', 'Chuyen khoan', 'Quet the', 'Vi dien tu'].includes(hinhThucThanhToan)
-          ? hinhThucThanhToan
-          : 'Tien mat';
-        await ThanhToanService.taoPhieuThu({
-          hoaDon: hoaDon._id,
-          soTien: soTienThanhToan,
-          hinhThuc: paymentMethod,
-          ghiChu: `Thu tiền bán hàng theo hóa đơn ${hoaDon.soHD}`
-        }, sessionUser);
-      } catch (err) {
-        console.warn('[HoaDonService] Không thể tự động tạo phiếu thu:', err.message);
-      }
-    }
 
-    // Trả về dữ liệu chi tiết hóa đơn vừa tạo
-    return await this.getHoaDonDetail(hoaDon._id);
+      // Trả về dữ liệu chi tiết hóa đơn vừa tạo
+      return await this.getHoaDonDetail(hoaDon._id);
+    }); // End runInTransaction
   }
 
   /**

@@ -27,7 +27,8 @@ const TEST_SUITES = [
   { name: 'Ràng Buộc DOM Element ID & Data Extractors Frontend (QA & UI)', file: 'test_frontend_dom_contract.js' },
   { name: 'Stress Test & Concurrency Atomic Lock (QA & Tối Ưu)', file: 'test_concurrency_stress.js' },
   { name: 'Kiểm Thử Cấu Trúc Giao Diện HTML, Sidebar & Assets (QA & UI)', file: 'test_ui_html_structure.js' },
-  { name: 'Soft Delete Toggle, RBAC Lockout & Safe Search (PR #26)', file: 'test_pr26_features.js' }
+  { name: 'Soft Delete Toggle, RBAC Lockout & Safe Search (PR #26)', file: 'test_pr26_features.js' },
+  { name: 'Giao Dịch Toàn Vẹn & Rollback Hóa Đơn (Transactions)', file: 'test_hoadon_rollback.js' }
 ];
 
 console.log('======================================================================');

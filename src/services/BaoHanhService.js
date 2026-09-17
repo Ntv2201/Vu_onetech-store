@@ -16,6 +16,10 @@ class BaoHanhService extends BaseService {
     super(PhieuBaoHanh);
   }
 
+  get runInTransaction() {
+    return require('../utils/transaction').runInTransaction;
+  }
+
   /**
    * Định dạng ngày dd/mm/yyyy
    */
@@ -241,29 +245,30 @@ class BaoHanhService extends BaseService {
    * 4. Cập nhật MayImei.trangThai = 'Bao hanh'
    */
   async tiepNhanBaoHanh(payload = {}, sessionUser = null) {
-    const { imei, moTaLoi, ghiChu, nhanVien } = payload;
+    return await this.runInTransaction(async (session) => {
+      const { imei, moTaLoi, ghiChu, nhanVien } = payload;
 
-    if (!imei || !imei.trim()) {
-      throw this.createError('Vui lòng nhập số IMEI máy cần bảo hành', 400);
-    }
-    if (!moTaLoi || !moTaLoi.trim()) {
-      throw this.createError('Vui lòng nhập mô tả lỗi bảo hành', 400);
-    }
+      if (!imei || !imei.trim()) {
+        throw this.createError('Vui lòng nhập số IMEI máy cần bảo hành', 400);
+      }
+      if (!moTaLoi || !moTaLoi.trim()) {
+        throw this.createError('Vui lòng nhập mô tả lỗi bảo hành', 400);
+      }
 
     const maNV = nhanVien || (sessionUser ? sessionUser._id : null);
     if (!maNV) {
       throw this.createError('Vui lòng cung cấp mã nhân viên tiếp nhận', 400);
     }
 
-    // 1. Tìm máy trong CSDL
-    const mayImei = await MayImei.findOne({ imei: imei.trim() }).populate('sanPham');
-    if (!mayImei) {
-      throw this.createError(`Không tìm thấy máy có IMEI "${imei}"`, 404);
-    }
+      // 1. Tìm máy trong CSDL
+      const mayImei = await MayImei.findOne({ imei: imei.trim() }).populate('sanPham').session(session);
+      if (!mayImei) {
+        throw this.createError(`Không tìm thấy máy có IMEI "${imei}"`, 404);
+      }
 
-    // Kiểm tra máy đã từng bán hay chưa
-    const ctHoaDon = await CT_HoaDon_May.findOne({ imei: imei.trim() }).populate('hoaDon');
-    if (!ctHoaDon || !ctHoaDon.hoaDon) {
+      // Kiểm tra máy đã từng bán hay chưa
+      const ctHoaDon = await CT_HoaDon_May.findOne({ imei: imei.trim() }).populate('hoaDon').session(session);
+      if (!ctHoaDon || !ctHoaDon.hoaDon) {
       throw this.createError(
         'Máy chưa bán, không thể tiếp nhận bảo hành! Vui lòng kiểm tra lại số IMEI hoặc lịch sử hóa đơn.',
         400
@@ -291,26 +296,29 @@ class BaoHanhService extends BaseService {
       );
     }
 
-    // 3. Tạo PhieuBaoHanh
-    const autoMaPBH = 'PBH' + Date.now().toString().slice(-8);
-    const phieuBaoHanh = await PhieuBaoHanh.create({
-      maPBH: autoMaPBH,
-      imei: imei.trim(),
-      khachHang: ctHoaDon.hoaDon.khachHang || null,
-      nhanVien: maNV,
-      moTaLoi: moTaLoi.trim(),
-      ngayTiepNhan: new Date(),
-      trangThai: 'Dang xu ly',
-      ghiChu: ghiChu ? ghiChu.trim() : ''
-    });
+      // 3. Tạo PhieuBaoHanh
+      const autoMaPBH = 'PBH' + Date.now().toString().slice(-8);
+      const pbhArray = await PhieuBaoHanh.create([{
+        maPBH: autoMaPBH,
+        imei: imei.trim(),
+        khachHang: ctHoaDon.hoaDon.khachHang || null,
+        nhanVien: maNV,
+        moTaLoi: moTaLoi.trim(),
+        ngayTiepNhan: new Date(),
+        trangThai: 'Dang xu ly',
+        ghiChu: ghiChu ? ghiChu.trim() : ''
+      }], { session });
+      const phieuBaoHanh = pbhArray[0];
 
-    // 4. Update MayImei -> 'Bao hanh'
-    await MayImei.findOneAndUpdate(
-      { imei: imei.trim() },
-      { $set: { trangThai: 'Bao hanh' } }
-    );
+      // 4. Update MayImei -> 'Bao hanh'
+      await MayImei.findOneAndUpdate(
+        { imei: imei.trim() },
+        { $set: { trangThai: 'Bao hanh' } },
+        { session }
+      );
 
-    return await this.getPhieuBaoHanhDetail(phieuBaoHanh._id);
+      return await this.getPhieuBaoHanhDetail(phieuBaoHanh._id);
+    }); // End runInTransaction
   }
 
   /**
@@ -319,18 +327,19 @@ class BaoHanhService extends BaseService {
    * 2. Trừ LinhKien.soLuongTon
    */
   async xuatLinhKienBaoHanh(pbhId, payload = {}) {
-    const { linhKienId, soLuong = 1, donGia } = payload;
+    return await this.runInTransaction(async (session) => {
+      const { linhKienId, soLuong = 1, donGia } = payload;
 
-    if (!linhKienId) {
-      throw this.createError('Vui lòng chọn linh kiện cần xuất', 400);
-    }
+      if (!linhKienId) {
+        throw this.createError('Vui lòng chọn linh kiện cần xuất', 400);
+      }
 
-    const qty = Math.max(1, parseInt(soLuong) || 1);
+      const qty = Math.max(1, parseInt(soLuong) || 1);
 
-    const [pbh, linhKien] = await Promise.all([
-      PhieuBaoHanh.findById(pbhId),
-      LinhKien.findById(linhKienId)
-    ]);
+      const [pbh, linhKien] = await Promise.all([
+        PhieuBaoHanh.findById(pbhId).session(session),
+        LinhKien.findById(linhKienId).session(session)
+      ]);
 
     if (!pbh) {
       throw this.createError('Không tìm thấy phiếu bảo hành', 404);
@@ -347,22 +356,24 @@ class BaoHanhService extends BaseService {
       );
     }
 
-    const donGiaXuat = donGia !== undefined ? Number(donGia) : (linhKien.donGia || 0);
+      const donGiaXuat = donGia !== undefined ? Number(donGia) : (linhKien.donGia || 0);
 
-    // Tạo chi tiết linh kiện
-    const ctLinhKien = await CT_PBH_LinhKien.create({
-      phieuBaoHanh: pbh._id,
-      linhKien: linhKien._id,
-      soLuong: qty,
-      donGia: donGiaXuat
-    });
+      // Tạo chi tiết linh kiện
+      const ctlkArray = await CT_PBH_LinhKien.create([{
+        phieuBaoHanh: pbh._id,
+        linhKien: linhKien._id,
+        soLuong: qty,
+        donGia: donGiaXuat
+      }], { session });
+      const ctLinhKien = ctlkArray[0];
 
-    // Trừ tồn kho linh kiện
-    await LinhKien.findByIdAndUpdate(linhKien._id, {
-      $inc: { soLuongTon: -qty }
-    });
+      // Trừ tồn kho linh kiện
+      await LinhKien.findByIdAndUpdate(linhKien._id, {
+        $inc: { soLuongTon: -qty }
+      }, { session });
 
-    return ctLinhKien;
+      return ctLinhKien;
+    }); // End runInTransaction
   }
 
   /**
@@ -371,31 +382,34 @@ class BaoHanhService extends BaseService {
    * 2. Đổi MayImei.trangThai -> 'Da ban' (máy đã sửa xong trả về cho khách)
    */
   async hoanTatBaoHanh(pbhId, payload = {}) {
-    const { ghiChu, trangThai = 'Da sua xong' } = payload;
+    return await this.runInTransaction(async (session) => {
+      const { ghiChu, trangThai = 'Da sua xong' } = payload;
 
-    const pbh = await PhieuBaoHanh.findById(pbhId);
-    if (!pbh) {
-      throw this.createError('Không tìm thấy phiếu bảo hành', 404);
-    }
+      const pbh = await PhieuBaoHanh.findById(pbhId).session(session);
+      if (!pbh) {
+        throw this.createError('Không tìm thấy phiếu bảo hành', 404);
+      }
 
-    pbh.trangThai = ['Da sua xong', 'Tra khach', 'Tu choi bao hanh'].includes(trangThai)
-      ? trangThai
-      : 'Da sua xong';
+      pbh.trangThai = ['Da sua xong', 'Tra khach', 'Tu choi bao hanh'].includes(trangThai)
+        ? trangThai
+        : 'Da sua xong';
 
-    if (ghiChu) {
-      pbh.ghiChu = (pbh.ghiChu ? pbh.ghiChu + ' | ' : '') + ghiChu.trim();
-    }
-    await pbh.save();
+      if (ghiChu) {
+        pbh.ghiChu = (pbh.ghiChu ? pbh.ghiChu + ' | ' : '') + ghiChu.trim();
+      }
+      await pbh.save({ session });
 
-    // Nếu sửa xong hoặc trả khách, cập nhật trạng thái IMEI trở lại 'Da ban'
-    if (pbh.trangThai === 'Da sua xong' || pbh.trangThai === 'Tra khach') {
-      await MayImei.findOneAndUpdate(
-        { imei: pbh.imei },
-        { $set: { trangThai: 'Da ban' } }
-      );
-    }
+      // Nếu sửa xong hoặc trả khách, cập nhật trạng thái IMEI trở lại 'Da ban'
+      if (pbh.trangThai === 'Da sua xong' || pbh.trangThai === 'Tra khach') {
+        await MayImei.findOneAndUpdate(
+          { imei: pbh.imei },
+          { $set: { trangThai: 'Da ban' } },
+          { session }
+        );
+      }
 
-    return await this.getPhieuBaoHanhDetail(pbh._id);
+      return await this.getPhieuBaoHanhDetail(pbh._id);
+    }); // End runInTransaction
   }
 
   /**

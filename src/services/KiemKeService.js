@@ -20,6 +20,10 @@ class KiemKeService extends BaseService {
     super(BienBanKiemKe);
   }
 
+  get runInTransaction() {
+    return require('../utils/transaction').runInTransaction;
+  }
+
   /**
    * Sinh mã biên bản kiểm kê tự động: BBKK-YYYYMMDD-XXXX
    */
@@ -97,15 +101,16 @@ class KiemKeService extends BaseService {
    * @param {Object} [params.sessionUser]
    */
   async thucHienKiemKe({ khoId, danhSachImeiThucTe, ghiChu, sessionUser }) {
-    let targetKhoId = khoId;
-    if (!targetKhoId) {
-      const defaultKho = await Kho.findOne();
-      if (!defaultKho) throw this.createError('Chưa có kho hàng trong hệ thống', 400);
-      targetKhoId = defaultKho._id;
-    }
+    return await this.runInTransaction(async (session) => {
+      let targetKhoId = khoId;
+      if (!targetKhoId) {
+        const defaultKho = await Kho.findOne().session(session);
+        if (!defaultKho) throw this.createError('Chưa có kho hàng trong hệ thống', 400);
+        targetKhoId = defaultKho._id;
+      }
 
-    const kho = await Kho.findById(targetKhoId);
-    if (!kho) throw this.createError('Kho hàng không tồn tại', 404);
+      const kho = await Kho.findById(targetKhoId).session(session);
+      if (!kho) throw this.createError('Kho hàng không tồn tại', 404);
 
     // Chuẩn hóa danh sách IMEI thực tế quét được
     let rawList = [];
@@ -123,10 +128,11 @@ class KiemKeService extends BaseService {
       )
     ];
 
-    // Lấy toàn bộ máy IMEI trong DB đang 'Con hang' (Lý thuyết)
-    const dbConHangList = await MayImei.find({ trangThai: 'Con hang' })
-      .populate('sanPham', 'tenMay hang giaBan')
-      .lean();
+      // Lấy toàn bộ máy IMEI trong DB đang 'Con hang' (Lý thuyết)
+      const dbConHangList = await MayImei.find({ trangThai: 'Con hang' })
+        .populate('sanPham', 'tenMay hang giaBan')
+        .session(session)
+        .lean();
 
     const mapDbConHang = new Map();
     dbConHangList.forEach(m => {
@@ -170,10 +176,11 @@ class KiemKeService extends BaseService {
     const imeiNgoaiDbConHang = imeiThucTeList.filter(imei => !mapDbConHang.has(imei));
 
     if (imeiNgoaiDbConHang.length > 0) {
-      // Tra cứu xem những IMEI này có trong DB ở trạng thái khác (Da ban, Bao hanh, Loi, Tra NCC) không
-      const otherMayList = await MayImei.find({ imei: { $in: imeiNgoaiDbConHang } })
-        .populate('sanPham', 'tenMay hang')
-        .lean();
+        // Tra cứu xem những IMEI này có trong DB ở trạng thái khác (Da ban, Bao hanh, Loi, Tra NCC) không
+        const otherMayList = await MayImei.find({ imei: { $in: imeiNgoaiDbConHang } })
+          .populate('sanPham', 'tenMay hang')
+          .session(session)
+          .lean();
 
       const mapOtherMay = new Map();
       otherMayList.forEach(m => mapOtherMay.set(m.imei, m));
@@ -216,30 +223,30 @@ class KiemKeService extends BaseService {
     const tongBatThuong = danhSachBatThuong.length;
     const tongLech = tongThieu + tongThua + tongBatThuong;
 
-    // Sinh mã và tạo bản ghi BienBanKiemKe
-    const maBienBan = await this._generateMaBienBan();
-    let nhanVienId = sessionUser?._id || sessionUser?.id;
-    if (!nhanVienId) {
-      const defaultNv = await NhanVien.findOne();
-      nhanVienId = defaultNv?._id;
-    }
+      // Sinh mã và tạo bản ghi BienBanKiemKe
+      const maBienBan = await this._generateMaBienBan();
+      let nhanVienId = sessionUser?._id || sessionUser?.id;
+      if (!nhanVienId) {
+        const defaultNv = await NhanVien.findOne().session(session);
+        nhanVienId = defaultNv?._id;
+      }
 
-    const bienBan = new BienBanKiemKe({
-      maBienBan,
-      kho: targetKhoId,
-      nhanVien: nhanVienId,
-      ngay: new Date(),
-      tongLyThuyet,
-      tongThucTe,
-      tongKhop,
-      tongLech,
-      tongThieu,
-      tongThua: tongThua + tongBatThuong,
-      trangThai: 'Da kiem ke',
-      ghiChu: ghiChu || ''
-    });
+      const bienBan = new BienBanKiemKe({
+        maBienBan,
+        kho: targetKhoId,
+        nhanVien: nhanVienId,
+        ngay: new Date(),
+        tongLyThuyet,
+        tongThucTe,
+        tongKhop,
+        tongLech,
+        tongThieu,
+        tongThua: tongThua + tongBatThuong,
+        trangThai: 'Da kiem ke',
+        ghiChu: ghiChu || ''
+      });
 
-    await bienBan.save();
+      await bienBan.save({ session });
 
     // Tạo các dòng DieuChinhKho cho các mục lệch
     const cacDongDieuChinh = [];
@@ -286,31 +293,33 @@ class KiemKeService extends BaseService {
       });
     });
 
-    let insertedDieuChinh = [];
-    if (cacDongDieuChinh.length > 0) {
-      insertedDieuChinh = await DieuChinhKho.insertMany(cacDongDieuChinh);
-    }
+      let insertedDieuChinh = [];
+      if (cacDongDieuChinh.length > 0) {
+        insertedDieuChinh = await DieuChinhKho.insertMany(cacDongDieuChinh, { session });
+      }
 
-    return {
-      bienBan: await BienBanKiemKe.findById(bienBan._id)
-        .populate('kho', 'tenKho diaChi')
-        .populate('nhanVien', 'hoTen tenDangNhap vaiTro')
-        .lean(),
-      tongKet: {
-        tongLyThuyet,
-        tongThucTe,
-        tongKhop,
-        tongLech,
-        tongThieu,
-        tongThua,
-        tongBatThuong
-      },
-      danhSachKhop,
-      danhSachThieu,
-      danhSachThua,
-      danhSachBatThuong,
-      chiTietDieuChinh: insertedDieuChinh
-    };
+      return {
+        bienBan: await BienBanKiemKe.findById(bienBan._id)
+          .populate('kho', 'tenKho diaChi')
+          .populate('nhanVien', 'hoTen tenDangNhap vaiTro')
+          .session(session)
+          .lean(),
+        tongKet: {
+          tongLyThuyet,
+          tongThucTe,
+          tongKhop,
+          tongLech,
+          tongThieu,
+          tongThua,
+          tongBatThuong
+        },
+        danhSachKhop,
+        danhSachThieu,
+        danhSachThua,
+        danhSachBatThuong,
+        chiTietDieuChinh: insertedDieuChinh
+      };
+    }); // End runInTransaction
   }
 
   /**
@@ -388,53 +397,57 @@ class KiemKeService extends BaseService {
    * Cập nhật tồn kho TonKho và trạng thái máy MayImei
    */
   async apDungDieuChinh(bienBanId, sessionUser) {
-    const bienBan = await BienBanKiemKe.findById(bienBanId);
-    if (!bienBan) {
-      throw this.createError('Không tìm thấy biên bản kiểm kê', 404);
-    }
-
-    if (bienBan.trangThai === 'Da dieu chinh') {
-      throw this.createError('Biên bản kiểm kê này đã được áp dụng điều chỉnh kho trước đó', 400);
-    }
-    if (bienBan.trangThai === 'Huy') {
-      throw this.createError('Không thể áp dụng điều chỉnh cho biên bản đã bị hủy', 400);
-    }
-
-    const chiTietList = await DieuChinhKho.find({ bienBan: bienBanId, daXuLy: false });
-
-    for (const item of chiTietList) {
-      if (item.loaiLech === 'Thieu') {
-        // Đổi trạng thái máy trong DB sang 'Loi' hoặc đánh dấu mất
-        if (item.imei) {
-          await MayImei.updateOne(
-            { imei: item.imei, trangThai: 'Con hang' },
-            { $set: { trangThai: 'Loi', status: false } }
-          );
-        }
-        // Giảm tồn kho sản phẩm tương ứng
-        if (item.sanPham) {
-          try {
-            await TonKhoService.capNhatTonKho(item.sanPham, bienBan.kho, -1, { choPhepAm: true });
-          } catch (e) {
-            console.warn(`[KiemKe] Cảnh báo cập nhật tồn kho khi thiếu sản phẩm ${item.sanPham}:`, e.message);
-          }
-        }
+    return await this.runInTransaction(async (session) => {
+      const bienBan = await BienBanKiemKe.findById(bienBanId).session(session);
+      if (!bienBan) {
+        throw this.createError('Không tìm thấy biên bản kiểm kê', 404);
       }
 
-      item.daXuLy = true;
-      await item.save();
-    }
+      if (bienBan.trangThai === 'Da dieu chinh') {
+        throw this.createError('Biên bản kiểm kê này đã được áp dụng điều chỉnh kho trước đó', 400);
+      }
+      if (bienBan.trangThai === 'Huy') {
+        throw this.createError('Không thể áp dụng điều chỉnh cho biên bản đã bị hủy', 400);
+      }
 
-    bienBan.trangThai = 'Da dieu chinh';
-    await bienBan.save();
+      const chiTietList = await DieuChinhKho.find({ bienBan: bienBanId, daXuLy: false }).session(session);
 
-    return {
-      message: 'Áp dụng điều chỉnh kho thành công',
-      bienBan: await BienBanKiemKe.findById(bienBanId)
-        .populate('kho', 'tenKho diaChi')
-        .populate('nhanVien', 'hoTen tenDangNhap vaiTro')
-        .lean()
-    };
+      for (const item of chiTietList) {
+        if (item.loaiLech === 'Thieu') {
+          // Đổi trạng thái máy trong DB sang 'Loi' hoặc đánh dấu mất
+          if (item.imei) {
+            await MayImei.updateOne(
+              { imei: item.imei, trangThai: 'Con hang' },
+              { $set: { trangThai: 'Loi', status: false } },
+              { session }
+            );
+          }
+          // Giảm tồn kho sản phẩm tương ứng
+          if (item.sanPham) {
+            try {
+              await TonKhoService.capNhatTonKho(item.sanPham, bienBan.kho, -1, { choPhepAm: true, session });
+            } catch (e) {
+              console.warn(`[KiemKe] Cảnh báo cập nhật tồn kho khi thiếu sản phẩm ${item.sanPham}:`, e.message);
+            }
+          }
+        }
+
+        item.daXuLy = true;
+        await item.save({ session });
+      }
+
+      bienBan.trangThai = 'Da dieu chinh';
+      await bienBan.save({ session });
+
+      return {
+        message: 'Áp dụng điều chỉnh kho thành công',
+        bienBan: await BienBanKiemKe.findById(bienBanId)
+          .populate('kho', 'tenKho diaChi')
+          .populate('nhanVien', 'hoTen tenDangNhap vaiTro')
+          .session(session)
+          .lean()
+      };
+    }); // End runInTransaction
   }
 
   /**

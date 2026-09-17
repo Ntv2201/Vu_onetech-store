@@ -401,3 +401,4 @@
 - **Nhi?m v?**: Chu?n hóa lu?ng Ð?t hàng (PO) và Nh?p kho (GR).
 - **Th?c hi?n**: B? sung phân quy?n (ch? Admin/Qu?n lý t?o PO, t? d?ng duy?t PO). B? sung logic auto-fill khi Nh?p kho t? PO. C?p nh?t Model và giao di?n x? lý (?n nút thao tác th?a, thêm nút thao tác nhanh).
 - **Tr?ng thái**: Hoàn thành.
+- **VÃ¡ lá»—i PR 28**: Chá»‰nh sá»­a chuáº©n RBAC 6 vai trÃ² vÃ  bá»• sung Mongoose Transaction báº£o vá»‡ toÃ n váº¹n dá»¯ liá»‡u nháº­p kho (17/09/2026).

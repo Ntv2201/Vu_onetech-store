@@ -43,7 +43,7 @@ class MayImeiService extends BaseService {
   async getImeiDetail(imei) {
     const [mayImei, sanPhams] = await Promise.all([
       MayImei.findOne({ imei }).populate('sanPham'),
-      SanPham.find().sort({ tenMay: 1 })
+      SanPham.find().sort({ tenMay: 1 }).lean()
     ]);
 
     if (!mayImei) {

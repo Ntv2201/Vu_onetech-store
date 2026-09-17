@@ -230,7 +230,7 @@ async function loadSapHetHang() {
         <td class="text-center"><span class="badge rounded-pill ${item.soLuongTon <= 0 ? 'bg-danger' : 'bg-secondary'}">${item.soLuongTon}</span></td>
         <td><span class="badge ${badgeColor}">${item.trangThai}</span></td>
         <td class="text-end">
-          <a href="/pages/nhap-kho/index.html?sanPhamId=${item.sanPhamId}" class="btn btn-sm btn-primary">
+          <a href="/don-dat-hang-ncc/index.html?action=taoDon&sanPhamId=${item.sanPhamId}" class="btn btn-sm btn-primary">
             <i class="bi bi-box-arrow-in-down me-1"></i>Nhập thêm
           </a>
         </td>

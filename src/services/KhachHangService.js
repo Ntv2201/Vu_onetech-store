@@ -45,7 +45,7 @@ class KhachHangService extends BaseService {
       if (query.tongChiTieuMax) filter.tongChiTieu.$lte = Number(query.tongChiTieuMax);
     }
 
-    return await KhachHang.find(filter).sort({ createdAt: -1 });
+    return await KhachHang.find(filter).sort({ createdAt: -1 }).lean();
   }
 
   async getKhachHangDetail(id) {
@@ -55,7 +55,7 @@ class KhachHangService extends BaseService {
     }
 
     // Lịch sử mua hàng
-    const hoaDons = await HoaDon.find({ khachHang: id }).sort({ ngayLap: -1 });
+    const hoaDons = await HoaDon.find({ khachHang: id }).sort({ ngayLap: -1 }).lean();
 
     return { khachHang, hoaDons };
   }
