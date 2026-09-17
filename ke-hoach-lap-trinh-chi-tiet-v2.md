@@ -402,3 +402,4 @@
 - **Th?c hi?n**: B? sung ph�n quy?n (ch? Admin/Qu?n l� t?o PO, t? d?ng duy?t PO). B? sung logic auto-fill khi Nh?p kho t? PO. C?p nh?t Model v� giao di?n x? l� (?n n�t thao t�c th?a, th�m n�t thao t�c nhanh).
 - **Tr?ng th�i**: Ho�n th�nh.
 - **Vá lỗi PR 28**: Chỉnh sửa chuẩn RBAC 6 vai trò và bổ sung Mongoose Transaction bảo vệ toàn vẹn dữ liệu nhập kho (17/09/2026).
+- [x] Mở rộng xuất/nhập Excel đa model trên trang Sản phẩm, Máy IMEI và Nhập Kho, tích hợp thanh tìm kiếm Sidebar (PR #29).
