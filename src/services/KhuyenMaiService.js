@@ -117,55 +117,6 @@ class KhuyenMaiService extends BaseService {
   }
 
   /**
-   * Kiểm tra mã khuyến mãi (Preview) — Không tăng soLuotDaDung
-   * Dùng cho endpoint /check ở POS để hiển thị số tiền giảm trước khi tạo hóa đơn
-   * @param {String} maKM - Mã khuyến mãi
-   * @param {Number} tongTien - Tổng tiền hóa đơn trước giảm
-   * @returns {{ khuyenMai, soTienGiam }}
-   */
-  async checkKhuyenMai(maKM, tongTien) {
-    if (!maKM) return { khuyenMai: null, soTienGiam: 0 };
-
-    const mongoose = require('mongoose');
-    let km;
-    if (mongoose.Types.ObjectId.isValid(maKM)) {
-      km = await KhuyenMai.findById(maKM).lean();
-    }
-    if (!km) {
-      km = await KhuyenMai.findOne({ maKM: maKM.toString().trim() }).lean();
-    }
-
-    if (!km) {
-      throw this.createError(`Không tìm thấy mã khuyến mãi: "${maKM}"`, 404);
-    }
-    if (km.trangThai !== 'Hoat dong') {
-      throw this.createError(`Chương trình "${km.tenKM}" hiện đang ${km.trangThai === 'Het han' ? 'hết hạn' : 'tạm ngưng'}`, 400);
-    }
-    const now = new Date();
-    if (now < km.ngayBatDau) {
-      throw this.createError(`Chương trình "${km.tenKM}" chưa bắt đầu`, 400);
-    }
-    if (now > km.ngayKetThuc) {
-      throw this.createError(`Chương trình "${km.tenKM}" đã hết hạn`, 400);
-    }
-    if (km.soLuotToiDa > 0 && km.soLuotDaDung >= km.soLuotToiDa) {
-      throw this.createError(`Chương trình "${km.tenKM}" đã hết lượt sử dụng`, 400);
-    }
-
-    let soTienGiam = 0;
-    if (km.loaiGiam === 'Phan tram') {
-      soTienGiam = Math.round(tongTien * km.giaTriGiam / 100);
-      if (km.giaTriToiDa > 0 && soTienGiam > km.giaTriToiDa) {
-        soTienGiam = km.giaTriToiDa;
-      }
-    } else {
-      soTienGiam = km.giaTriGiam;
-    }
-    soTienGiam = Math.min(soTienGiam, tongTien);
-
-    return { khuyenMai: km, soTienGiam };
-  }
-
   /**
    * Áp dụng mã khuyến mãi vào hóa đơn — Tính toán số tiền giảm
    * Gọi bởi HoaDonService khi tạo hóa đơn
@@ -232,6 +183,58 @@ class KhuyenMaiService extends BaseService {
     km.soLuotDaDung += 1;
     await km.save();
 
+    return { khuyenMai: km, soTienGiam };
+  }
+
+  /**
+   * Kiểm tra mã khuyến mãi (Dành cho frontend kiểm tra trước khi thanh toán)
+   * Giống apDungKhuyenMai nhưng KHÔNG làm tăng số lượt sử dụng
+   */
+  async kiemTraKhuyenMai(khuyenMaiId, tongTien) {
+    if (!khuyenMaiId) return { khuyenMai: null, soTienGiam: 0 };
+
+    let km;
+    const mongoose = require('mongoose');
+    if (mongoose.Types.ObjectId.isValid(khuyenMaiId)) {
+      km = await KhuyenMai.findById(khuyenMaiId);
+    }
+    if (!km) {
+      km = await KhuyenMai.findOne({ maKM: khuyenMaiId.toString().trim() });
+    }
+
+    if (!km) {
+      throw this.createError(`Không tìm thấy mã khuyến mãi: ${khuyenMaiId}`, 404);
+    }
+
+    if (km.trangThai !== 'Hoat dong') {
+      throw this.createError(`Chương trình khuyến mãi "${km.tenKM}" hiện đang ${km.trangThai === 'Het han' ? 'hết hạn' : 'tạm ngưng'}`, 400);
+    }
+
+    const now = new Date();
+    if (now < km.ngayBatDau) {
+      throw this.createError(`Chương trình khuyến mãi "${km.tenKM}" chưa bắt đầu (Từ ${km.ngayBatDau.toLocaleDateString('vi-VN')})`, 400);
+    }
+    if (now > km.ngayKetThuc) {
+      throw this.createError(`Chương trình khuyến mãi "${km.tenKM}" đã hết hạn (Đến ${km.ngayKetThuc.toLocaleDateString('vi-VN')})`, 400);
+    }
+
+    if (km.soLuotToiDa > 0 && km.soLuotDaDung >= km.soLuotToiDa) {
+      throw this.createError(`Chương trình khuyến mãi "${km.tenKM}" đã hết lượt sử dụng (${km.soLuotToiDa}/${km.soLuotToiDa})`, 400);
+    }
+
+    let soTienGiam = 0;
+    if (km.loaiGiam === 'Phan tram') {
+      soTienGiam = Math.round(tongTien * km.giaTriGiam / 100);
+      if (km.giaTriToiDa > 0 && soTienGiam > km.giaTriToiDa) {
+        soTienGiam = km.giaTriToiDa;
+      }
+    } else {
+      soTienGiam = km.giaTriGiam;
+    }
+
+    soTienGiam = Math.min(soTienGiam, tongTien);
+
+    // KHÔNG TĂNG SỐ LƯỢT VÀ KHÔNG SAVE
     return { khuyenMai: km, soTienGiam };
   }
 

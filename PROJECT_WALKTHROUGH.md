@@ -545,6 +545,20 @@ Tất cả API trả về định dạng JSON thống nhất theo quy ước d�
   - Tích hợp biểu đồ động Chart.js, bộ lọc chuyển đổi nhóm Ngày / Tuần / Tháng, hiển thị Top 5 sản phẩm và cảnh báo máy tồn lâu ngày.
 * **Kiểm thử tự động:** Bộ test `tests/test_vuong_tuan5_6_e2e.js` với 25/25 test cases PASS 100%.
 
+### 6.16. Phân hệ Mã Khuyến Mãi (Promo Code) & Tích hợp POS (`KhuyenMaiService`, `khuyenMaiController`)
+* `KhuyenMaiService.kiemTraKhuyenMai(maKM, tongTien)`:
+  - Kiểm tra tính hợp lệ của mã khuyến mãi (thời hạn, trạng thái, số lượt dùng).
+  - Trả về số tiền được giảm tương ứng với cấu hình của mã (giảm theo % tối đa hoặc tiền mặt). KHÔNG làm tăng số lượt dùng. Dùng để pre-check ở UI.
+* `KhuyenMaiService.apDungKhuyenMai(khuyenMaiId, tongTien)`:
+  - Tương tự hàm kiểm tra, nhưng lưu vết bằng cách tăng `soLuotDaDung += 1` và `save()`. Dùng khi chính thức thanh toán tạo `HoaDon`.
+* **RESTful API Endpoints (`/api/khuyen-mai`):**
+  - `POST /api/khuyen-mai/check`: Endpoint hỗ trợ POS check nhanh mã khuyến mãi. Trả về `soTienGiam` hợp lệ (RBAC: `Quản lý`, `Admin`, `NV bán hàng`, `Thu ngân`, `Kế toán`).
+  - `GET /api/khuyen-mai`: Danh sách mã (RBAC: `Quản lý`, `Admin`, `NV bán hàng`, `Thu ngân`, `Kế toán`).
+  - `POST`, `PUT`, `DELETE`: Quản lý CRUD (RBAC: `Quản lý`, `Admin`).
+* **Tích hợp POS (`HoaDonService.createHoaDon` & `ban-hang/index.html`):**
+  - Đã loại bỏ luồng giảm giá tiền mặt thủ công (tránh gian lận).
+  - Thu ngân chỉ được phép nhập `maKM`. Hệ thống tự động gọi API `check`, cấn trừ tiền, và lưu trữ ID + Số tiền giảm vào document `HoaDon`.
+
 ---
 
 ## 7. HƯỚNG DẪN DÀNH CHO CÁC THÀNH VIÊN KHI CODE MODULE MỚI

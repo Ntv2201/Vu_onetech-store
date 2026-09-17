@@ -167,6 +167,14 @@ const MENU_SCHEMA = [
         roles: ['Quản lý', 'Thủ kho', 'Kế toán']
       },
       {
+        path: '/khuyen-mai/index.html',
+        dataPath: '/khuyen-mai/',
+        label: 'Khuyến mãi',
+        shortLabel: 'Khuyến mãi',
+        icon: 'bi-tags-fill',
+        roles: ['Quản lý', 'Admin']
+      },
+      {
         path: '/kiem-ke/index.html',
         dataPath: '/kiem-ke/',
         label: 'Kiểm kê kho & Đối soát IMEI',

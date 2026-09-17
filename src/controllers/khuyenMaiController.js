@@ -12,7 +12,21 @@ class KhuyenMaiController extends BaseController {
     this.create = this.create.bind(this);
     this.update = this.update.bind(this);
     this.delete = this.delete.bind(this);
-    this.checkCode = this.checkCode.bind(this);
+    this.check = this.check.bind(this);
+  }
+
+  // POST /api/khuyen-mai/check
+  async check(req, res) {
+    try {
+      const { maKM, tongTien } = req.body;
+      if (!maKM) {
+        return this.sendError(res, 'Vui lòng nhập mã khuyến mãi', 400);
+      }
+      const result = await KhuyenMaiService.kiemTraKhuyenMai(maKM, tongTien || 0);
+      return this.sendSuccess(res, result, 'Áp dụng mã khuyến mãi thành công');
+    } catch (error) {
+      return this.handleError(res, error, 'Mã khuyến mãi không hợp lệ');
+    }
   }
 
   // GET /api/khuyen-mai
@@ -62,23 +76,6 @@ class KhuyenMaiController extends BaseController {
       return this.sendSuccess(res, result, 'Xóa chương trình khuyến mãi thành công');
     } catch (error) {
       return this.handleError(res, error, 'Lỗi khi xóa khuyến mãi');
-    }
-  }
-
-  // POST /api/khuyen-mai/check — Kiểm tra mã KM và tính số tiền giảm (preview, không tăng lượt dùng)
-  async checkCode(req, res) {
-    try {
-      const { maKM, tongTien } = req.body;
-      if (!maKM || !maKM.trim()) {
-        return res.status(400).json({ success: false, message: 'Vui lòng nhập mã khuyến mãi' });
-      }
-      if (!tongTien || Number(tongTien) <= 0) {
-        return res.status(400).json({ success: false, message: 'Tổng tiền phải lớn hơn 0' });
-      }
-      const result = await KhuyenMaiService.checkKhuyenMai(maKM.trim(), Number(tongTien));
-      return this.sendSuccess(res, result, 'Kiểm tra mã khuyến mãi thành công');
-    } catch (error) {
-      return this.handleError(res, error, 'Lỗi khi kiểm tra mã khuyến mãi');
     }
   }
 }

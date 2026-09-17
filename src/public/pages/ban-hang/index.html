@@ -315,16 +315,17 @@
                   </div>
                 </div>
 
-                <!-- Giảm giá / Chiết khấu -->
+                <!-- Giảm giá / Chiết khấu (Mã Khuyến Mãi) -->
                 <div class="mb-2">
                   <label class="form-label small fw-semibold mb-1 d-flex justify-content-between">
-                    <span><i class="bi bi-tag-fill text-warning me-1"></i>Chiết khấu / Giảm giá (VNĐ)</span>
-                    <span class="text-muted" style="font-size: 0.75rem;">Nhập 0 nếu không giảm</span>
+                    <span><i class="bi bi-tag-fill text-warning me-1"></i>Mã Khuyến Mãi</span>
                   </label>
                   <div class="input-group input-group-sm">
-                    <input type="text" id="inputSoTienGiam" class="format-currency form-control" placeholder="0" min="0" value="0">
-                    <span class="input-group-text">đ</span>
+                    <input type="text" id="inputMaKM" class="form-control" placeholder="Nhập mã KM...">
+                    <button class="btn btn-outline-primary" type="button" id="btnApplyKM">Áp dụng</button>
+                    <button class="btn btn-outline-danger d-none" type="button" id="btnRemoveKM">Xóa</button>
                   </div>
+                  <div id="kmMessage" class="small mt-1 d-none"></div>
                 </div>
 
                 <!-- Footer: Tổng tiền & Nút xác nhận thanh toán -->

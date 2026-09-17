@@ -116,6 +116,7 @@
 - [x] Phối hợp với Vũ hoàn thiện trải nghiệm POS bán hàng (phím tắt quét barcode F1-F9 / Alt+1-9, hiệu ứng âm thanh beep, in nhanh hóa đơn K80/A5 chuyên nghiệp qua `printInvoiceReceipt`).
 - [x] Thống kê KPI doanh số bán hàng theo từng nhân viên (`GET /api/hoa-don/bao-cao/doanh-so-nhan-vien`) và Top sản phẩm bán chạy (`GET /api/hoa-don/bao-cao/top-san-pham`).
 - [x] Phối hợp với Việt Anh (QA) kiểm thử luồng tích hợp toàn trình E2E: Đặt trước $\rightarrow$ Bán hàng POS $\rightarrow$ Bảo hành dòng đời $\rightarrow$ Đổi trả trong 30 ngày ([`tests/test_tuan_tuan5_6_e2e.js`](tests/test_tuan_tuan5_6_e2e.js) đạt 33/33 test cases PASS 100%).
+- [x] Tích hợp hệ thống Mã Khuyến Mãi (Promo Code) vào màn hình POS. Xây dựng API `/api/khuyen-mai/check` và cập nhật luồng `createHoaDon` để trừ tiền và tính lượt dùng mã. Lột bỏ luồng giảm giá nhập tay.
 
 #### Tuần 7-8: Stress Test, Diễn tập Demo & Đóng gói
 - [ ] Chạy stress test bán hàng đồng thời nhiều IMEI cùng QA.
