@@ -1,6 +1,6 @@
-﻿# CHECKLIST KIEM TRA SO 3 — ONE TECH STORE
+# CHECKLIST KIEM TRA SO 3 — ONE TECH STORE
 > Doi chieu yeu cau he thong toi thieu 90% chuc nang theo de kiem tra so 3.
-> Ket qua npm test: 22/22 suites PASS — 865/865 assertions PASS (0 FAIL)
+> Ket qua npm test: 22/22 suites PASS — 866/866 assertions PASS (0 FAIL)
 
 ---
 
@@ -154,4 +154,4 @@
 | **TONG** | **56** | **56** | **100%** |
 
 > He thong dat 100% tieu chi kiem tra so 3 (vuot nguong toi thieu 90%).
-> npm test: 22/22 suites PASS — 865/865 assertions PASS — 0 FAIL
+> npm test: 22/22 suites PASS — 866/866 assertions PASS — 0 FAIL
