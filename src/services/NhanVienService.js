@@ -39,7 +39,7 @@ class NhanVienService extends BaseService {
     return await NhanVien.find(filter).select('-matKhau').sort({ createdAt: -1 }).lean();
   }
 
-  async getNhanVienDetail(id) {
+  async getNhanVienById(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw this.createError('ID nhân viên không hợp lệ', 400);
     }

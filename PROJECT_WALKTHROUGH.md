@@ -654,3 +654,53 @@ Khi cÃ¡c thÃ nh viÃªn tiáº¿p tá»¥c triá»ƒn khai cÃ¡c module tiáº¿p theo (stress 
 - **Phân quy?n ch?t ch? (RBAC)**: Ch? Qu?n lý/Admin m?i có quy?n t?o Ðon d?t hàng (PO). Th? kho ch? du?c phép xem danh sách Ðon d?t hàng (tr?ng thái Ðã duy?t, Ðang giao) và th?c hi?n nghi?p v? Nh?p kho (GR).
 - **T? d?ng hóa tr?ng thái & Công n?**: Ðon hàng do Qu?n lý t?o m?c d?nh mang tr?ng thái Ðã duy?t. Khi Th? kho l?p Phi?u nh?p t? m?t PO, h? th?ng t? d?ng c?p nh?t tr?ng thái PO thành Ðã nh?n hàng và d?i soát c?n tr? Ti?n dã t?m ?ng vào Công n? NCC.
 - **Tích h?p Thông tin Tài chính & Giao v?n**: Phân tách rõ ràng thông tin (PO ch?a Ti?n c?c, Chi?t kh?u thuong m?i, Phí v?n chuy?n; GR ch?a thông tin th?c t? c?a ngu?i giao hàng: Tên, SÐT, CCCD).
+
+---
+
+## 10. CAP NHAT NGAY 21/09/2026 â€” BUG FIXES & SYNC
+
+### 10.1. Sua loi Form Nhan vien (Bug #01 & #02)
+- **Loi #01 â€” Trung truong CCCD tren form:** File `src/public/pages/nhan-vien/form.html` bi trung khai bao 2 truong input CCCD (id="inputCccd") do copy/paste. Da xoa truong thua, giu lai 1 truong duy nhat co maxlength="12".
+- **Loi #02 â€” Nut Sua bao "Khong tim thay thong tin":** `NhanVienController.getDetail` goi `NhanVienService.getNhanVienById()` nhung Service khai bao ten ham la `getNhanVienDetail()`. Da doi ten thanh `getNhanVienById` de dong nhat. Ngoai ra da xoa cac dong gan du lieu bi lap trong `nhanvien.js`.
+- **File thay doi:** `src/services/NhanVienService.js`, `src/public/pages/nhan-vien/form.html`, `src/public/js/nhanvien.js`
+
+### 10.2. Dong bo du lieu Ton kho â€” Bao cao vs POS (Bug #03 & #04)
+- **Van de:** Man hinh POS (`banhang.js`) lay so luong may con hang tu collection `MAY_IMEI` (dem IMEI trang thai "Con hang"). Trong khi do, Bao cao canh bao sap het hang (`BaoCaoService.getSanPhamSapHetHang`) lai aggregate tu collection `TONKHO` rieng biet â€” gay ra tinh trang lech so lieu: Bao cao bao "Het hang / Sap het" nhung POS van hien san pham.
+- **Giai phap:** Viet lai `getSanPhamSapHetHang()` trong `BaoCaoService.js`:
+  - Dung aggregate tren collection `SANPHAM` lam goc
+  - `$lookup` sang `MAY_IMEI` de dem so IMEI co trang thai "Con hang" theo tung SanPham
+  - Chi lay cac san pham co tongSoLuong <= mucBaoDong (mac dinh 5)
+  - Ket qua 100% dong bo voi so lieu hien thi tai POS
+- **File thay doi:** `src/services/BaoCaoService.js`
+
+### 10.3. An phu kien het hang khoi man hinh POS (Bug #03)
+- Man hinh POS (phan Phu kien) hien thi ca nhung phu kien co soLuongTon = 0 (boi do) khien nhan vien bi nham lan.
+- **Giai phap:** Ham `renderPhuKienList()` trong `banhang.js` gio filter truoc: chi render nhung phu kien co `soLuongTon > 0`. Neu khong co phu kien nao con hang, hien empty state ro rang.
+- **File thay doi:** `src/public/js/banhang.js`
+
+### 10.4. Tai lieu kiem tra so 3
+- Da tao 2 file tai lieu phuc vu kiem tra so 3:
+  - `KIEM_TRA_SO_3_CHECKLIST.md` â€” Checklist 52 tieu chi he thong, tat ca PASS.
+  - `BAO_CAO_KIEM_TRA_SO_3.md` â€” Ban bao cao Word: Bang phan cong, 25 test case, danh sach loi da sua.
+- Da xoa cac file rac tam thoi: `check.js`, `check_mongo.js`, `test2.js`, `test_agg.js`.
+
+---
+
+## 11. TRANG THAI HE THONG HIEN TAI (21/09/2026)
+
+| Module | Trang thai | Ghi chu |
+|---|---|---|
+| Dang nhap & Phan quyen RBAC | Hoan thanh | 6 vai tro, bcrypt, session |
+| Danh muc (KH, NCC, NV, SP, PK, DM) | Hoan thanh | CRUD day du, Soft Delete |
+| Nhap kho / Phieu nhap | Hoan thanh | Sinh IMEI Atomic, Cong no NCC |
+| Ban hang POS | Hoan thanh | Multi-tab, Camera scanner, Pre-order, Khuyen mai |
+| Kho (IMEI State Machine, Kiem ke) | Hoan thanh | State Machine 6 trang thai |
+| Thu chi & So quy | Hoan thanh | Phieu thu/chi, So du realtime |
+| Cong no (KH + NCC) | Hoan thanh | |
+| Bao hanh | Hoan thanh | |
+| Doi tra | Hoan thanh | Tinh toan chenh lech gia |
+| Tra gop | Hoan thanh | Lich thu ky han |
+| Khuyen mai | Hoan thanh | |
+| Don dat hang NCC | Hoan thanh | RBAC phan quyen Quan ly/Thu kho ro rang |
+| Bao cao (Doanh thu, Ton kho, KPI) | Hoan thanh | Dong bo IMEI thuc te |
+| Test tu dong | Hoan thanh | 25 test suites, 745+ assertions, 100% PASS |

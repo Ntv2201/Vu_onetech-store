@@ -167,9 +167,6 @@ async function initNhanVienForm() {
       document.getElementById('inputTenDangNhap').value = nv.tenDangNhap || '';
       document.getElementById('selectVaiTro').value = nv.vaiTro || 'NV bán hàng';
       document.getElementById('selectTrangThai').value = nv.trangThai || 'Hoạt động';
-      if (document.getElementById('inputEmail')) document.getElementById('inputEmail').value = nv.email || '';
-      if (document.getElementById('inputCccd')) document.getElementById('inputCccd').value = nv.cccd || '';
-      if (document.getElementById('inputDiaChi')) document.getElementById('inputDiaChi').value = nv.diaChi || '';
     } else {
       showToast('Không tìm thấy thông tin nhân viên', 'danger');
     }

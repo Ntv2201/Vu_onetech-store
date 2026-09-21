@@ -426,12 +426,35 @@ class BaoCaoService extends BaseService {
     const mucBaoDong = Math.max(0, parseInt(query.mucBaoDong) || 5);
     const limit = Math.max(1, Math.min(100, parseInt(query.limit) || 50));
 
-    // Nhóm tồn kho theo sanPham, tính tổng số lượng
+    // Tính trực tiếp từ số lượng IMEI còn hàng thay vì TonKho để đồng bộ với POS
     const pipeline = [
       {
-        $group: {
-          _id: '$sanPham',
-          tongSoLuong: { $sum: '$soLuong' }
+        $match: {
+          status: { $ne: false } // Chỉ lấy sản phẩm đang kinh doanh
+        }
+      },
+      {
+        $lookup: {
+          from: 'MAY_IMEI',
+          let: { spId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$sanPham', '$$spId'] },
+                    { $eq: ['$trangThai', 'Con hang'] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: 'imeis'
+        }
+      },
+      {
+        $addFields: {
+          tongSoLuong: { $size: '$imeis' }
         }
       },
       {
@@ -446,34 +469,26 @@ class BaoCaoService extends BaseService {
         $limit: limit
       },
       {
-        $lookup: {
-          from: 'SANPHAM',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'sanPhamInfo'
+        $project: {
+          imeis: 0 // Không cần trả mảng này về frontend
         }
-      },
-      {
-        $unwind: '$sanPhamInfo'
       }
     ];
 
-    const items = await TonKho.aggregate(pipeline);
+    const items = await SanPham.aggregate(pipeline);
 
-    const formattedList = items
-      .filter(item => item.sanPhamInfo && item.sanPhamInfo.status !== false) // Chỉ lấy các sản phẩm đang còn kinh doanh
-      .map(item => {
-        return {
-          sanPhamId: item._id,
-          tenMay: item.sanPhamInfo.tenMay || 'N/A',
-          hang: item.sanPhamInfo.hang || 'N/A',
-          giaBan: item.sanPhamInfo.giaBan || 0,
-          khoId: null,
-          tenKho: 'Tất cả kho',
-          soLuongTon: item.tongSoLuong,
-          trangThai: item.tongSoLuong <= 0 ? 'Hết hàng' : 'Sắp hết'
-        };
-      });
+    const formattedList = items.map(item => {
+      return {
+        sanPhamId: item._id,
+        tenMay: item.tenMay || 'N/A',
+        hang: item.hang || 'N/A',
+        giaBan: item.giaBan || 0,
+        khoId: null,
+        tenKho: 'Tất cả kho',
+        soLuongTon: item.tongSoLuong,
+        trangThai: item.tongSoLuong <= 0 ? 'Hết hàng' : 'Sắp hết'
+      };
+    });
 
     return {
       tieuChi: `Tổng tồn kho <= ${mucBaoDong} máy`,

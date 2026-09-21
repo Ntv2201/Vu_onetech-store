@@ -814,12 +814,14 @@ function renderPhuKienList() {
   const container = document.getElementById('availablePhuKienList');
   if (!container) return;
 
-  if (allPhuKiens.length === 0) {
-    container.innerHTML = `<div class="col-12 text-center text-muted py-3 small">Không có phụ kiện nào</div>`;
+  const availablePks = allPhuKiens.filter(pk => pk.soLuongTon > 0);
+
+  if (availablePks.length === 0) {
+    container.innerHTML = `<div class="col-12 text-center text-muted py-3 small">Không có phụ kiện nào còn hàng</div>`;
     return;
   }
 
-  container.innerHTML = allPhuKiens.map(pk => {
+  container.innerHTML = availablePks.map(pk => {
     return `
       <div class="col-md-6 col-12">
         <div class="pos-product-item" onclick="addPhuKienToCart('${pk._id}')">
