@@ -137,15 +137,22 @@
                     <option value="Hoan tat">Hoàn tất</option>
                     <option value="Da huy">Đã hủy / Thu hồi</option>
                   </select>
-                </div>
-                <div class="col-6 col-md-2">
-                  <input type="date" id="filterTuNgay" class="form-control form-control-sm" title="Từ ngày">
-                </div>
-                <div class="col-6 col-md-2">
-                  <input type="date" id="filterDenNgay" class="form-control form-control-sm" title="Đến ngày">
+                <div class="col-12 col-md-4">
+                  <div class="date-range-box w-100 justify-content-between">
+                    <span class="date-picker-icon"><i class="bi bi-calendar-event"></i></span>
+                    <div class="date-field">
+                      <span class="date-label">TỪ</span>
+                      <input type="date" id="filterTuNgay" class="date-input-clean" title="Từ ngày">
+                    </div>
+                    <span class="date-arrow"><i class="bi bi-arrow-right"></i></span>
+                    <div class="date-field">
+                      <span class="date-label">ĐẾN</span>
+                      <input type="date" id="filterDenNgay" class="date-input-clean" title="Đến ngày">
+                    </div>
+                  </div>
                 </div>
                 <div class="col-12 col-md-1 text-end">
-                  <button id="btnRefreshList" class="btn btn-sm btn-reset-filter w-100 d-inline-flex align-items-center justify-content-center" title="Đặt lại bộ lọc / Làm mới">
+                  <button id="btnRefreshList" class="btn btn-sm btn-reset-filter w-100 d-inline-flex align-items-center justify-content-center py-1.5" title="Đặt lại bộ lọc / Làm mới">
                     <i class="bi bi-arrow-clockwise text-primary"></i>
                   </button>
                 </div>

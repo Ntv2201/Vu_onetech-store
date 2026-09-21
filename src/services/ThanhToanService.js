@@ -268,6 +268,21 @@ class ThanhToanService extends BaseService {
       filterChi.hinhThuc = query.hinhThuc;
     }
 
+    if (query.search) {
+      const regex = { $regex: query.search.trim(), $options: 'i' };
+      filterThu.$or = [
+        { ghiChu: regex },
+        { nguoiNop: regex },
+        { chungTuLienQuan: regex }
+      ];
+      filterChi.$or = [
+        { lyDo: regex },
+        { maDT: regex },
+        { nguoiNhan: regex },
+        { chungTuLienQuan: regex }
+      ];
+    }
+
     const [danhSachThu, danhSachChi] = await Promise.all([
       PhieuThu.find(filterThu).sort({ ngayThu: -1, createdAt: -1 }).lean(),
       PhieuChi.find(filterChi).sort({ ngayChi: -1, createdAt: -1 }).lean()

@@ -56,8 +56,8 @@ async function autoFillTuDonDatHang(donId) {
         nccSelect.disabled = true;
       }
       
-      if (document.getElementById('inputTienChietKhau')) document.getElementById('inputTienChietKhau').value = don.chietKhau || 0;
-      if (document.getElementById('inputPhiVanChuyen')) document.getElementById('inputPhiVanChuyen').value = don.phiVanChuyen || 0;
+      if (document.getElementById('inputTienChietKhau')) document.getElementById('inputTienChietKhau').value = don.chietKhau ? Number(don.chietKhau).toLocaleString('vi-VN') : '0';
+      if (document.getElementById('inputPhiVanChuyen')) document.getElementById('inputPhiVanChuyen').value = don.phiVanChuyen ? Number(don.phiVanChuyen).toLocaleString('vi-VN') : '0';
       if (document.getElementById('inputSdtNguoiGiao')) document.getElementById('inputSdtNguoiGiao').value = don.sdtNguoiGiao || '';
       if (document.getElementById('inputCccdNguoiGiao')) document.getElementById('inputCccdNguoiGiao').value = don.cccdNguoiGiao || '';
       
@@ -302,8 +302,7 @@ function autoFillBulkGiaNhap(selectEl) {
     const inputDL = document.getElementById('bulkInputDL');
     
     if (inputGia) {
-      // bulkInputGia is type="number" so we set raw number, not formatted string
-      inputGia.value = giaGoc > 0 ? giaGoc : '';
+      inputGia.value = giaGoc > 0 ? Number(giaGoc).toLocaleString('vi-VN') : '';
     }
     if (inputDL) {
       inputDL.value = dungLuong;
@@ -315,7 +314,7 @@ function processBulkImport() {
   const maSP = document.getElementById('bulkInputSP').value;
   const mauSac = document.getElementById('bulkInputMau').value;
   const dungLuong = document.getElementById('bulkInputDL').value;
-  const giaNhap = document.getElementById('bulkInputGia').value;
+  const giaNhap = parseCurrencyValue(document.getElementById('bulkInputGia').value);
   const rawText = document.getElementById('bulkInputImeis').value;
   
   if (!maSP) return api.showToast('Vui lòng chọn Model máy chung', 'warning');
@@ -387,6 +386,9 @@ function recalcTotalPreview() {
     const sl = Number(row.querySelector('.input-pk-sl')?.value) || 0;
     total += (gia * sl);
   });
+  const chietKhau = parseCurrencyValue(document.getElementById('inputTienChietKhau')?.value || 0);
+  const phiVC = parseCurrencyValue(document.getElementById('inputPhiVanChuyen')?.value || 0);
+  total = Math.max(0, total - chietKhau + phiVC);
   document.getElementById('lblTongTienDuTinh').textContent = formatCurrency(total);
 }
 

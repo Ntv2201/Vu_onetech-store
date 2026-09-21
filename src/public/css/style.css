@@ -1886,3 +1886,273 @@ th.sortable.sorted-desc .sort-icon {
   opacity: 0.85;
 }
 
+/* =========================================
+   UNIFIED & BALANCED DATE FILTER TOOLBAR
+   ========================================= */
+:root {
+  --filter-height: 38px;
+  --filter-radius: 8px;
+  --filter-border: 1.5px solid #cbd5e1;
+  --filter-hover-border: #94a3b8;
+  --filter-focus-border: #2563eb;
+  --filter-focus-glow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+input[type="date"] {
+  font-family: inherit;
+  font-weight: 500;
+  color: #1e293b;
+  cursor: pointer;
+  border-radius: var(--filter-radius);
+  border: var(--filter-border);
+  background-color: #ffffff;
+  padding: 0.35rem 0.65rem;
+  transition: all 0.2s ease;
+  min-width: 145px;
+  height: var(--filter-height);
+  box-sizing: border-box;
+}
+
+input[type="date"]:hover {
+  border-color: var(--filter-hover-border);
+}
+
+input[type="date"]:focus {
+  border-color: var(--filter-focus-border);
+  box-shadow: var(--filter-focus-glow);
+  outline: none;
+}
+
+/* Custom calendar icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.75;
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.18s ease;
+  filter: invert(36%) sepia(85%) saturate(1400%) hue-rotate(205deg) brightness(95%) contrast(90%);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background-color: #eff6ff;
+  transform: scale(1.12);
+}
+
+/* Date Range Box Component - Đồng đều về kích thước & thẩm mỹ */
+.date-range-box {
+  display: inline-flex;
+  align-items: center;
+  height: var(--filter-height);
+  background-color: #ffffff;
+  border: var(--filter-border);
+  border-radius: var(--filter-radius);
+  padding: 0 10px;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+}
+
+.date-range-box:hover {
+  border-color: var(--filter-hover-border);
+}
+
+.date-range-box:focus-within {
+  border-color: var(--filter-focus-border);
+  box-shadow: var(--filter-focus-glow);
+}
+
+.date-range-box .date-picker-icon {
+  font-size: 1rem;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.date-range-box .date-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.date-range-box .date-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 2px 5px;
+  border-radius: 4px;
+  user-select: none;
+  line-height: 1;
+}
+
+.date-range-box .date-input-clean {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  color: #1e293b !important;
+  box-shadow: none !important;
+  min-width: 122px;
+  width: 122px;
+  outline: none !important;
+  height: calc(var(--filter-height) - 4px);
+  line-height: calc(var(--filter-height) - 4px);
+}
+
+.date-range-box .date-arrow {
+  color: #94a3b8;
+  font-size: 0.82rem;
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Filter Select Box - Chuẩn hóa đồng nhất cùng hàng với Date Range Box */
+.filter-select-box {
+  display: inline-flex;
+  align-items: center;
+  height: var(--filter-height);
+  background-color: #ffffff;
+  border: var(--filter-border);
+  border-radius: var(--filter-radius);
+  padding: 0 10px;
+  gap: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+}
+
+.filter-select-box:hover {
+  border-color: var(--filter-hover-border);
+}
+
+.filter-select-box:focus-within {
+  border-color: var(--filter-focus-border);
+  box-shadow: var(--filter-focus-glow);
+}
+
+.filter-select-box .select-icon {
+  font-size: 0.95rem;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.filter-select-box .clean-select {
+  border: none !important;
+  background-color: transparent !important;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1e293b;
+  box-shadow: none !important;
+  outline: none !important;
+  cursor: pointer;
+  padding: 0 20px 0 0 !important;
+  min-width: 145px;
+  height: calc(var(--filter-height) - 4px);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 12px 10px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Đồng bộ nút Đặt lại bộ lọc với chiều cao thanh công cụ */
+.btn-reset-filter {
+  height: var(--filter-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--filter-radius);
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+/* Quick Date Filter Chips */
+.quick-date-btn {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #475569;
+  transition: all 0.18s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.quick-date-btn:hover {
+  background-color: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.quick-date-btn.active {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.28);
+  font-weight: 600;
+}
+
+/* Filter Search Box Component */
+.filter-search-box {
+  display: inline-flex;
+  align-items: center;
+  height: var(--filter-height);
+  background-color: #ffffff;
+  border: var(--filter-border);
+  border-radius: var(--filter-radius);
+  padding: 0 12px;
+  gap: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  min-width: 220px;
+}
+
+.filter-search-box:hover {
+  border-color: var(--filter-hover-border);
+}
+
+.filter-search-box:focus-within {
+  border-color: var(--filter-focus-border);
+  box-shadow: var(--filter-focus-glow);
+}
+
+.filter-search-box .clean-input {
+  border: none !important;
+  background: transparent !important;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1e293b;
+  box-shadow: none !important;
+  outline: none !important;
+  width: 100%;
+  height: calc(var(--filter-height) - 4px);
+}
+
+.filter-search-box .clean-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+
+

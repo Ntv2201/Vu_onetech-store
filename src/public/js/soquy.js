@@ -23,12 +23,22 @@ function getFilterParams() {
   const tuNgay = document.getElementById('filterTuNgay')?.value;
   const denNgay = document.getElementById('filterDenNgay')?.value;
   const hinhThuc = document.getElementById('filterHinhThuc')?.value;
+  const search = document.getElementById('filterSearch')?.value?.trim();
 
   const params = {};
   if (tuNgay) params.tuNgay = tuNgay;
   if (denNgay) params.denNgay = denNgay;
   if (hinhThuc) params.hinhThuc = hinhThuc;
+  if (search) params.search = search;
   return params;
+}
+
+let searchDebounceTimer = null;
+function onSearchInput() {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    applyFilters();
+  }, 300);
 }
 
 function applyFilters() {
@@ -37,10 +47,64 @@ function applyFilters() {
   loadDanhSachChi();
 }
 
+function formatDateInput(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function setQuickDate(preset) {
+  const tuInput = document.getElementById('filterTuNgay');
+  const denInput = document.getElementById('filterDenNgay');
+  if (!tuInput || !denInput) return;
+
+  const now = new Date();
+
+  if (preset === 'today') {
+    const todayStr = formatDateInput(now);
+    tuInput.value = todayStr;
+    denInput.value = todayStr;
+  } else if (preset === 'week') {
+    const past = new Date();
+    past.setDate(now.getDate() - 6);
+    tuInput.value = formatDateInput(past);
+    denInput.value = formatDateInput(now);
+  } else if (preset === 'month') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    tuInput.value = formatDateInput(firstDay);
+    denInput.value = formatDateInput(now);
+  } else if (preset === 'all') {
+    tuInput.value = '';
+    denInput.value = '';
+  }
+
+  // Cập nhật trạng thái active cho nút chọn nhanh
+  document.querySelectorAll('.quick-date-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-preset') === preset);
+  });
+
+  applyFilters();
+}
+
+function onDateInputChange() {
+  // Khi người dùng chỉnh ngày thủ công, bỏ trạng thái active của các nút chọn nhanh
+  document.querySelectorAll('.quick-date-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  applyFilters();
+}
+
 function resetFilters() {
   if (document.getElementById('filterTuNgay')) document.getElementById('filterTuNgay').value = '';
   if (document.getElementById('filterDenNgay')) document.getElementById('filterDenNgay').value = '';
   if (document.getElementById('filterHinhThuc')) document.getElementById('filterHinhThuc').value = '';
+  if (document.getElementById('filterSearch')) document.getElementById('filterSearch').value = '';
+  
+  document.querySelectorAll('.quick-date-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-preset') === 'all');
+  });
+
   applyFilters();
 }
 
@@ -129,10 +193,15 @@ function renderGiaoDichTable(list) {
         <td><span class="badge bg-light text-dark border">${item.hinhThuc}</span></td>
         <td><div class="fw-semibold text-truncate" style="max-width: 280px;" title="${escapeHtml(item.noiDung || '')}">${escapeHtml(item.noiDung || '---')}</div></td>
         <td><span class="badge bg-secondary-subtle text-dark">${escapeHtml(item.lienKet || '---')}</span></td>
-        <td class="text-center">
-          <button class="btn-action btn-action-view" onclick="viewTransactionDetail('${item._id}', '${item.loai}')" title="Xem chi tiết">
-            <i class="bi bi-eye"></i>
-          </button>
+        <td class="text-center text-nowrap">
+          <div class="d-inline-flex justify-content-center align-items-center" style="gap: 6px;">
+            <button class="btn-action btn-action-view" onclick="viewTransactionDetail('${item._id}', '${item.loai}')" title="Xem chi tiết">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn-action btn-action-print" onclick="inPhieuDirect('${item._id}', '${item.loai}')" title="In phiếu chứng từ chuẩn">
+              <i class="bi bi-printer"></i>
+            </button>
+          </div>
         </td>
       </tr>
     `;
@@ -180,10 +249,15 @@ async function loadDanhSachThu() {
           ${thongTinBoSung}
         </td>
         <td><div class="text-muted small text-truncate" style="max-width: 250px;">${escapeHtml(pt.ghiChu || '---')}</div></td>
-        <td class="text-center">
-          <button class="btn-action btn-action-view" onclick="viewTransactionDetail('${pt._id}', 'THU')" title="Xem chi tiết phiếu thu">
-            <i class="bi bi-receipt"></i>
-          </button>
+        <td class="text-center text-nowrap">
+          <div class="d-inline-flex justify-content-center align-items-center" style="gap: 6px;">
+            <button class="btn-action btn-action-view" onclick="viewTransactionDetail('${pt._id}', 'THU')" title="Xem chi tiết phiếu thu">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn-action btn-action-print" onclick="inPhieuDirect('${pt._id}', 'THU')" title="In phiếu thu chuẩn">
+              <i class="bi bi-printer"></i>
+            </button>
+          </div>
         </td>
       </tr>
     `;
@@ -230,18 +304,119 @@ async function loadDanhSachChi() {
           ${thongTinBoSung}
         </td>
         <td><div class="text-muted small text-truncate" style="max-width: 250px;">${escapeHtml(pc.lyDo || '---')}</div></td>
-        <td class="text-center">
-          <button class="btn-action btn-action-view" onclick="viewTransactionDetail('${pc._id}', 'CHI')" title="Xem chi tiết phiếu chi">
-            <i class="bi bi-receipt"></i>
-          </button>
+        <td class="text-center text-nowrap">
+          <div class="d-inline-flex justify-content-center align-items-center" style="gap: 6px;">
+            <button class="btn-action btn-action-view" onclick="viewTransactionDetail('${pc._id}', 'CHI')" title="Xem chi tiết phiếu chi">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn-action btn-action-print" onclick="inPhieuDirect('${pc._id}', 'CHI')" title="In phiếu chi chuẩn">
+              <i class="bi bi-printer"></i>
+            </button>
+          </div>
         </td>
       </tr>
     `;
   }).join('');
 }
 
+function updateDocTienThu(rawVal) {
+  const num = typeof parseCurrencyValue === 'function' ? parseCurrencyValue(rawVal) : Number(String(rawVal || '').replace(/\D/g, ''));
+  const span = document.getElementById('spanDocTienThu');
+  if (!span) return;
+  if (!num || num <= 0) {
+    span.textContent = 'Bằng chữ: Không đồng';
+    span.className = 'text-muted';
+  } else {
+    const chu = typeof docSoTienBangChu === 'function' ? docSoTienBangChu(num) : '';
+    span.textContent = 'Bằng chữ: ' + (chu || `${formatCurrency(num)}`);
+    span.className = 'text-success fw-semibold';
+  }
+}
+
+function updateDocTienChi(rawVal) {
+  const num = typeof parseCurrencyValue === 'function' ? parseCurrencyValue(rawVal) : Number(String(rawVal || '').replace(/\D/g, ''));
+  const span = document.getElementById('spanDocTienChi');
+  if (span) {
+    if (!num || num <= 0) {
+      span.textContent = 'Bằng chữ: Không đồng';
+      span.className = 'text-muted';
+    } else {
+      const chu = typeof docSoTienBangChu === 'function' ? docSoTienBangChu(num) : '';
+      span.textContent = 'Bằng chữ: ' + (chu || `${formatCurrency(num)}`);
+      span.className = 'text-danger fw-semibold';
+    }
+  }
+  checkHanMucChi();
+}
+
+function getTonHienCoTheoHinhThuc(hinhThuc) {
+  if (!soQuyData || !soQuyData.theoHinhThuc) return 0;
+  return soQuyData.theoHinhThuc[hinhThuc]?.ton || 0;
+}
+
+function checkHanMucChi() {
+  const hinhThuc = document.getElementById('inputChiHinhThuc')?.value || 'Tien mat';
+  const tonHienCo = getTonHienCoTheoHinhThuc(hinhThuc);
+
+  const labelEl = document.getElementById('labelTenHinhThucTon');
+  const valEl = document.getElementById('valTonKenhHienCo');
+  const alertEl = document.getElementById('alertChiAmQuy');
+  const statusEl = document.getElementById('statusChiHopLe');
+  const textAlertEl = document.getElementById('textChiAmQuyChiTiet');
+  const textHopLeEl = document.getElementById('textChiHopLe');
+  const inputSoTien = document.getElementById('inputChiSoTien');
+
+  if (labelEl) {
+    if (hinhThuc === 'Tien mat') labelEl.textContent = 'Tồn két tiền mặt hiện có:';
+    else if (hinhThuc === 'Chuyen khoan') labelEl.textContent = 'Số dư tài khoản ngân hàng:';
+    else if (hinhThuc === 'Quet the') labelEl.textContent = 'Số dư máy quẹt thẻ:';
+    else if (hinhThuc === 'Vi dien tu') labelEl.textContent = 'Số dư ví điện tử:';
+    else labelEl.textContent = `Số dư hiện có (${hinhThuc}):`;
+  }
+
+  if (valEl) {
+    valEl.textContent = formatCurrency(tonHienCo);
+    valEl.className = tonHienCo < 0 ? 'text-danger font-monospace fw-bold' : 'text-primary font-monospace fw-bold';
+  }
+
+  if (!alertEl || !statusEl || !inputSoTien) return;
+
+  const rawVal = inputSoTien.value || '';
+  const soTien = typeof parseCurrencyValue === 'function' ? parseCurrencyValue(rawVal) : Number(String(rawVal).replace(/\D/g, ''));
+
+  if (soTien > 0) {
+    if (soTien > tonHienCo) {
+      const lech = soTien - tonHienCo;
+      alertEl.classList.remove('d-none');
+      statusEl.classList.add('d-none');
+      inputSoTien.classList.add('is-invalid');
+      if (textAlertEl) {
+        textAlertEl.innerHTML = `Số tiền chi <strong>${formatCurrency(soTien)}</strong> vượt quá số dư hiện có (${formatCurrency(tonHienCo)}). Sau khi chi, quỹ sẽ bị <strong class="text-danger">ÂM -${formatCurrency(lech)}</strong>!`;
+      }
+    } else {
+      const conLai = tonHienCo - soTien;
+      alertEl.classList.add('d-none');
+      statusEl.classList.remove('d-none');
+      inputSoTien.classList.remove('is-invalid');
+      if (textHopLeEl) {
+        textHopLeEl.textContent = `Hợp lệ. Số dư dự kiến còn lại: ${formatCurrency(conLai)} (An toàn)`;
+      }
+    }
+  } else {
+    alertEl.classList.add('d-none');
+    statusEl.classList.add('d-none');
+    inputSoTien.classList.remove('is-invalid');
+  }
+}
+
+function onChiHinhThucChange() {
+  checkHanMucChi();
+}
+window.onChiHinhThucChange = onChiHinhThucChange;
+
 function openCreateThuModal() {
   document.getElementById('formCreateThu').reset();
+  updateDocTienThu(0);
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   const inputNgay = document.getElementById('inputThuNgay');
@@ -253,6 +428,8 @@ function openCreateThuModal() {
 
 function openCreateChiModal() {
   document.getElementById('formCreateChi').reset();
+  updateDocTienChi(0);
+  checkHanMucChi();
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   const inputNgay = document.getElementById('inputChiNgay');
@@ -299,6 +476,21 @@ async function handleCreateChi(e) {
   if (!soTien || soTien <= 0) {
     showToast('Vui lòng nhập số tiền hợp lệ (> 0 đ)', 'danger');
     return;
+  }
+
+  // Cảnh báo an toàn khi chi vượt tồn két (Âm quỹ)
+  const tonHienCo = getTonHienCoTheoHinhThuc(hinhThuc);
+  if (soTien > tonHienCo) {
+    const lech = soTien - tonHienCo;
+    const tenHinhThuc = hinhThuc === 'Tien mat' ? 'tiền mặt trong két' : `quỹ ${hinhThuc}`;
+    const isConfirm = await showConfirm({
+      title: 'Cảnh Báo Xuất Chi Âm Quỹ',
+      message: `Số tiền chi (${formatCurrency(soTien)}) lớn hơn số dư ${tenHinhThuc} hiện có (${formatCurrency(tonHienCo)}).\n\nSau khi xuất chi, quỹ sẽ bị ÂM (-${formatCurrency(lech)})!\n\nBạn có chắc chắn muốn tiếp tục xuất tiền chi này không?`,
+      confirmText: 'Vẫn Tiếp Tục Chi',
+      cancelText: 'Hủy Bỏ / Kiểm Tra Lại',
+      type: 'danger'
+    });
+    if (!isConfirm) return;
   }
 
   const res = await api.post('/thanh-toan/chi', { soTien, hinhThuc, maDT, lyDo, ngayChi, nguoiNhan, chungTuLienQuan });
@@ -365,33 +557,176 @@ async function viewTransactionDetail(id, type) {
   document.getElementById('detailModalBody').innerHTML = html;
   
   // Gán sự kiện in chuẩn Thông tư vào nút in của modal
-  const btnPrintModal = document.querySelector('#modalDetail .modal-footer button.btn-outline-primary');
+  const btnPrintModal = document.getElementById('btnInPhieuModal') || document.querySelector('#modalDetail .modal-footer button.btn-primary');
   if (btnPrintModal) {
-    btnPrintModal.onclick = () => {
-      if (isThu) {
-        inPhieuThuChuan({
-          soPhieu: 'PT-' + item._id.slice(-6).toUpperCase(),
-          ngayThu: item.ngayThu || item.createdAt,
-          soTien: item.soTien,
-          lyDo: item.ghiChu || 'Thu tiền',
-          hoTenNguoiNop: item.nguoiNop || item.hoaDon?.khachHang?.hoTen || 'Khách hàng',
-          diaChi: item.hoaDon?.khachHang?.diaChi || ''
-        });
-      } else {
-        inPhieuChiChuan({
-          soPhieu: 'PC-' + item._id.slice(-6).toUpperCase(),
-          ngayChi: item.ngayChi || item.createdAt,
-          soTien: item.soTien,
-          lyDo: item.lyDo || 'Chi tiền',
-          hoTenNguoiNhan: item.nguoiNhan || item.maDT || 'Đối tác / Nhà cung cấp'
-        });
-      }
-    };
+    btnPrintModal.onclick = () => inPhieuData(item, isThu);
   }
 
   const modal = new bootstrap.Modal(document.getElementById('modalDetail'));
   modal.show();
 }
+
+/**
+ * Thực hiện in chứng từ phiếu thu/chi chuẩn mẫu Thông tư BTC
+ */
+function inPhieuData(item, isThu) {
+  if (!item) return;
+  if (isThu) {
+    inPhieuThuChuan({
+      soPhieu: 'PT-' + item._id.slice(-6).toUpperCase(),
+      ngayThu: item.ngayThu || item.ngay || item.createdAt,
+      soTien: item.soTien || 0,
+      lyDo: item.ghiChu || item.noiDung || 'Thu tiền',
+      hoTenNguoiNop: item.nguoiNop || item.hoaDon?.khachHang?.hoTen || 'Khách hàng',
+      diaChi: item.hoaDon?.khachHang?.diaChi || '',
+      kemTheo: item.chungTuLienQuan ? `Chứng từ: ${item.chungTuLienQuan}` : 'Hóa đơn / Phiếu thu'
+    });
+  } else {
+    inPhieuChiChuan({
+      soPhieu: 'PC-' + item._id.slice(-6).toUpperCase(),
+      ngayChi: item.ngayChi || item.ngay || item.createdAt,
+      soTien: item.soTien || 0,
+      lyDo: item.lyDo || item.noiDung || 'Chi tiền',
+      hoTenNguoiNhan: item.nguoiNhan || item.maDT || 'Đối tác / Người nhận',
+      kemTheo: item.chungTuLienQuan ? `Chứng từ: ${item.chungTuLienQuan}` : 'Phiếu chi / Đề nghị thanh toán'
+    });
+  }
+}
+
+/**
+ * Tải dữ liệu phiếu và gọi in trực tiếp từ bảng
+ */
+async function inPhieuDirect(id, type) {
+  try {
+    const isThu = type === 'THU';
+    const endpoint = isThu ? `/thanh-toan/thu/${id}` : `/thanh-toan/chi/${id}`;
+    const res = await api.get(endpoint);
+    if (!res.success || !res.data) {
+      return showToast('Không tìm thấy dữ liệu phiếu để in', 'danger');
+    }
+    inPhieuData(res.data, isThu);
+  } catch (err) {
+    console.error('Lỗi khi tải dữ liệu in phiếu:', err);
+    showToast('Lỗi khi chuẩn bị in phiếu', 'danger');
+  }
+}
+
+/**
+ * Xuất dữ liệu Sổ Quỹ ra Excel theo tab hiện tại (Tổng hợp dòng tiền, Phiếu thu, Phiếu chi)
+ */
+async function exportSoQuyExcel() {
+  const now = new Date();
+  const nowStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+
+  try {
+    if (currentView === 'tong-hop') {
+      const params = getFilterParams();
+      const res = await api.get('/thanh-toan/so-quy', params);
+      const list = res.data?.giaoDichGanDay || [];
+      if (list.length === 0) {
+        return showToast('Không có giao dịch nào để xuất Excel', 'warning');
+      }
+
+      const columns = [
+        { key: 'stt', title: 'STT' },
+        { key: 'maGD', title: 'Mã Giao Dịch' },
+        { key: 'ngayFormatted', title: 'Thời Gian' },
+        { key: 'loai', title: 'Loại' },
+        { key: 'soTienFormatted', title: 'Số Tiền' },
+        { key: 'hinhThuc', title: 'Hình Thức' },
+        { key: 'doiTuong', title: 'Người Nộp / Nhận' },
+        { key: 'noiDung', title: 'Nội Dung / Lý Do' },
+        { key: 'lienKet', title: 'Chứng Từ Liên Quan' }
+      ];
+
+      const rows = list.map((item, idx) => ({
+        stt: idx + 1,
+        maGD: (item.loai === 'THU' ? 'PT-' : 'PC-') + item._id.slice(-6).toUpperCase(),
+        ngayFormatted: formatDateTime(item.ngay || item.createdAt),
+        loai: item.loai === 'THU' ? 'THU' : 'CHI',
+        soTienFormatted: (item.loai === 'THU' ? '+' : '-') + (item.soTien || 0).toLocaleString('vi-VN') + ' đ',
+        hinhThuc: item.hinhThuc || '',
+        doiTuong: item.nguoiNop || item.nguoiNhan || item.maDT || '',
+        noiDung: item.noiDung || '',
+        lienKet: item.lienKet || item.chungTuLienQuan || ''
+      }));
+
+      DataTableHelper.exportToExcel(columns, rows, `SoQuy_BienDongDongTien_${nowStr}.xls`);
+      showToast('Đã xuất thành công file Excel Biến Động Dòng Tiền!', 'success');
+    } else if (currentView === 'phieu-thu') {
+      const res = await api.get('/thanh-toan/thu', { ...getFilterParams(), limit: 5000 });
+      const list = res.data?.list || [];
+      if (list.length === 0) {
+        return showToast('Không có phiếu thu nào để xuất Excel', 'warning');
+      }
+
+      const columns = [
+        { key: 'stt', title: 'STT' },
+        { key: 'maPhieu', title: 'Mã Phiếu Thu' },
+        { key: 'ngayFormatted', title: 'Thời Gian Thu' },
+        { key: 'soTienFormatted', title: 'Số Tiền Thu' },
+        { key: 'hinhThuc', title: 'Hình Thức' },
+        { key: 'nguoiNop', title: 'Người Nộp' },
+        { key: 'chungTu', title: 'Chứng Từ Gốc' },
+        { key: 'ghiChu', title: 'Ghi Chú' }
+      ];
+
+      const rows = list.map((pt, idx) => ({
+        stt: idx + 1,
+        maPhieu: 'PT-' + pt._id.slice(-6).toUpperCase(),
+        ngayFormatted: formatDateTime(pt.ngayThu || pt.createdAt),
+        soTienFormatted: (pt.soTien || 0).toLocaleString('vi-VN') + ' đ',
+        hinhThuc: pt.hinhThuc || '',
+        nguoiNop: pt.nguoiNop || 'Khách hàng',
+        chungTu: pt.chungTuLienQuan || (pt.hoaDon ? `HĐ: ${pt.hoaDon.soHD || pt.hoaDon._id}` : ''),
+        ghiChu: pt.ghiChu || ''
+      }));
+
+      DataTableHelper.exportToExcel(columns, rows, `SoQuy_DanhSachPhieuThu_${nowStr}.xls`);
+      showToast('Đã xuất thành công file Excel Phiếu Thu!', 'success');
+    } else if (currentView === 'phieu-chi') {
+      const res = await api.get('/thanh-toan/chi', { ...getFilterParams(), limit: 5000 });
+      const list = res.data?.list || [];
+      if (list.length === 0) {
+        return showToast('Không có phiếu chi nào để xuất Excel', 'warning');
+      }
+
+      const columns = [
+        { key: 'stt', title: 'STT' },
+        { key: 'maPhieu', title: 'Mã Phiếu Chi' },
+        { key: 'ngayFormatted', title: 'Thời Gian Chi' },
+        { key: 'soTienFormatted', title: 'Số Tiền Chi' },
+        { key: 'hinhThuc', title: 'Hình Thức' },
+        { key: 'nguoiNhan', title: 'Người Nhận' },
+        { key: 'maDT', title: 'Đối Tượng' },
+        { key: 'chungTu', title: 'Chứng Từ Gốc' },
+        { key: 'lyDo', title: 'Lý Do Chi' }
+      ];
+
+      const rows = list.map((pc, idx) => ({
+        stt: idx + 1,
+        maPhieu: 'PC-' + pc._id.slice(-6).toUpperCase(),
+        ngayFormatted: formatDateTime(pc.ngayChi || pc.createdAt),
+        soTienFormatted: (pc.soTien || 0).toLocaleString('vi-VN') + ' đ',
+        hinhThuc: pc.hinhThuc || '',
+        nguoiNhan: pc.nguoiNhan || 'Đối tác',
+        maDT: pc.maDT || '',
+        chungTu: pc.chungTuLienQuan || (pc.phieuNhap ? `PN: ${pc.phieuNhap.soPN || pc.phieuNhap._id}` : ''),
+        lyDo: pc.lyDo || ''
+      }));
+
+      DataTableHelper.exportToExcel(columns, rows, `SoQuy_DanhSachPhieuChi_${nowStr}.xls`);
+      showToast('Đã xuất thành công file Excel Phiếu Chi!', 'success');
+    }
+  } catch (err) {
+    console.error('Lỗi xuất Excel:', err);
+    showToast('Lỗi khi xuất file Excel', 'danger');
+  }
+}
+
+window.exportSoQuyExcel = exportSoQuyExcel;
+window.inPhieuDirect = inPhieuDirect;
+window.inPhieuData = inPhieuData;
 
 function formatDateTime(dateStr) {
   if (!dateStr) return '';

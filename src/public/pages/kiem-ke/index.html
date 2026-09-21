@@ -205,15 +205,25 @@
           </h5>
           
           <!-- Bộ lọc (Đã bỏ lọc tất cả kho vì cửa hàng dùng 1 kho duy nhất) -->
-          <div class="d-flex gap-2 flex-wrap">
+          <div class="d-flex gap-2 flex-wrap align-items-center">
             <select class="form-select form-select-sm" id="filterTrangThai" style="width: 170px;" onchange="loadLichSuKiemKe(1)">
               <option value="">Tất cả trạng thái</option>
               <option value="Da kiem ke">Đã kiểm kê</option>
               <option value="Da dieu chinh">Đã điều chỉnh</option>
               <option value="Huy">Đã hủy</option>
             </select>
-            <input type="date" class="form-control form-control-sm" id="filterTuNgay" style="width: 140px;" onchange="loadLichSuKiemKe(1)">
-            <input type="date" class="form-control form-control-sm" id="filterDenNgay" style="width: 140px;" onchange="loadLichSuKiemKe(1)">
+            <div class="date-range-box">
+              <span class="date-picker-icon"><i class="bi bi-calendar-event"></i></span>
+              <div class="date-field">
+                <span class="date-label">TỪ</span>
+                <input type="date" class="date-input-clean" id="filterTuNgay" onchange="loadLichSuKiemKe(1)" title="Chọn ngày bắt đầu">
+              </div>
+              <span class="date-arrow"><i class="bi bi-arrow-right"></i></span>
+              <div class="date-field">
+                <span class="date-label">ĐẾN</span>
+                <input type="date" class="date-input-clean" id="filterDenNgay" onchange="loadLichSuKiemKe(1)" title="Chọn ngày kết thúc">
+              </div>
+            </div>
           </div>
         </div>
 

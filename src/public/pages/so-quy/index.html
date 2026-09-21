@@ -29,7 +29,10 @@
           <h4 class="fw-bold mb-1">Quản Lý Thu - Chi & Sổ Quỹ Dùng Chung</h4>
           <p class="text-muted small mb-0">Theo dõi toàn bộ dòng tiền thu/chi, đối soát tồn quỹ thực tế và lịch sử giao dịch</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-success fw-semibold shadow-sm" onclick="exportSoQuyExcel()" title="Xuất dữ liệu dòng tiền ra file Excel (.xls)">
+            <i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel Sổ Quỹ
+          </button>
           <button class="btn btn-success fw-semibold shadow-sm" onclick="openCreateThuModal()">
             <i class="bi bi-plus-circle me-1"></i> Lập Phiếu Thu
           </button>
@@ -156,48 +159,78 @@
 
       <!-- Navigation Tabs & Filter -->
       <div class="card-custom p-3 mb-4">
-        <div class="row g-2 align-items-center">
-          <div class="col-12 col-lg-5">
-            <ul class="nav nav-pills" id="soQuyTab" role="tablist">
-              <li class="nav-item" role="presentation">
-                <button class="nav-link active fw-semibold" id="tab-all-tab" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" onclick="switchView('tong-hop')">
-                  <i class="bi bi-journal-text me-1"></i> Biến Động Dòng Tiền
-                </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link fw-semibold" id="tab-thu-tab" data-bs-toggle="pill" data-bs-target="#tab-thu" type="button" role="tab" onclick="switchView('phieu-thu')">
-                  <i class="bi bi-arrow-down-left-circle me-1"></i> Phiếu Thu
-                </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link fw-semibold" id="tab-chi-tab" data-bs-toggle="pill" data-bs-target="#tab-chi" type="button" role="tab" onclick="switchView('phieu-chi')">
-                  <i class="bi bi-arrow-up-right-circle me-1"></i> Phiếu Chi
-                </button>
-              </li>
-            </ul>
-          </div>
+        <!-- Hàng 1: Tabs điều hướng sổ quỹ & Phím chọn nhanh thời gian -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pb-3 mb-3 border-bottom">
+          <ul class="nav nav-pills" id="soQuyTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active fw-semibold" id="tab-all-tab" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" onclick="switchView('tong-hop')">
+                <i class="bi bi-journal-text me-1"></i> Biến Động Dòng Tiền
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link fw-semibold" id="tab-thu-tab" data-bs-toggle="pill" data-bs-target="#tab-thu" type="button" role="tab" onclick="switchView('phieu-thu')">
+                <i class="bi bi-arrow-down-left-circle me-1"></i> Phiếu Thu
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link fw-semibold" id="tab-chi-tab" data-bs-toggle="pill" data-bs-target="#tab-chi" type="button" role="tab" onclick="switchView('phieu-chi')">
+                <i class="bi bi-arrow-up-right-circle me-1"></i> Phiếu Chi
+              </button>
+            </li>
+          </ul>
 
-          <div class="col-12 col-lg-7">
-            <div class="d-flex gap-2 flex-wrap justify-content-lg-end">
-              <div class="input-group input-group-sm" style="max-width: 150px;">
-                <span class="input-group-text">Từ</span>
-                <input type="date" id="filterTuNgay" class="form-control form-control-sm" onchange="applyFilters()">
+          <!-- Phím chọn nhanh khoảng thời gian -->
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="small fw-semibold text-muted d-none d-sm-inline">
+              <i class="bi bi-lightning-charge-fill text-warning me-1"></i>Khoảng thời gian:
+            </span>
+            <button type="button" class="btn btn-sm quick-date-btn" data-preset="today" onclick="setQuickDate('today')">Hôm nay</button>
+            <button type="button" class="btn btn-sm quick-date-btn" data-preset="week" onclick="setQuickDate('week')">7 ngày qua</button>
+            <button type="button" class="btn btn-sm quick-date-btn" data-preset="month" onclick="setQuickDate('month')">Tháng này</button>
+            <button type="button" class="btn btn-sm quick-date-btn active" data-preset="all" onclick="setQuickDate('all')">Toàn bộ</button>
+          </div>
+        </div>
+
+        <!-- Hàng 2: Bộ chọn ngày chi tiết & Lọc hình thức & Đặt lại -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <!-- Ô tìm kiếm từ khóa giao dịch -->
+            <div class="filter-search-box">
+              <span class="text-muted"><i class="bi bi-search"></i></span>
+              <input type="text" id="filterSearch" class="clean-input" placeholder="Tìm mã phiếu, người nộp/nhận, nội dung..." oninput="onSearchInput()">
+            </div>
+
+            <!-- Hộp chọn ngày TỪ - ĐẾN -->
+            <div class="date-range-box">
+              <span class="date-picker-icon"><i class="bi bi-calendar-event"></i></span>
+              <div class="date-field">
+                <span class="date-label">TỪ</span>
+                <input type="date" id="filterTuNgay" class="date-input-clean" onchange="onDateInputChange()" title="Chọn ngày bắt đầu">
               </div>
-              <div class="input-group input-group-sm" style="max-width: 150px;">
-                <span class="input-group-text">Đến</span>
-                <input type="date" id="filterDenNgay" class="form-control form-control-sm" onchange="applyFilters()">
+              <span class="date-arrow"><i class="bi bi-arrow-right"></i></span>
+              <div class="date-field">
+                <span class="date-label">ĐẾN</span>
+                <input type="date" id="filterDenNgay" class="date-input-clean" onchange="onDateInputChange()" title="Chọn ngày kết thúc">
               </div>
-              <select id="filterHinhThuc" class="form-select form-select-sm" style="max-width: 140px;" onchange="applyFilters()">
-                <option value="">-- Hình thức --</option>
+            </div>
+
+            <!-- Lọc phương thức thanh toán -->
+            <div class="filter-select-box">
+              <span class="select-icon"><i class="bi bi-credit-card"></i></span>
+              <select id="filterHinhThuc" class="clean-select" onchange="applyFilters()">
+                <option value="">-- Tất cả hình thức --</option>
                 <option value="Tien mat">Tiền mặt</option>
                 <option value="Chuyen khoan">Chuyển khoản</option>
                 <option value="Quet the">Quẹt thẻ</option>
                 <option value="Vi dien tu">Ví điện tử</option>
               </select>
-              <button class="btn btn-sm btn-reset-filter px-2.5 py-1" onclick="resetFilters()">
-                <i class="bi bi-arrow-clockwise text-primary me-1"></i> Đặt lại
-              </button>
             </div>
+          </div>
+
+          <div>
+            <button class="btn btn-reset-filter px-3" onclick="resetFilters()" title="Đặt lại bộ lọc về mặc định">
+              <i class="bi bi-arrow-clockwise text-primary me-1"></i> Đặt lại
+            </button>
           </div>
         </div>
       </div>
@@ -218,7 +251,7 @@
                       <th style="width: 140px;">Hình Thức</th>
                       <th>Nội Dung / Lý Do</th>
                       <th style="width: 160px;">Liên Kết Nghiệp Vụ</th>
-                      <th style="width: 80px;" class="text-center">Chi Tiết</th>
+                      <th style="width: 105px;" class="text-center text-nowrap">Thao Tác</th>
                     </tr>
                   </thead>
                   <tbody id="tableGiaoDichBody">
@@ -247,7 +280,7 @@
                       <th>Hình Thức</th>
                       <th>Nghiệp Vụ Liên Kết</th>
                       <th>Ghi Chú</th>
-                      <th class="text-center">Thao Tác</th>
+                      <th style="width: 105px;" class="text-center text-nowrap">Thao Tác</th>
                     </tr>
                   </thead>
                   <tbody id="tableThuBody">
@@ -274,7 +307,7 @@
                       <th>Hình Thức</th>
                       <th>Nghiệp Vụ Liên Kết</th>
                       <th>Lý Do Chi</th>
-                      <th class="text-center">Thao Tác</th>
+                      <th style="width: 105px;" class="text-center text-nowrap">Thao Tác</th>
                     </tr>
                   </thead>
                   <tbody id="tableChiBody">
@@ -304,7 +337,10 @@
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label fw-semibold">Số tiền thu (VNĐ) <span class="text-danger">*</span></label>
-            <input type="text" id="inputThuSoTien" class="format-currency form-control form-control-lg fw-bold text-success" placeholder="0" min="1000" required>
+            <input type="text" id="inputThuSoTien" class="format-currency form-control form-control-lg fw-bold text-success" placeholder="0" min="1000" required oninput="updateDocTienThu(this.value)">
+            <div class="mt-1 small">
+              <i class="bi bi-spellcheck me-1 text-success"></i><span id="spanDocTienThu" class="text-muted">Bằng chữ: Không đồng</span>
+            </div>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Ngày thu tiền</label>
@@ -351,9 +387,42 @@
       </div>
       <form id="formCreateChi" onsubmit="handleCreateChi(event)">
         <div class="modal-body">
+          <!-- Hộp Hiển Thị Số Dư Két / Quỹ Hiện Có -->
+          <div class="p-2 px-3 mb-3 rounded-3 border bg-light-subtle d-flex justify-content-between align-items-center" id="boxKiemTraTonQuy">
+            <div class="small text-muted">
+              <i class="bi bi-wallet2 me-1 text-primary"></i> <span id="labelTenHinhThucTon">Tồn két tiền mặt hiện có:</span>
+            </div>
+            <strong id="valTonKenhHienCo" class="text-primary font-monospace">0 đ</strong>
+          </div>
+
           <div class="mb-3">
             <label class="form-label fw-semibold">Số tiền chi (VNĐ) <span class="text-danger">*</span></label>
-            <input type="text" id="inputChiSoTien" class="format-currency form-control form-control-lg fw-bold text-danger" placeholder="0" min="1000" required>
+            <input type="text" id="inputChiSoTien" class="format-currency form-control form-control-lg fw-bold text-danger" placeholder="0" min="1000" required oninput="updateDocTienChi(this.value)">
+            <div class="mt-1 small">
+              <i class="bi bi-spellcheck me-1 text-danger"></i><span id="spanDocTienChi" class="text-muted">Bằng chữ: Không đồng</span>
+            </div>
+            <!-- Cảnh Báo An Toàn Âm Quỹ Real-time -->
+            <div id="alertChiAmQuy" class="alert alert-danger py-2 px-3 mt-2 mb-0 small d-none" role="alert">
+              <div class="d-flex align-items-start">
+                <i class="bi bi-exclamation-triangle-fill text-danger me-2 fs-6 mt-0"></i>
+                <div>
+                  <div class="fw-bold">Cảnh báo an toàn: Chi vượt quá tồn quỹ hiện có!</div>
+                  <div id="textChiAmQuyChiTiet">Số tiền chi vượt quá tiền mặt hiện có. Két sẽ bị âm.</div>
+                </div>
+              </div>
+            </div>
+            <div id="statusChiHopLe" class="text-success small mt-1 d-none">
+              <i class="bi bi-check-circle-fill me-1"></i> <span id="textChiHopLe">Hợp lệ. Số dư dự kiến còn lại: 0 đ</span>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Hình thức chi tiền <span class="text-danger">*</span></label>
+            <select id="inputChiHinhThuc" class="form-select" required onchange="onChiHinhThucChange()">
+              <option value="Tien mat">Tiền mặt</option>
+              <option value="Chuyen khoan">Chuyển khoản</option>
+              <option value="Quet the">Quẹt thẻ</option>
+              <option value="Vi dien tu">Ví điện tử</option>
+            </select>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Ngày chi tiền</label>
@@ -366,15 +435,6 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">Chứng từ liên quan</label>
             <input type="text" id="inputChiChungTu" class="form-control" placeholder="Mã hóa đơn, phiếu nhập...">
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Hình thức chi tiền <span class="text-danger">*</span></label>
-            <select id="inputChiHinhThuc" class="form-select" required>
-              <option value="Tien mat">Tiền mặt</option>
-              <option value="Chuyen khoan">Chuyển khoản</option>
-              <option value="Quet the">Quẹt thẻ</option>
-              <option value="Vi dien tu">Ví điện tử</option>
-            </select>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Mã đối tượng nhận (nếu có)</label>
@@ -406,9 +466,9 @@
         <!-- Injected dynamically -->
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-        <button type="button" class="btn btn-outline-primary" onclick="window.print()">
-          <i class="bi bi-printer me-1"></i> In Chứng Từ
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-primary fw-semibold shadow-sm" id="btnInPhieuModal">
+          <i class="bi bi-printer me-1"></i> In Chứng Từ Chuẩn
         </button>
       </div>
     </div>
@@ -418,6 +478,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/layout.js"></script>
+<script src="/js/print-templates.js"></script>
 <script src="/js/soquy.js"></script>
 </body>
 </html>

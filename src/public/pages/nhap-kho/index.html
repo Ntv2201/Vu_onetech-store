@@ -97,16 +97,20 @@
           </div>
 
           <div class="col-12 col-md-8">
-            <div class="d-flex gap-2 flex-wrap justify-content-md-end">
-              <div class="input-group input-group-sm" style="max-width: 150px;">
-                <span class="input-group-text">Từ</span>
-                <input type="date" id="filterTuNgay" class="form-control form-control-sm" onchange="loadDanhSachPhieuNhap()">
+            <div class="d-flex gap-2 flex-wrap justify-content-md-end align-items-center">
+              <div class="date-range-box">
+                <span class="date-picker-icon"><i class="bi bi-calendar-event"></i></span>
+                <div class="date-field">
+                  <span class="date-label">TỪ</span>
+                  <input type="date" id="filterTuNgay" class="date-input-clean" onchange="loadDanhSachPhieuNhap()" title="Chọn ngày bắt đầu">
+                </div>
+                <span class="date-arrow"><i class="bi bi-arrow-right"></i></span>
+                <div class="date-field">
+                  <span class="date-label">ĐẾN</span>
+                  <input type="date" id="filterDenNgay" class="date-input-clean" onchange="loadDanhSachPhieuNhap()" title="Chọn ngày kết thúc">
+                </div>
               </div>
-              <div class="input-group input-group-sm" style="max-width: 150px;">
-                <span class="input-group-text">Đến</span>
-                <input type="date" id="filterDenNgay" class="form-control form-control-sm" onchange="loadDanhSachPhieuNhap()">
-              </div>
-              <button class="btn btn-sm btn-reset-filter px-2.5 py-1" onclick="resetFilters()">
+              <button class="btn btn-sm btn-reset-filter px-2.5 py-1.5" onclick="resetFilters()">
                 <i class="bi bi-arrow-clockwise text-primary me-1"></i> Đặt lại
               </button>
             </div>
@@ -180,11 +184,11 @@
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label fw-semibold">Chiết khấu (VND)</label>
-              <input type="number" id="inputTienChietKhau" class="form-control" value="0" min="0">
+              <input type="text" id="inputTienChietKhau" class="form-control format-currency" value="0" placeholder="0" oninput="maskCurrencyInput(this); recalcTotalPreview()">
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label fw-semibold">Phí vận chuyển (VND)</label>
-              <input type="number" id="inputPhiVanChuyen" class="form-control" value="0" min="0">
+              <input type="text" id="inputPhiVanChuyen" class="form-control format-currency" value="0" placeholder="0" oninput="maskCurrencyInput(this); recalcTotalPreview()">
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label fw-semibold">Tên người giao hàng</label>
@@ -300,7 +304,7 @@
           </div>
           <div class="col-12 mt-2">
             <label class="form-label fw-semibold">Giá nhập (VNĐ) <span class="text-danger">*</span></label>
-            <input type="number" id="bulkInputGia" class="form-control form-control-sm" placeholder="0">
+            <input type="text" id="bulkInputGia" class="form-control form-control-sm format-currency" placeholder="0" oninput="maskCurrencyInput(this)">
           </div>
         </div>
         <div class="mb-3">
