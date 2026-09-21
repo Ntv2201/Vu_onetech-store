@@ -1,39 +1,67 @@
-# ONE TECH STORE — HỆ THỐNG QUẢN LÝ BÁN HÀNG THEO TỪNG IMEI
+﻿# ONE TECH STORE
+### He thong Quan ly Ban hang Chuoi Cua hang Dien thoai
+### Quan ly hang hoa theo tung IMEI/Serial vat ly rieng biet
 
-Dự án hệ thống quản lý bán hàng cho chuỗi cửa hàng điện thoại **One Tech Store**.  
-Đặc thù cốt lõi: **Quản lý hàng hóa theo từng IMEI/Serial vật lý riêng biệt**, truy vết chính xác từ Nhập kho $\rightarrow$ Đặt hàng trước $\rightarrow$ Bán hàng POS $\rightarrow$ Xuất kho $\rightarrow$ Tiếp nhận/Hoàn tất Bảo hành $\rightarrow$ Đổi trả máy $\rightarrow$ Hợp đồng Trả góp & Quản lý Công nợ.
-
----
-
-## 📜 QUY CHUẨN LẬP TRÌNH & ĐÓNG GÓP (BẮT BUỘC ĐỌC)
-
-Để tránh xung đột mã nguồn (Merge Conflicts) và đảm bảo chất lượng hệ thống, **tất cả thành viên trong nhóm và AI Assistant bắt buộc phải tuân thủ**:
-* 🏛️ **[Bộ Quy Tắc Kiến Trúc Toàn Diện (AGENTS.md)](./AGENTS.md):** 9 quy tắc bắt buộc về Layered MVC OOP, RBAC 6 vai trò, Mongoose Transaction, Concurrency Lock, State Machine và chuẩn phản hồi API.
-* 🚀 **[Hướng Dẫn Đóng Góp & Quy Trình Tạo PR (CONTRIBUTING.md)](./CONTRIBUTING.md):** Checklist 4 bước trước khi tạo PR, hướng dẫn chạy test tự động 100% PASS và phân công module.
-* 📋 **[Bản Walkthrough Kiến Trúc Kỹ Thuật (PROJECT_WALKTHROUGH.md)](./PROJECT_WALKTHROUGH.md):** Chi tiết CSDL 26 models, 20 bộ test suites (796 assertions) và danh sách endpoints.
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-7.0+-brightgreen)](https://mongodb.com)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple)](https://getbootstrap.com)
+[![Tests](https://img.shields.io/badge/Tests-22%20Suites%20865%20PASS-success)](./tests)
 
 ---
 
-## 1. Tech Stack & Kiến trúc Hệ thống (Layered MVC + OOP Service)
+## Gioi thieu
 
-- **Backend:** Node.js, Express.js — **RESTful API thuần (trả JSON chuẩn hóa)**
-- **Kiến trúc:** Layered MVC + OOP Service Layer (`src/services/` kế thừa `BaseService`, `src/controllers/` kế thừa `BaseController`)
-- **Database:** MongoDB (sử dụng Mongoose ODM) — mô hình hóa đầy đủ 26 Models CSDL
-- **Frontend:** **100% HTML5 thuần + Vanilla JS (Fetch API Wrapper) + Bootstrap 5 + Bootstrap Icons + CSS Animations** (Giao diện hiện đại, card glassmorphism, responsive drawer, lọc phân quyền tự động theo vai trò, biểu mẫu in ấn chuyên nghiệp khổ K80 / A5)
-- **Auth & Phân quyền RBAC:** Session + Bcryptjs + Middleware phân quyền bảo vệ 6 vai trò: `Quản lý`, `Thủ kho`, `NV bán hàng`, `Thu ngân`, `Kế toán`, `Kỹ thuật`
-- **Kiểm thử tự động:** Hơn 13 bộ test suites tự động phủ $100\%$ các luồng nghiệp vụ liên phòng ban, kiểm thử tình huống biên (Boundary Testing), cấn trừ cọc, đối soát Sổ quỹ & Công nợ, và phân quyền RBAC HTTP.
+**One Tech Store** la he thong quan ly ban hang chuyen biet cho chuoi cua hang dien thoai, may tinh bang va phu kien cong nghe. Diem khac biet cot loi: moi chiec may la mot ban ghi doc lap gan voi 1 ma **IMEI duy nhat (15 ky tu)**, cho phep truy vet chinh xac toan bo vong doi thiet bi tu nhap kho -> ban hang -> bao hanh -> doi tra.
 
 ---
 
-## 2. Hướng dẫn Cài đặt & Khởi chạy
+## Tinh nang chinh
 
-### Bước 1: Cài đặt thư viện
+| Module | Mo ta |
+|---|---|
+| **Dang nhap & RBAC** | 6 vai tro phan quyen, bcrypt, session |
+| **Ban hang POS** | Quet IMEI bang camera, multi-tab don hang, ma khuyen mai, in hoa don K80/A5 |
+| **Nhap kho** | Phieu nhap nhieu dong, tu dong sinh IMEI, nhap hang loat tu Excel/CSV |
+| **Dat truoc Pre-order** | Thu coc, lien ket can tru vao hoa don POS |
+| **Doi tra** | Xu ly trong 30 ngay, tinh chenh lech tai chinh tu dong |
+| **Bao hanh** | Tiep nhan, xuat linh kien thay the, hoan tat tra may |
+| **Tra gop** | Hop dong tra gop, lich thu ky han tu dong |
+| **Kho** | State Machine 6 trang thai IMEI, kiem ke, dieu chinh ton |
+| **So quy** | Phieu Thu/Chi, so du realtime, doi soat theo ngay/thang |
+| **Cong no** | Cong no khach hang + NCC, canh bao qua han |
+| **Bao cao** | Doanh thu Chart.js, Top SP, Ton kho sap het, KPI nhan vien |
+
+---
+
+## Cong nghe su dung
+
+| Thanh phan | Cong nghe |
+|---|---|
+| **Backend** | Node.js 18+ / Express.js (RESTful API JSON) |
+| **Kien truc** | Layered MVC + OOP Service Layer (BaseService, BaseController) |
+| **Database** | MongoDB 7.0 / Mongoose ODM (27 Collections) |
+| **Frontend** | HTML5 + Vanilla JS + Bootstrap 5.3 + FontAwesome 6 |
+| **Auth & Bao mat** | express-session + bcryptjs + RBAC Middleware |
+| **Kiem thu** | Node.js custom test runner — 22 suites, 865 assertions, 100% PASS |
+
+---
+
+## Huong dan cai dat
+
+### Yeu cau he thong
+- Node.js >= 18
+- MongoDB >= 6.0 (chay local hoac Atlas)
+- npm >= 9
+
+### Buoc 1: Clone va cai dat
 ```bash
+git clone https://github.com/tuan-coder-code/onetech-store.git
+cd onetech-store
 npm install
 ```
 
-### Bước 2: Cấu hình môi trường (.env)
-Tạo file `.env` tại thư mục gốc (hoặc copy từ `.env.example`):
+### Buoc 2: Cau hinh moi truong
+Tao file `.env` tai thu muc goc:
 ```env
 PORT=3000
 MONGODB_URI=mongodb://127.0.0.1:27017/onetech_store
@@ -41,189 +69,136 @@ SESSION_SECRET=onetech_secret_key_super_secure_2026
 NODE_ENV=development
 ```
 
-### Bước 3: Nạp dữ liệu mẫu (Seed Data)
-Chạy script seed để tạo danh mục, sản phẩm, máy IMEI theo trạng thái, khách hàng, nhà cung cấp và tài khoản cho 6 vai trò:
+### Buoc 3: Nap du lieu mau (Seed Data)
 ```bash
 npm run seed
 ```
+Script tu dong tao: 7 tai khoan 6 vai tro, danh muc, san pham, IMEI mau, khach hang, NCC.
 
-### Bước 4: Chạy kiểm thử tự động toàn bộ phân hệ
+### Buoc 4: Chay server
 ```bash
-# 1. Kiểm thử module Bán hàng POS & Dịch vụ Bảo hành (Tuấn)
-node tests/test_tuan_module.js
-node tests/test_tuan_tuan5_6_e2e.js
+# Che do phat trien (nodemon auto-reload)
+npm run dev
 
-# 2. Kiểm thử module Đặt trước, Đổi trả & E2E Workflow (Việt)
-node tests/test_viet_module.js
-node tests/test_viet_tuan4.js
-node tests/test_viet_tuan5.js
-node tests/test_viet_tuan6_e2e.js
-
-# 3. Kiểm thử module Tồn kho dùng chung, Công nợ & Trả góp (An)
-node tests/test_an_tuan3.js
-node tests/test_an_tuan4.js
-node tests/test_an_tuan5.js
-
-# 4. Kiểm thử module Nhập kho máy IMEI & Phụ kiện (Tuân)
-node tests/test_tuan_nhap_kho.js
-
-# 5. Kiểm thử module Thu - Chi & Sổ quỹ dùng chung (Vượng)
-node tests/test_vuong_module.js
-
-# 6. Kiểm thử đăng nhập 6 vai trò & Ma trận phân quyền RBAC (QA)
-node tests/verify_all_logins.js
-node tests/test_http_endpoints.js
+# San xuat
+npm start
 ```
 
-### Bước 5: Khởi động Server
-- Chế độ phát triển (auto-reload):
-  ```bash
-  npm run dev
-  ```
-- Chế độ chạy thông thường:
-  ```bash
-  npm start
-  ```
-
-Truy cập hệ thống tại: **`http://localhost:3000`** (hoặc `http://localhost:3000/login.html`)
+### Buoc 5: Truy cap
+- **URL:** http://localhost:3000
+- **Trang dang nhap:** http://localhost:3000/login.html
 
 ---
 
-## 3. Danh sách Tài khoản Demo (6 Vai trò)
+## Tai khoan demo (sau khi seed)
 
-| Vai trò | Tên đăng nhập | Mật khẩu | Quyền hạn & Phân hệ được truy cập |
+| Vai tro | Ten dang nhap | Mat khau | Quyen han |
 |---|---|---|---|
-| **Quản lý** | `admin` | `admin123` | **Toàn quyền hệ thống**: Dashboard, POS Bán hàng, Đặt trước, Đổi trả (bao gồm quyền hủy phiếu), Hợp đồng Trả góp, Nhập kho, Thu - Chi & Sổ quỹ, Quản lý Công nợ & Đối soát, Bảo hành, Sản phẩm, Quản lý IMEI, Danh mục, Phụ kiện, KH, NCC, Nhân viên. |
-| **NV bán hàng** | `banhang` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Đặt trước, Đổi trả máy, Lập HĐ Trả góp, Phiếu thu, Tra cứu & Tiếp nhận Bảo hành, Xem Sản phẩm, Khách hàng. |
-| **Thủ kho** | `thukho` | `123456` | Dashboard, Nhập kho hàng hóa & IMEI, Xem Tồn kho & Phiếu xuất, Xem Sản phẩm, Quản lý máy IMEI, Danh mục, Phụ kiện, Nhà cung cấp. |
-| **Thu ngân** | `thungan` | `123456` | Dashboard, Bán hàng POS & Hóa đơn, Đặt trước, Đổi trả, Thu tiền kỳ Trả góp, Thu - Chi & Sổ quỹ, Quản lý Công nợ, Xem bảng giá Sản phẩm, Quản lý Khách hàng. |
-| **Kế toán** | `ketoan` | `123456` | Dashboard, Thu - Chi & Sổ quỹ, Quản lý Công nợ & Đối soát quá hạn, Quản lý Hợp đồng Trả góp & Thu tiền kỳ, Đặt trước, Tra cứu Phiếu nhập, Tra cứu Hóa đơn, Xem Sản phẩm, Phụ kiện, Khách hàng, Quản lý Nhà cung cấp. |
-| **Kỹ thuật** | `kythuat` | `123456` | Dashboard, Tra cứu dòng đời IMEI, Tiếp nhận/Sửa chữa Bảo hành, Xuất linh kiện thay thế, Cập nhật trạng thái máy IMEI. |
-
-*(Trên trang đăng nhập có các nút badge để tự động điền nhanh tài khoản demo 1-click).*
+| **Quan ly** | `admin` | `admin123` | Toan quyen he thong |
+| **Thu kho** | `thukho` | `thukho123` | Nhap kho, xuat kho, kiem ke, IMEI, phu kien, NCC |
+| **NV ban hang** | `banhang` | `banhang123` | Lap hoa don POS, dat truoc, tu van tra gop |
+| **Thu ngan** | `thungan` | `thungan123` | Thu tien, xac nhan thanh toan, lap phieu thu |
+| **Ke toan** | `ketoan` | `ketoan123` | Cong no, so quy thu-chi, doi soat tai chinh |
+| **Ky thuat** | `kythuat` | `kythuat123` | Tiep nhan bao hanh, tham dinh doi tra, sua chua |
 
 ---
 
-## 4. Cấu trúc Thư mục Dự án
+## Kiem thu tu dong
+
+```bash
+# Chay toan bo 22 Test Suites (khuyen nghi)
+npm test
+# Ket qua: 22/22 suites PASS — 865/865 assertions — 0 FAIL (~13 giay)
+```
+
+| Test Suite | So luong | Mo ta |
+|---|---|---|
+| test_tuan_module.js | 60 | Ban hang POS, IMEI, Bao hanh, Data Contract |
+| test_tuan_tuan5_6_e2e.js | 33 | E2E: Dat coc -> Ban hang -> Doi tra -> Bao hanh -> KPI |
+| test_viet_module.js | 32 | Dat truoc Pre-order |
+| test_viet_tuan4.js | 39 | Doi tra may & Can tru coc |
+| test_viet_tuan5.js | 26 | Tinh huong bien & Huy phieu RBAC |
+| test_viet_tuan6_e2e.js | 21 | E2E toan trinh |
+| test_an_tuan3.js | 28 | Ton kho dung chung & Cong no |
+| test_an_tuan4.js | 24 | Doi soat cong no & Qua han |
+| test_an_tuan5.js | 23 | Hop dong Tra gop & Lich thu ky |
+| test_tuan_nhap_kho.js | 25 | Nhap kho may IMEI & Phu kien |
+| test_tuan_tuan4.js | 13 | Nhap hang loat IMEI & Lich su NCC |
+| test_tuan_tuan5.js | 8 | Tra hang NCC & Can tru cong no |
+| test_vuong_module.js | 37 | Thu - Chi & So quy |
+| test_vuong_tuan4_kiemke.js | 23 | Kiem ke kho & Xu ly lech IMEI |
+| test_vuong_tuan5_6_e2e.js | 25 | Bao cao Doanh thu, Top SP & Doi soat So quy E2E |
+| verify_all_logins.js | 6 | Ma tran dang nhap 6 vai tro |
+| test_http_endpoints.js | 51 | REST API 26 Endpoints & Data Contracts |
+| test_frontend_dom_contract.js | 65 | DOM ID Bindings & Data Extractors |
+| test_concurrency_stress.js | 5 | Atomic Lock & Stress Test 1000+ IMEI |
+| test_ui_html_structure.js | 201 | HTML5 Structure, Sidebar & Assets |
+
+---
+
+## Cau truc thu muc
 
 ```
 onetech/
-├── .env.example                         # Mẫu cấu hình môi trường
-├── package.json                         # Dependencies & scripts
-├── ke-hoach-lap-trinh-chi-tiet-v2.md    # Kế hoạch phân công 7 thành viên theo ngày (Lộ trình 8 tuần)
-├── PROJECT_WALKTHROUGH.md               # Tài liệu bàn giao kỹ thuật & kiến trúc chi tiết
-├── one_tech_store_schema.sql            # Bản thiết kế SQL gốc
-├── one_tech_store_mo_ta_bang.md         # Mô tả 26 bảng CSDL
-├── one_tech_store_erd.dbml              # Sơ đồ quan hệ ERD
-├── README.md                            # Hướng dẫn dự án (File này)
-├── tests/                               # Trọn bộ 13 test suites kiểm thử tự động
-│   ├── test_tuan_module.js              # 44 tests Bán hàng POS, IMEI, Bảo hành
-│   ├── test_tuan_tuan5_6_e2e.js         # 33 tests E2E tích hợp Bán hàng POS, Cọc, Bảo hành, KPI
-│   ├── test_viet_module.js              # 32 tests Đặt hàng trước & Cọc (Tuần 3)
-│   ├── test_viet_tuan4.js               # 39 tests Đổi trả máy & Cấn trừ cọc (Tuần 4)
-│   ├── test_viet_tuan5.js               # 26 tests Tình huống biên & Hủy phiếu RBAC (Tuần 5)
-│   ├── test_viet_tuan6_e2e.js           # 21 tests Kịch bản E2E toàn trình Đặt cọc -> POS -> Đổi trả (Tuần 6)
-│   ├── test_an_tuan3.js                 # 28 tests Tồn kho dùng chung & Công nợ đa hình (Tuần 3)
-│   ├── test_an_tuan4.js                 # 24 tests Đối soát công nợ & Quản lý quá hạn (Tuần 4)
-│   ├── test_an_tuan5.js                 # 23 tests Hợp đồng Trả góp & Lịch thu kỳ (Tuần 5)
-│   ├── test_tuan_nhap_kho.js            # 25 tests Nhập kho máy IMEI & Phụ kiện (Tuần 3)
-│   ├── test_vuong_module.js             # 37 tests Thu - Chi & Báo cáo Sổ quỹ dùng chung (Tuần 3)
-│   ├── test_http_endpoints.js           # Kiểm thử tích hợp HTTP API & RBAC 403 Forbidden
-│   └── verify_all_logins.js             # Kiểm thử đăng nhập 6 vai trò
-└── src/
-    ├── app.js                           # Cấu hình Express App, REST API & Static Server
-    ├── server.js                        # Điểm khởi động server & kết nối DB
-    ├── config/
-    │   └── db.js                        # Kết nối MongoDB (Mongoose)
-    ├── models/                          # Đầy đủ 26 Mongoose Models
-    │   ├── NhanVien.js, KhachHang.js, NhaCungCap.js
-    │   ├── DanhMuc.js, SanPham.js, MayImei.js, PhuKien.js, LinhKien.js
-    │   ├── HoaDon.js, CT_HoaDon_May.js, CT_HoaDon_PhuKien.js, PhieuXuatKho.js
-    │   ├── PhieuBaoHanh.js, CT_PBH_LinhKien.js, PhieuDoiTra.js
-    │   ├── PhieuNhap.js, CT_PhieuNhap.js, PhieuChi.js
-    │   ├── Kho.js, TonKho.js, BienBanKiemKe.js, DieuChinhKho.js
-    │   ├── CongNo.js, PhieuThu.js, DonDatHangTruoc.js, HopDongTraGop.js
-    │   └── index.js                     # Export tập trung 26 models
-    ├── services/                        # [TẦNG OOP SERVICE] Đóng gói toàn bộ logic nghiệp vụ
-    │   ├── BaseService.js               # Base Service Class
-    │   ├── HoaDonService.js             # Bán hàng POS, khóa IMEI, trừ kho, cấn trừ cọc
-    │   ├── BaoHanhService.js            # Tra cứu dòng đời IMEI, tiếp nhận BH, xuất LK, hoàn tất
-    │   ├── DatTruocService.js           # Đặt hàng trước, thu tiền cọc, hủy đơn hoàn cọc, gán IMEI
-    │   ├── DoiTraService.js             # Đổi trả máy, đổi kèm phụ kiện, tính chênh lệch, hủy phiếu hoàn tác
-    │   ├── TraGopService.js             # Lập HĐ trả góp, sinh lịch thu kỳ, thu tiền kỳ, tự sinh Phiếu Thu
-    │   ├── CongNoService.js             # Công nợ đa hình, thanh toán nợ, đối soát & cảnh báo quá hạn
-    │   ├── TonKhoService.js             # Hàm tồn kho dùng chung capNhatTonKho, thống kê tồn, phiếu xuất
-    │   ├── PhieuNhapService.js          # Nhập kho máy IMEI & phụ kiện, tự tăng tồn, chi tiền/ghi nợ
-    │   ├── ThanhToanService.js          # Sổ quỹ & Thu - Chi dùng chung (taoPhieuThu, taoPhieuChi)
-    │   ├── MayImeiService.js            # Quản lý vòng đời máy IMEI (nhập lẻ / hàng loạt)
-    │   ├── SanPhamService.js            # Quản lý Model sản phẩm & tính tồn kho
-    │   ├── KhachHangService.js, NhanVienService.js, NhaCungCapService.js
-    │   ├── DanhMucService.js, PhuKienService.js
-    │   ├── AuthService.js, DashboardService.js
-    │   └── index.js                     # Export tập hợp Services
-    ├── controllers/                     # [TẦNG OOP CONTROLLER] Kế thừa BaseController
-    │   ├── BaseController.js            # Base Controller Class (sendSuccess, sendError, handleError)
-    │   ├── authController.js, dashboardController.js
-    │   ├── hoaDonController.js, baoHanhController.js, datTruocController.js
-    │   ├── doiTraController.js, TraGopController.js, congNoController.js
-    │   ├── khoController.js, phieuNhapController.js, thanhToanController.js
-    │   ├── sanPhamController.js, mayImeiController.js
-    │   ├── khachHangController.js, nhaCungCapController.js
-    │   ├── nhanVienController.js, danhMucController.js, phuKienController.js
-    │   └── index.js
-    ├── middlewares/
-    │   └── auth.js                      # requireAuth, requireRole (Trả JSON 401/403)
-    ├── routes/                          # Định tuyến REST API (/api/...)
-    │   ├── authRoutes.js, dashboardRoutes.js
-    │   ├── hoaDonRoutes.js, baoHanhRoutes.js, datTruocRoutes.js
-    │   ├── doiTraRoutes.js, traGopRoutes.js, congNoRoutes.js
-    │   ├── khoRoutes.js, phieuNhapRoutes.js, thanhToanRoutes.js
-    │   ├── sanPhamRoutes.js, mayImeiRoutes.js
-    │   ├── khachHangRoutes.js, nhaCungCapRoutes.js
-    │   ├── nhanVienRoutes.js, danhMucRoutes.js, phuKienRoutes.js
-    │   └── index.js
-    └── public/                          # Giao diện Frontend (Tách bạch CSS, JS, HTML Pages)
-        ├── css/                         # 🎨 TOÀN BỘ FILE STYLESHEET
-        │   └── style.css                # CSS thiết kế giao diện, animations & theme
-        ├── js/                          # ⚡ TOÀN BỘ FILE JAVASCRIPT CLIENT
-        │   ├── api.js                   # Fetch API helper, toast notifications
-        │   ├── layout.js                # Dựng sidebar/navbar, phân quyền menu & route guard
-        │   ├── dashboard.js             # Hiệu ứng đếm số & thao tác nhanh Dashboard
-        │   ├── banhang.js               # Logic POS bán hàng, giỏ hàng, in hóa đơn chuyên nghiệp
-        │   ├── baohanh.js               # Logic tra cứu IMEI, lập phiếu BH, xuất linh kiện
-        │   ├── dattruoc.js              # Logic Đặt trước (Pre-order), thu/hoàn cọc
-        │   ├── doitra.js                # Logic Đổi trả máy, đổi kèm phụ kiện, in biên bản, hủy phiếu
-        │   ├── congno.js                # Logic Quản lý Công nợ & Thanh toán nợ
-        │   ├── nhapkho.js               # Logic Nhập kho máy IMEI & Phụ kiện
-        │   ├── soquy.js                 # Logic Báo cáo Sổ quỹ & Quản lý Thu/Chi
-        │   └── auth.js, sanpham.js, mayimei.js, khachhang.js, nhacungcap.js...
-        └── pages/                       # 📄 TOÀN BỘ CÁC TRANG HTML GIAO DIỆN
-            ├── index.html               # Trang Dashboard tổng quan
-            ├── login.html               # Trang Đăng nhập hiện đại
-            ├── 404.html                 # Trang 404 Not Found
-            ├── ban-hang/index.html      # Màn hình Bán hàng POS & Hóa đơn
-            ├── bao-hanh/index.html      # Màn hình Tra cứu & Bảo hành
-            ├── dat-truoc/index.html     # Màn hình Quản lý Đơn đặt trước & Thu cọc
-            ├── doi-tra/index.html       # Màn hình Quản lý Đổi trả máy & In biên bản
-            ├── cong-no/index.html       # Màn hình Quản lý Công nợ & Đối soát
-            ├── nhap-kho/index.html      # Màn hình Nhập kho hàng hóa & IMEI
-            ├── so-quy/index.html        # Màn hình Sổ quỹ Thu - Chi
-            ├── san-pham/                # Danh sách, form thêm/sửa, chi tiết SP
-            ├── may-imei/                # Danh sách, form nhập lẻ & hàng loạt IMEI
-            ├── khach-hang/              # Danh sách & form khách hàng
-            ├── nha-cung-cap/            # Danh sách & form nhà cung cấp
-            ├── nhan-vien/               # Danh sách & form nhân viên, phân quyền
-            ├── danh-muc/                # Danh sách & modal danh mục
-            └── phu-kien/                # Danh sách & modal phụ kiện
+|-- src/
+|   |-- models/          # 27 Mongoose Schemas (MAY_IMEI, SANPHAM, HOADON...)
+|   |-- services/        # OOP Service Layer (ke thua BaseService)
+|   |   |-- HoaDonService.js      # Ban hang POS, Atomic Lock, can tru coc
+|   |   |-- PhieuNhapService.js   # Nhap kho, sinh IMEI, cong no NCC
+|   |   |-- BaoHanhService.js     # Tra cuu IMEI, tiep nhan BH, xuat LK
+|   |   |-- DoiTraService.js      # Doi tra, tinh chenh lech, huy phieu
+|   |   |-- DatTruocService.js    # Pre-order, thu coc, huy don hoan coc
+|   |   |-- TraGopService.js      # Hop dong tra gop, thu tien ky
+|   |   |-- CongNoService.js      # Cong no da hinh, canh bao qua han
+|   |   |-- ThanhToanService.js   # So quy, Phieu Thu/Chi dung chung
+|   |   |-- TonKhoService.js      # Ham ton kho dung chung capNhatTonKho
+|   |   |-- BaoCaoService.js      # Doanh thu, Top SP, Ton kho lau/sap het
+|   |   `-- ...
+|   |-- controllers/     # OOP Controller Layer (ke thua BaseController)
+|   |-- middlewares/     # requireAuth, requireRole (RBAC)
+|   |-- routes/          # REST API /api/... (24 route files)
+|   `-- public/
+|       |-- css/style.css         # Design system, animations, glassmorphism
+|       |-- js/
+|       |   |-- api.js            # Fetch API wrapper, toast notifications
+|       |   |-- layout.js         # Sidebar/Navbar injection, RBAC menu filter
+|       |   |-- banhang.js        # POS logic, multi-tab, in hoa don
+|       |   |-- nhapkho.js        # Nhap kho, bulk IMEI import
+|       |   `-- ...
+|       `-- pages/                # HTML5 pages (20+ trang)
+|-- tests/               # 22 Test Suites (865 assertions, 100% PASS)
+|-- AGENTS.md            # Quy tac kien truc bat buoc (AI & Developer)
+|-- CONTRIBUTING.md      # Huong dan PR & quy trinh lam viec nhom
+|-- PROJECT_WALKTHROUGH.md  # Tai lieu ky thuat toan dien
+|-- ke-hoach-lap-trinh-chi-tiet-v2.md  # Phan cong 7 thanh vien
+|-- package.json
+`-- README.md
 ```
 
 ---
 
-## 5. Hướng dẫn Phát triển & Tiếp nhận Module mới
+## Nhom phat trien
 
-Khi tiếp tục triển khai các module tiếp theo (Kiểm kê kho & Báo cáo Dashboard của Vượng, Mở rộng nhập kho của Tuân, Stress test của QA):
-1. **Service Class (`src/services/`):** Kế thừa `BaseService`, đóng gói toàn bộ business rules, kiểm tra trạng thái IMEI và xử lý atomic transactions.
-2. **Controller Class (`src/controllers/`):** Kế thừa `BaseController`, sử dụng `this.sendSuccess(res, data, message)` và `this.handleError(res, error)`.
-3. **REST Routes (`src/routes/`):** Gắn middleware `requireAuth` và `requireRole([...])` bảo vệ quyền truy cập theo 6 vai trò.
-4. **Frontend (`src/public/`):** Sử dụng `api.get()` / `api.post()` để gọi Backend API và tự động kế thừa layout/sidebar phân quyền từ `js/layout.js`.
+| STT | Ho ten | Vai tro |
+|---|---|---|
+| 1 | Nguyen Quang Tuan | Truong nhom / Full-stack Lead (POS, Bao hanh, Kien truc, Deploy) |
+| 2 | Le Bao Tuan | Backend Dev (Nhap kho, IMEI, Tra hang NCC, TonKhoService) |
+| 3 | Nguyen Viet An | Backend Dev (Cong no, So quy, Tra gop, Scaffold Models) |
+| 4 | Le Phan Vuong | Backend Dev (Phieu Thu/Chi, Bao cao, Chart.js, Kiem ke) |
+| 5 | Nguyen Thi Viet | Backend Dev (Dat truoc, Doi tra, Huy phieu hoan tac) |
+| 6 | Do Thanh Vuc | Frontend Dev (Giao dien POS, Custom Dropdown, Mau in phap quy) |
+| 7 | Le Viet Anh | QA / Tester (Master Test Runner, Stress test, RBAC Audit, Test E2E) |
 
+---
+
+## Tai lieu tham khao
+
+- [AGENTS.md](./AGENTS.md) — Quy tac kien truc bat buoc (9 quy tac)
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — Huong dan PR va quy trinh nhom
+- [PROJECT_WALKTHROUGH.md](./PROJECT_WALKTHROUGH.md) — Tai lieu ky thuat toan dien
+- [ke-hoach-lap-trinh-chi-tiet-v2.md](./ke-hoach-lap-trinh-chi-tiet-v2.md) — Ke hoach phan cong 7 thanh vien
+
+---
+
+*One Tech Store — He thong quan ly ban hang dien thoai theo IMEI*  
+*22/22 Test Suites PASS — 865/865 assertions — 0 FAIL*
