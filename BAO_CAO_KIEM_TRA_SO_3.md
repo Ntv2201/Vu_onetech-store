@@ -1,4 +1,4 @@
-﻿# BAO CAO KIEM TRA SO 3
+# BAO CAO KIEM TRA SO 3
 # HE THONG QUAN LY BAN HANG CHUOI CUA HANG DIEN THOAI
 # ONE TECH STORE
 
@@ -56,8 +56,8 @@
 | Chi so | Ket qua |
 |---|---|
 | Tong so Test Suites | 22 suites |
-| Tong so Test Assertions | 865 assertions |
-| PASS | 865 (100%) |
+| Tong so Test Assertions | 866 assertions |
+| PASS | 866 (100%) |
 | FAIL | 0 (0%) |
 | Thoi gian thuc thi | ~13.33 giay |
 
@@ -123,4 +123,4 @@
 ---
 
 *Bao cao duoc tao ngay 21/09/2026 - He thong One Tech Store*
-*Ket qua npm test: 22/22 suites PASS - 865/865 assertions PASS (0 FAIL)*
+*Ket qua npm test: 22/22 suites PASS - 866/866 assertions PASS (0 FAIL)*

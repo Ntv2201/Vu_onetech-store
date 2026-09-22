@@ -1,11 +1,11 @@
-﻿# ONE TECH STORE
+# ONE TECH STORE
 ### He thong Quan ly Ban hang Chuoi Cua hang Dien thoai
 ### Quan ly hang hoa theo tung IMEI/Serial vat ly rieng biet
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7.0+-brightgreen)](https://mongodb.com)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple)](https://getbootstrap.com)
-[![Tests](https://img.shields.io/badge/Tests-22%20Suites%20865%20PASS-success)](./tests)
+[![Tests](https://img.shields.io/badge/Tests-22%20Suites%20866%20PASS-success)](./tests)
 
 ---
 
@@ -42,7 +42,7 @@
 | **Database** | MongoDB 7.0 / Mongoose ODM (27 Collections) |
 | **Frontend** | HTML5 + Vanilla JS + Bootstrap 5.3 + FontAwesome 6 |
 | **Auth & Bao mat** | express-session + bcryptjs + RBAC Middleware |
-| **Kiem thu** | Node.js custom test runner — 22 suites, 865 assertions, 100% PASS |
+| **Kiem thu** | Node.js custom test runner — 22 suites, 866 assertions, 100% PASS |
 
 ---
 
@@ -108,7 +108,7 @@ npm start
 ```bash
 # Chay toan bo 22 Test Suites (khuyen nghi)
 npm test
-# Ket qua: 22/22 suites PASS — 865/865 assertions — 0 FAIL (~13 giay)
+# Ket qua: 22/22 suites PASS — 866/866 assertions — 0 FAIL (~13 giay)
 ```
 
 | Test Suite | So luong | Mo ta |
@@ -166,7 +166,7 @@ onetech/
 |       |   |-- nhapkho.js        # Nhap kho, bulk IMEI import
 |       |   `-- ...
 |       `-- pages/                # HTML5 pages (20+ trang)
-|-- tests/               # 22 Test Suites (865 assertions, 100% PASS)
+|-- tests/               # 22 Test Suites (866 assertions, 100% PASS)
 |-- AGENTS.md            # Quy tac kien truc bat buoc (AI & Developer)
 |-- CONTRIBUTING.md      # Huong dan PR & quy trinh lam viec nhom
 |-- PROJECT_WALKTHROUGH.md  # Tai lieu ky thuat toan dien
@@ -201,4 +201,4 @@ onetech/
 ---
 
 *One Tech Store — He thong quan ly ban hang dien thoai theo IMEI*  
-*22/22 Test Suites PASS — 865/865 assertions — 0 FAIL*
+*22/22 Test Suites PASS — 866/866 assertions — 0 FAIL*
