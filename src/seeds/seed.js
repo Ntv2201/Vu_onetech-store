@@ -674,7 +674,7 @@ const seedData = async () => {
       maPN: 'PN20260801',
       nhaCungCap: nccApple._id,
       nhanVien: nvThuKho._id,
-      ngayNhap: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000),
+      ngayNhap: new Date(Date.now() - 65 * 24 * 60 * 60 * 1000),
       tongTien: 185000000,
       ghiChu: 'Nhập lô iPhone 15 Series & MacBook Air đợt 1 từ Apple VN',
       status: true
@@ -694,7 +694,7 @@ const seedData = async () => {
       maPN: 'PN20260802',
       nhaCungCap: nccSamsung._id,
       nhanVien: nvThuKho._id,
-      ngayNhap: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+      ngayNhap: new Date(Date.now() - 62 * 24 * 60 * 60 * 1000),
       tongTien: 83400000,
       ghiChu: 'Nhập lô Galaxy S24 Ultra 512GB (Hình thức Ghi nợ gối đầu 30 ngày)',
       status: true
@@ -710,7 +710,7 @@ const seedData = async () => {
       maPN: 'PN20260803',
       nhaCungCap: nccFPT._id,
       nhanVien: nvThuKho._id,
-      ngayNhap: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+      ngayNhap: new Date(Date.now() - 58 * 24 * 60 * 60 * 1000),
       tongTien: 45000000,
       ghiChu: 'Nhập củ sạc, cáp sạc, tai nghe và pin linh kiện',
       status: true
@@ -720,7 +720,7 @@ const seedData = async () => {
       maPN: 'PN20260804',
       nhaCungCap: nccDigiworld._id,
       nhanVien: nvThuKho._id,
-      ngayNhap: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+      ngayNhap: new Date(Date.now() - 55 * 24 * 60 * 60 * 1000),
       tongTien: 41780000,
       ghiChu: 'Nhập đồng hồ Apple Watch Ultra 2 & tai nghe AirPods',
       status: true
@@ -1250,7 +1250,7 @@ const seedData = async () => {
       phieuNhap: pn2._id,
       soTien: 40000000,
       hinhThuc: 'Chuyen khoan',
-      ngayChi: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      ngayChi: new Date(Date.now() - 61 * 24 * 60 * 60 * 1000),
       lyDo: `Thanh toan dot 1 cong no NCC Samsung theo phieu ${pn2.maPN}`,
       status: true
     });
