@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const BaseService = require('./BaseService');
 const { HopDongTraGop, HoaDon } = require('../models');
 const ThanhToanService = require('./ThanhToanService');
@@ -79,7 +80,6 @@ class TraGopService extends BaseService {
     if (search && search.trim()) {
       const keyword = search.trim();
       const safeKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const mongoose = require('mongoose');
       
       // 1. Tìm Khách hàng khớp
       const KhachHang = mongoose.model('KhachHang');

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const BaseService = require('./BaseService');
 const { KhachHang, HoaDon } = require('../models');
 

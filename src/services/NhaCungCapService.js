@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const BaseService = require('./BaseService');
 const { NhaCungCap, PhieuNhap, CongNo } = require('../models');
 
